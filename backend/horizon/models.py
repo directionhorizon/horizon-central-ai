@@ -1,0 +1,150 @@
+"""Modèles Pydantic des contrats exposés par les nouveaux routeurs.
+
+Les noms de champs suivent le style déjà utilisé par `app.py` (snake_case).
+Aucun modèle ne contient de secret : les clés API ne sont référencées que par
+le nom de la variable d'environnement qui les contient (`api_key_env`).
+"""
+from __future__ import annotations
+
+from typing import Literal
+
+from pydantic import BaseModel, Field
+
+ProjectStatus = Literal["active", "paused", "archived"]
+OrchestratorStatus = Literal["active", "inactive", "disabled"]
+HealthStatus = Literal["unverified", "available", "unavailable", "degraded"]
+MissionStatus = Literal["draft", "planned", "running", "paused", "completed", "failed", "cancelled"]
+StepStatus = Literal["pending", "running", "completed", "failed", "skipped"]
+Priority = Literal["low", "normal", "high", "critical"]
+
+
+# --- Projets ---------------------------------------------------------------
+
+class ProjectCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    description: str = Field(default="", max_length=4000)
+    status: ProjectStatus = "active"
+
+
+class ProjectUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    description: str | None = Field(default=None, max_length=4000)
+    status: ProjectStatus | None = None
+
+
+# --- Orchestrateurs --------------------------------------------------------
+
+class CapabilityCreate(BaseModel):
+    capability_id: str = Field(min_length=1, max_length=120)
+    level: str = Field(default="standard", max_length=40)
+    detail: str = Field(default="", max_length=2000)
+
+
+class OrchestratorCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    kind: str = Field(default="local", max_length=60)
+    description: str = Field(default="", max_length=4000)
+    endpoint: str = Field(default="", max_length=500)
+    version: str = Field(default="", max_length=60)
+    status: OrchestratorStatus = "active"
+    config: dict = Field(default_factory=dict)
+    capabilities: list[CapabilityCreate] = Field(default_factory=list)
+
+
+class OrchestratorUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    kind: str | None = Field(default=None, max_length=60)
+    description: str | None = Field(default=None, max_length=4000)
+    endpoint: str | None = Field(default=None, max_length=500)
+    version: str | None = Field(default=None, max_length=60)
+    status: OrchestratorStatus | None = None
+    config: dict | None = None
+
+
+class OrchestratorProjectLink(BaseModel):
+    project_id: str = Field(min_length=1)
+    role: str = Field(default="member", max_length=60)
+
+
+class OrchestratorModelSelection(BaseModel):
+    provider_id: str = Field(min_length=1)
+    model: str = Field(min_length=1, max_length=200)
+
+
+# --- Missions --------------------------------------------------------------
+
+class MissionCreate(BaseModel):
+    project_id: str = Field(min_length=1)
+    title: str = Field(min_length=1, max_length=200)
+    description: str = Field(default="", max_length=8000)
+    priority: Priority = "normal"
+    orchestrator_id: str | None = None
+
+
+class MissionUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=200)
+    description: str | None = Field(default=None, max_length=8000)
+    status: MissionStatus | None = None
+    priority: Priority | None = None
+    orchestrator_id: str | None = None
+
+
+class MissionStepCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    position: int | None = Field(default=None, ge=0)
+    assigned_orchestrator_id: str | None = None
+
+
+class MissionStepUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    status: StepStatus | None = None
+    assigned_orchestrator_id: str | None = None
+    error: str | None = Field(default=None, max_length=4000)
+
+
+class CheckpointCreate(BaseModel):
+    label: str = Field(min_length=1, max_length=200)
+    step_id: str | None = None
+    state: dict = Field(default_factory=dict)
+
+
+# --- Fournisseurs LLM ------------------------------------------------------
+
+class ProviderCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=120)
+    base_url: str = Field(min_length=1, max_length=500)
+    kind: str = Field(default="openai_compatible", max_length=60)
+    api_key_env: str = Field(default="", max_length=120)
+    default_model: str = Field(default="", max_length=200)
+
+
+class ProviderUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=120)
+    base_url: str | None = Field(default=None, min_length=1, max_length=500)
+    kind: str | None = Field(default=None, max_length=60)
+    api_key_env: str | None = Field(default=None, max_length=120)
+    default_model: str | None = Field(default=None, max_length=200)
+
+
+class ModelSelectionUpdate(BaseModel):
+    mode: Literal["auto", "manual"] = "auto"
+    provider_id: str | None = None
+    model: str | None = Field(default=None, max_length=200)
+
+
+# --- Mémoire documentaire --------------------------------------------------
+
+class DocumentCreate(BaseModel):
+    title: str = Field(min_length=1, max_length=300)
+    content: str = Field(default="", max_length=200000)
+    project_id: str | None = None
+    tags: str = Field(default="", max_length=600)
+    source: str = Field(default="", max_length=600)
+
+
+class DocumentUpdate(BaseModel):
+    title: str | None = Field(default=None, min_length=1, max_length=300)
+    content: str | None = Field(default=None, max_length=200000)
+    project_id: str | None = None
+    tags: str | None = Field(default=None, max_length=600)
+    source: str | None = Field(default=None, max_length=600)

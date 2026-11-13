@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HORIZON CENTRAL AI — interface indisponible</title>
+    <style>
+      :root { color-scheme: dark; }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 32px;
+        font-family: "Segoe UI", system-ui, -apple-system, sans-serif;
+        background: #0a0b10;
+        color: #e2e8f0;
+      }
+      .card {
+        width: 100%;
+        max-width: 640px;
+        padding: 28px 30px;
+        border: 1px solid rgba(248, 113, 113, 0.35);
+        border-radius: 18px;
+        background: radial-gradient(120% 120% at 0% 0%, rgba(248, 113, 113, 0.10), transparent 60%), #12151e;
+        box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
+      }
+      .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #f87171;
+      }
+      h1 { margin: 10px 0 6px; font-size: 22px; font-weight: 600; letter-spacing: -0.01em; }
+      p { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: #94a3b8; }
+      ul { margin: 0 0 16px; padding-left: 18px; font-size: 13px; line-height: 1.7; color: #cbd5e1; }
+      code {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: rgba(255, 255, 255, 0.07);
+        font-family: Consolas, "Courier New", monospace;
+        font-size: 12px;
+        color: #e2e8f0;
+        word-break: break-all;
+      }
+      .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 18px; }
+      button, a.btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 9px 16px;
+        border: 1px solid rgba(255, 255, 255, 0.16);
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.04);
+        color: #e2e8f0;
+        font-size: 12px;
+        font-weight: 600;
+        text-decoration: none;
+        cursor: pointer;
+      }
+      button.primary { background: #22d3ee; border-color: #22d3ee; color: #04121a; }
+      .meta {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid rgba(255, 255, 255, 0.08);
+        font-size: 11px;
+        line-height: 1.8;
+        color: #64748b;
+      }
+      .status { font-weight: 700; }
+      .status.bad { color: #f87171; }
+      .status.good { color: #34d399; }
+    </style>
+  </head>
+  <body>
+    <main class="card">
+      <p class="eyebrow">HORIZON CENTRAL AI · poste de commande local</p>
+      <h1 id="title">L’interface n’a pas pu être chargée</h1>
+      <p id="reason">
+        Le moteur local ne répond pas encore. La fenêtre ne peut donc pas afficher l’interface.
+      </p>
+
+      <ul>
+        <li>Vérifiez que le moteur local est démarré (il est lancé automatiquement par le raccourci).</li>
+        <li>Consultez le journal du moteur : <code id="log">backend\log\horizon-core.log</code></li>
+        <li>Relancez ensuite le raccourci <strong>HORIZON CENTRAL AI</strong>.</li>
+      </ul>
+
+      <div class="actions">
+        <button class="primary" id="retry" type="button">Réessayer maintenant</button>
+        <button id="probe" type="button">Tester le moteur local</button>
+      </div>
+
+      <p class="meta">
+        Adresse attendue : <code id="target">http://127.0.0.1:8000</code><br />
+        État du moteur : <span class="status bad" id="engine">inconnu</span><br />
+        <span id="detail"></span>
+      </p>
+    </main>
+
+    <script>
+      // Écran d'erreur local : aucune dépendance réseau, aucun script externe.
+      const params = new URLSearchParams(location.search);
+      const appUrl = params.get('app') || 'http://127.0.0.1:8000/';
+      const reason = params.get('reason');
+      const logPath = params.get('log');
+      const titleParam = params.get('title');
+
+      document.getElementById('target').textContent = appUrl;
+      if (reason) document.getElementById('reason').textContent = reason;
+      if (titleParam) document.getElementById('title').textContent = titleParam;
+      if (logPath) document.getElementById('log').textContent = logPath;
+
+      const engine = document.getElementById('engine');
+      const detail = document.getElementById('detail');
+
+      async function probe() {
+        engine.textContent = 'vérification…';
+        engine.className = 'status';
+        detail.textContent = '';
+        const startedAt = Date.now();
+        try {
+          // `no-cors` : sonde de joignabilité sans pré-vol CORS (origine file://).
+          await fetch(new URL('/api/v1/health', appUrl).toString(), { mode: 'no-cors', cache: 'no-store' });
+          engine.textContent = 'joignable';
+          engine.className = 'status good';
+          detail.textContent =
+            'Le moteur local répond (' + (Date.now() - startedAt) + ' ms). Chargement de l’interface…';
+          setTimeout(() => { location.href = appUrl; }, 900);
+        } catch (error) {
+          engine.textContent = 'injoignable';
+          engine.className = 'status bad';
+          detail.textContent = 'Détail : ' + (error && error.message ? error.message : 'échec réseau');
+        }
+      }
+
+      document.getElementById('retry').addEventListener('click', probe);
+      document.getElementById('probe').addEventListener('click', probe);
+      probe();
+    </script>
+  </body>
+</html>

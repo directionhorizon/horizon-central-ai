@@ -1,0 +1,1243 @@
+/* Aucune police distante : HORIZON doit fonctionner sans Internet.
+   Les familles systeme couvrent Windows / macOS / Linux. */
+@import "tailwindcss";
+@plugin "tailwindcss-animate";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme inline {
+  --font-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+  --font-heading: var(--font-sans);
+  --font-body: var(--font-sans);
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --radius-lg: 0.75rem;
+  --radius-md: 0.5rem;
+  --radius-sm: 0.25rem;
+
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  @keyframes accordion-down {
+    from { height: 0; }
+    to { height: var(--radix-accordion-content-height); }
+  }
+  @keyframes accordion-up {
+    from { height: var(--radix-accordion-content-height); }
+    to { height: 0; }
+  }
+}
+
+@layer base {
+  /* Thème par défaut : sombre (identité d'origine de HORIZON, conservée). */
+  :root,
+  [data-theme="dark"] {
+    --background: #0a0b10;
+    --foreground: #f8fafc;
+
+    --card: #141721;
+    --card-foreground: #f8fafc;
+
+    --popover: #141721;
+    --popover-foreground: #f8fafc;
+
+    --primary: #1e2235;
+    --primary-foreground: #f8fafc;
+
+    --secondary: #64748b;
+    --secondary-foreground: #f8fafc;
+
+    --muted: #1e2235;
+    --muted-foreground: #94a3b8;
+
+    --accent: #00d1ff;
+    --accent-foreground: #0a0b10;
+    --accent-text-mix: #e6faff;
+
+    --destructive: #ef4444;
+    --destructive-foreground: #f8fafc;
+
+    --border: #1e293b;
+    --input: #1e293b;
+    --ring: #00d1ff;
+
+    --radius: 0.5rem;
+
+    /* Jetons applicatifs (panneaux, survols, états). */
+    --surface: #12151e;
+    --surface-2: #171a24;
+    --surface-3: #1e2235;
+    --hover: rgba(255, 255, 255, 0.05);
+    --hairline: rgba(255, 255, 255, 0.10);
+    --shadow-color: rgba(0, 0, 0, 0.55);
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: var(--accent);
+    color-scheme: dark;
+  }
+
+  /* Thème clair : environnements lumineux, travail de jour. */
+  [data-theme="light"] {
+    --background: #f5f7fb;
+    --foreground: #101828;
+
+    --card: #ffffff;
+    --card-foreground: #101828;
+
+    --popover: #ffffff;
+    --popover-foreground: #101828;
+
+    --primary: #e6ebf5;
+    --primary-foreground: #101828;
+
+    --secondary: #d7deea;
+    --secondary-foreground: #1f2937;
+
+    --muted: #eef1f7;
+    --muted-foreground: #5b6474;
+
+    --accent: #0e7490;
+    --accent-foreground: #ffffff;
+    --accent-text-mix: #06232b;
+
+    --destructive: #dc2626;
+    --destructive-foreground: #ffffff;
+
+    --border: #d3dae6;
+    --input: #d3dae6;
+    --ring: #0e7490;
+
+    --surface: #ffffff;
+    --surface-2: #f0f3f9;
+    --surface-3: #e5eaf3;
+    --hover: rgba(16, 24, 40, 0.06);
+    --hairline: rgba(16, 24, 40, 0.12);
+    --shadow-color: rgba(16, 24, 40, 0.14);
+    --success: #15803d;
+    --warning: #b45309;
+    --danger: #b91c1c;
+    --info: var(--accent);
+    color-scheme: light;
+  }
+  /* Thème confort visuel : sombre adouci, contraste maîtrisé, sans blanc pur. */
+  [data-theme="comfort"] {
+    --background: #14161c;
+    --foreground: #dde3ec;
+
+    --card: #1a1d25;
+    --card-foreground: #dde3ec;
+
+    --popover: #1a1d25;
+    --popover-foreground: #dde3ec;
+
+    --primary: #232833;
+    --primary-foreground: #e6ebf3;
+
+    --secondary: #6b7688;
+    --secondary-foreground: #eef1f6;
+
+    --muted: #222630;
+    --muted-foreground: #98a2b3;
+
+    --accent: #22a9c4;
+    --accent-foreground: #0d1117;
+    --accent-text-mix: #cfeef6;
+
+    --destructive: #d97070;
+    --destructive-foreground: #14161c;
+
+    --border: #2b3140;
+    --input: #2b3140;
+    --ring: #22a9c4;
+
+    --surface: #1a1d25;
+    --surface-2: #20242d;
+    --surface-3: #262b36;
+    --hover: rgba(255, 255, 255, 0.045);
+    --hairline: rgba(255, 255, 255, 0.09);
+    --shadow-color: rgba(0, 0, 0, 0.45);
+    --success: #6fbf9a;
+    --warning: #e0b060;
+    --danger: #dd8b8b;
+    --info: var(--accent);
+    color-scheme: dark;
+  }
+
+  /* Thème contraste élevé : lisibilité et accessibilité maximales. */
+  [data-theme="contrast"] {
+    --background: #000000;
+    --foreground: #ffffff;
+
+    --card: #0a0a0a;
+    --card-foreground: #ffffff;
+
+    --popover: #0a0a0a;
+    --popover-foreground: #ffffff;
+
+    --primary: #1a1a1a;
+    --primary-foreground: #ffffff;
+
+    --secondary: #d0d0d0;
+    --secondary-foreground: #000000;
+
+    --muted: #141414;
+    --muted-foreground: #f0f0f0;
+
+    --accent: #ffe066;
+    --accent-foreground: #000000;
+    --accent-text-mix: #fffbe6;
+
+    --destructive: #ff6b6b;
+    --destructive-foreground: #000000;
+
+    --border: #8a8a8a;
+    --input: #8a8a8a;
+    --ring: #ffe066;
+
+    --surface: #0a0a0a;
+    --surface-2: #141414;
+    --surface-3: #1e1e1e;
+    --hover: rgba(255, 255, 255, 0.14);
+    --hairline: rgba(255, 255, 255, 0.45);
+    --shadow-color: rgba(0, 0, 0, 0.9);
+    --success: #7dffb0;
+    --warning: #ffd166;
+    --danger: #ff8f8f;
+    --info: var(--accent);
+    color-scheme: dark;
+  }
+
+  /* Thème personnalisé : base + teinte lue depuis le stockage (variables
+     posées par le ThemeProvider ; les valeurs ci-dessous ne sont que des
+     replis sûrs si les variables sont absentes). */
+  [data-theme="custom"] {
+    --background: var(--custom-background, #101317);
+    --foreground: var(--custom-foreground, #f2f5f9);
+    --card: var(--custom-surface, #171b21);
+    --card-foreground: var(--custom-foreground, #f2f5f9);
+    --popover: var(--custom-surface, #171b21);
+    --popover-foreground: var(--custom-foreground, #f2f5f9);
+    --primary: var(--custom-surface-2, #1e232b);
+    --primary-foreground: var(--custom-foreground, #f2f5f9);
+    --secondary: #6b7688;
+    --secondary-foreground: var(--custom-foreground, #f2f5f9);
+    --muted: var(--custom-surface-2, #1e232b);
+    --muted-foreground: var(--custom-muted, #9aa5b4);
+    --accent: var(--custom-accent, #00d1ff);
+    --accent-foreground: var(--custom-accent-fg, #06131a);
+    --accent-text-mix: var(--custom-accent-mix, #e6faff);
+    --destructive: #ef4444;
+    --destructive-foreground: #ffffff;
+    --border: var(--custom-border, #2a323c);
+    --input: var(--custom-border, #2a323c);
+    --ring: var(--custom-accent, #00d1ff);
+    --surface: var(--custom-surface, #171b21);
+    --surface-2: var(--custom-surface-2, #1e232b);
+    --surface-3: var(--custom-border, #2a323c);
+    --hover: var(--custom-hover, rgba(255, 255, 255, 0.06));
+    --hairline: var(--custom-hairline, rgba(255, 255, 255, 0.12));
+    --shadow-color: rgba(0, 0, 0, 0.5);
+    --success: #34d399;
+    --warning: #fbbf24;
+    --danger: #f87171;
+    --info: var(--accent);
+    color-scheme: var(--custom-scheme, dark);
+  }
+
+  /* Palettes d'accentuation : HORIZON n'est pas limité au cyan d'origine. */
+  [data-accent="cyan"]   { --accent: #00d1ff; --accent-foreground: #06131a; --ring: #00d1ff; }
+  [data-accent="azure"]  { --accent: #3b82f6; --accent-foreground: #f8fafc; --ring: #3b82f6; --accent-text-mix: #dbeafe; }
+  [data-accent="violet"] { --accent: #8b5cf6; --accent-foreground: #f8fafc; --ring: #8b5cf6; --accent-text-mix: #ede9fe; }
+  [data-accent="emerald"]{ --accent: #10b981; --accent-foreground: #04231a; --ring: #10b981; --accent-text-mix: #d1fae5; }
+  [data-accent="amber"]  { --accent: #f59e0b; --accent-foreground: #2b1a02; --ring: #f59e0b; --accent-text-mix: #fef3c7; }
+  [data-accent="rose"]   { --accent: #f43f5e; --accent-foreground: #fff1f2; --ring: #f43f5e; --accent-text-mix: #ffe4e6; }
+
+  /* En thème clair les accents doivent être assombris pour rester lisibles. */
+  [data-theme="light"][data-accent="cyan"]   { --accent: #0e7490; --accent-foreground: #ffffff; --ring: #0e7490; }
+  [data-theme="light"][data-accent="azure"]  { --accent: #1d4ed8; --accent-foreground: #ffffff; --ring: #1d4ed8; }
+  [data-theme="light"][data-accent="violet"] { --accent: #6d28d9; --accent-foreground: #ffffff; --ring: #6d28d9; }
+  [data-theme="light"][data-accent="emerald"]{ --accent: #047857; --accent-foreground: #ffffff; --ring: #047857; }
+  [data-theme="light"][data-accent="amber"]  { --accent: #b45309; --accent-foreground: #ffffff; --ring: #b45309; }
+  [data-theme="light"][data-accent="rose"]   { --accent: #be123c; --accent-foreground: #ffffff; --ring: #be123c; }
+
+  /* Jeton dérivé : texte d'accent lisible dans tous les thèmes. */
+  :root { --accent-text: color-mix(in srgb, var(--accent) 62%, var(--accent-text-mix)); }
+
+
+  * {
+    border-color: var(--border);
+    outline-color: var(--ring);
+  }
+
+  body {
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-body);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    margin: 0;
+    padding: 0;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-heading);
+    font-weight: 600;
+  }
+}
+
+@layer components {
+  .glass-effect {
+    background: rgba(20, 23, 33, 0.7);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .glass-effect-strong {
+    background: rgba(10, 11, 16, 0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+  }
+}
+
+@layer utilities {
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  /* Broken image fallback */
+  img:not([src]), 
+  img[src=""], 
+  img[src^="data:image/svg+xml"],
+  img[onerror] {
+    @apply bg-muted relative overflow-hidden;
+  }
+  
+  img:not([src])::before,
+  img[src=""]::before {
+    content: " ";
+    display: block;
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--muted);
+  }
+}
+
+/* HORIZON CENTRAL AI — navigation unifiée : lisibilité, hiérarchie, fluidité. */
+.horizon-nav{position:sticky;top:0;z-index:1000;display:flex;align-items:center;gap:16px;min-height:64px;padding:9px 18px;background:color-mix(in srgb,var(--surface) 90%,transparent);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border-bottom:1px solid var(--hairline);color:var(--foreground);box-shadow:inset 0 -1px 0 var(--hairline)}
+.horizon-brand{display:flex;align-items:center;gap:10px;white-space:nowrap}
+.horizon-brand-text{display:flex;flex-direction:column;line-height:1.1}
+.horizon-brand strong{font-size:13px;font-weight:750;letter-spacing:.10em}
+.horizon-brand small{color:var(--muted-foreground);font-size:9px;font-weight:600;letter-spacing:.22em}
+.horizon-mark{display:grid;place-items:center;width:32px;height:32px;border-radius:10px;background:linear-gradient(140deg,color-mix(in srgb,var(--accent) 34%,transparent),color-mix(in srgb,var(--accent) 12%,transparent));color:var(--accent-text);font-size:16px;font-weight:800;box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 32%,transparent)}
+.horizon-tabs{display:flex;align-items:center;gap:3px;overflow-x:auto;flex:1;scrollbar-width:none}
+.horizon-tabs::-webkit-scrollbar{display:none}
+.horizon-tabs button{display:flex;align-items:center;gap:7px;white-space:nowrap;border:1px solid transparent;border-radius:9px;padding:8px 11px;background:transparent;color:var(--muted-foreground);font-size:11px;font-weight:550;cursor:pointer;transition:background var(--hz-motion-fast) var(--hz-ease),color var(--hz-motion-fast) var(--hz-ease),border-color var(--hz-motion-fast) var(--hz-ease)}
+.horizon-tabs button:hover{background:var(--hover);color:var(--foreground)}
+.horizon-tabs button.active{border-color:color-mix(in srgb,var(--accent) 38%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 12%,transparent)}
+.horizon-build-label{white-space:nowrap;color:var(--muted-foreground);font-size:9px;font-weight:600;letter-spacing:.14em}
+.horizon-page{min-height:calc(100vh - 62px);background:var(--background);color:var(--foreground)}
+/* Indicateur de santé backend + sélecteur de session. */
+.horizon-health{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:10px;color:var(--muted-foreground)}
+.horizon-health-refresh{border:none;background:transparent;color:var(--muted-foreground);cursor:pointer;font-size:12px;line-height:1;padding:2px 4px;border-radius:5px}
+.horizon-health-refresh:hover{background:var(--hover);color:var(--foreground)}
+.horizon-health-detail{display:none}
+.horizon-session-select{max-width:190px;border:1px solid var(--hairline);border-radius:8px;background:var(--surface-2);color:var(--foreground);font-size:10px;padding:6px 8px;cursor:pointer}
+.horizon-session-select:focus{outline:none;border-color:var(--ring)}
+.horizon-session-id{color:var(--muted-foreground);font-size:9px;letter-spacing:.06em}
+/* Commandes de thème toujours accessibles depuis l'en-tête. */
+.horizon-theme-controls{display:flex;align-items:center;gap:6px;color:var(--muted-foreground)}
+.horizon-theme-toggle{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border:1px solid var(--hairline);border-radius:7px;background:transparent;color:var(--muted-foreground);cursor:pointer}
+.horizon-theme-toggle:hover{background:var(--hover);color:var(--foreground)}
+/* Responsive réel de la barre : la rangée d'onglets reste utilisable à toute
+   largeur (défilement horizontal contenu), puis passe sur une 2e ligne sous 900px.
+   Le libellé de build disparaît sous 1200px pour ne pas manger la largeur. */
+@media(max-width:1200px){
+  .horizon-nav{gap:8px;padding:8px 12px}
+  .horizon-tabs button{padding:7px 9px;font-size:10.5px}
+  .horizon-build-label{display:none}
+}
+@media(max-width:900px){
+  .horizon-nav{align-items:center;flex-wrap:wrap;gap:8px;padding:8px 10px}
+  .horizon-tabs{order:3;flex-basis:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .horizon-session-select{max-width:130px}
+  .horizon-brand strong{font-size:12px}
+}
+@media(max-width:640px){
+  .horizon-nav{gap:6px;padding:6px 8px}
+  .horizon-brand small{display:none}
+  .horizon-tabs button{padding:6px 8px;gap:5px}
+  .horizon-session-select{max-width:96px}
+  .horizon-page{min-height:calc(100vh - 56px)}
+}
+
+
+/* ==========================================================================
+   Passerelle de thème (« compat layer »)
+   Les pages existantes utilisent des classes de couleur figées (Tailwind
+   arbitraire + anciennes palettes). Ces règles, volontairement hors @layer
+   (donc prioritaires sur les utilitaires Tailwind), les rattachent aux jetons
+   du thème actif. Aucun composant existant n'est réécrit : structure et
+   comportement identiques, seules les couleurs suivent le thème choisi.
+   ========================================================================== */
+
+/* Fonds de page et de panneaux */
+[class~="bg-[#0A0B10]"], [class~="bg-[#0a0b10]"], [class~="bg-[#090c13]"],
+[class~="bg-black"] { background-color: var(--background); }
+[class~="bg-[#12151e]"] { background-color: var(--surface); }
+[class~="bg-[#141721]"] { background-color: var(--card); }
+[class~="bg-[#171a24]"], [class~="bg-[#11151f]"], [class~="bg-[#111722]"],
+[class~="bg-[#0d1420]"] { background-color: var(--surface-2); }
+
+/* Texte */
+[class~="text-white"], [class~="text-slate-100"], [class~="text-slate-200"],
+[class~="text-slate-300"] { color: var(--foreground); }
+[class~="text-slate-400"], [class~="text-slate-500"], [class~="text-slate-600"],
+[class~="text-slate-700"], [class~="text-slate-950"] { color: var(--muted-foreground); }
+[class~="text-[#0A0B10]"], [class~="text-[#071017]"], [class~="text-[#071016]"] {
+  color: var(--accent-foreground);
+}
+
+/* Bordures et surfaces translucides */
+[class~="border-white/5"], [class~="border-white/10"], [class~="border-white/15"],
+[class~="border-white/[0.06]"], [class~="border-white/[0.07]"],
+[class~="border-white/[0.08]"], [class~="border-white/[0.10]"],
+[class~="border-white/[0.12]"] { border-color: var(--hairline); }
+[class~="border-[#0A0B10]"], [class~="border-[#0a0b10]"] { border-color: var(--border); }
+[class~="bg-white/5"], [class~="bg-white/[0.02]"], [class~="bg-white/[0.025]"],
+[class~="bg-white/[0.03]"], [class~="bg-white/[0.04]"], [class~="bg-white/[0.06]"] {
+  background-color: var(--hover);
+}
+
+/* Accentuation : le cyan d'origine suit la palette d'accent choisie. */
+[class~="text-cyan-100"], [class~="text-cyan-200"], [class~="text-cyan-300"],
+[class~="text-cyan-400"], [class~="text-cyan-500"], [class~="text-cyan-400/80"] {
+  color: var(--accent-text);
+}
+[class~="bg-cyan-200"], [class~="bg-cyan-300"], [class~="bg-cyan-400"],
+[class~="bg-cyan-500"] { background-color: var(--accent); }
+[class~="bg-cyan-400/10"], [class~="bg-cyan-400/15"], [class~="bg-cyan-400/20"],
+[class~="bg-cyan-400/[0.06]"], [class~="bg-cyan-400/[0.08]"],
+[class~="bg-cyan-500/10"], [class~="bg-cyan-500/20"] {
+  background-color: color-mix(in srgb, var(--accent) 14%, transparent);
+}
+[class~="border-cyan-300"], [class~="border-cyan-400"], [class~="border-cyan-500"],
+[class~="border-cyan-400/20"], [class~="border-cyan-400/25"],
+[class~="border-cyan-400/30"], [class~="border-cyan-400/40"] {
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+}
+[class~="ring-cyan-300"], [class~="ring-cyan-400"] { --tw-ring-color: var(--ring); }
+[class~="from-cyan-500"] { --tw-gradient-from: var(--accent); }
+/* États sémantiques : lisibles en thème clair comme en thème sombre. */
+[class~="text-emerald-100"], [class~="text-emerald-200"], [class~="text-emerald-300"],
+[class~="text-emerald-400"], [class~="text-emerald-500"] { color: var(--success); }
+[class~="bg-emerald-300"], [class~="bg-emerald-400"], [class~="bg-emerald-500"] {
+  background-color: var(--success);
+}
+[class~="bg-emerald-400/[0.07]"], [class~="bg-emerald-400/[0.08]"],
+[class~="bg-emerald-400/10"], [class~="bg-emerald-500/10"] {
+  background-color: color-mix(in srgb, var(--success) 16%, transparent);
+}
+[class~="border-emerald-400"], [class~="border-emerald-400/25"],
+[class~="border-emerald-400/30"] { border-color: color-mix(in srgb, var(--success) 40%, transparent); }
+
+[class~="text-amber-100"], [class~="text-amber-200"], [class~="text-amber-300"],
+[class~="text-amber-400"] { color: var(--warning); }
+[class~="bg-amber-300"], [class~="bg-amber-400"], [class~="bg-amber-500"] {
+  background-color: var(--warning);
+}
+[class~="bg-amber-400/[0.05]"], [class~="bg-amber-400/[0.06]"],
+[class~="bg-amber-400/[0.07]"], [class~="bg-amber-400/10"] {
+  background-color: color-mix(in srgb, var(--warning) 16%, transparent);
+}
+[class~="border-amber-300"], [class~="border-amber-400"], [class~="border-amber-400/20"],
+[class~="border-amber-400/25"], [class~="border-amber-400/30"] {
+  border-color: color-mix(in srgb, var(--warning) 40%, transparent);
+}
+
+[class~="text-rose-100"], [class~="text-rose-200"], [class~="text-rose-300"],
+[class~="text-rose-400"] { color: var(--danger); }
+[class~="bg-rose-300"], [class~="bg-rose-400"], [class~="bg-rose-500"] {
+  background-color: var(--danger);
+}
+[class~="bg-rose-400/[0.06]"], [class~="bg-rose-400/[0.07]"],
+[class~="bg-rose-400/[0.08]"], [class~="bg-rose-400/10"] {
+  background-color: color-mix(in srgb, var(--danger) 16%, transparent);
+}
+[class~="border-rose-300"], [class~="border-rose-400"], [class~="border-rose-400/20"],
+[class~="border-rose-400/25"], [class~="border-rose-400/30"] {
+  border-color: color-mix(in srgb, var(--danger) 40%, transparent);
+}
+[class~="text-violet-300"], [class~="text-violet-400"] { color: var(--accent-text); }
+[class~="bg-violet-400"] { background-color: var(--accent); }
+[class~="border-violet-400"] { border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+
+/* Accessibilité : focus visible renforcé en contraste élevé. */
+[data-theme="contrast"] :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+
+/* ==========================================================================
+   DESIGN SYSTEM — HORIZON CENTRAL AI
+   Jetons de rythme/élévation, composants communs et motion design.
+   Toutes les valeurs dérivent des jetons de thème : chaque composant suit donc
+   automatiquement le thème et la palette d'accent choisis.
+   ========================================================================== */
+
+:root {
+  --hz-space-1: 4px;
+  --hz-space-2: 8px;
+  --hz-space-3: 12px;
+  --hz-space-4: 16px;
+  --hz-space-5: 24px;
+  --hz-space-6: 32px;
+  --hz-radius-sm: 8px;
+  --hz-radius: 12px;
+  --hz-radius-lg: 16px;
+  --hz-shadow-1: 0 1px 2px var(--shadow-color);
+  --hz-shadow-2: 0 8px 22px -12px var(--shadow-color);
+  --hz-shadow-3: 0 22px 48px -24px var(--shadow-color);
+  --hz-motion-fast: 120ms;
+  --hz-motion: 200ms;
+  --hz-motion-slow: 320ms;
+  --hz-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --hz-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --hz-ring: 0 0 0 3px color-mix(in srgb, var(--accent) 30%, transparent);
+}
+
+/* --- Conteneurs -------------------------------------------------------- */
+.hz-card {
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--hz-radius);
+  box-shadow: var(--hz-shadow-1);
+}
+.hz-panel {
+  background: var(--surface);
+  border: 1px solid var(--hairline);
+  border-radius: var(--hz-radius-lg);
+  box-shadow: var(--hz-shadow-2);
+}
+.hz-panel--flat { box-shadow: none; }
+.hz-divider { height: 1px; background: var(--hairline); border: 0; margin: var(--hz-space-3) 0; }
+
+/* --- Typographie ------------------------------------------------------- */
+.hz-eyebrow {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+.hz-title { font-size: 16px; font-weight: 650; letter-spacing: -0.01em; color: var(--foreground); }
+.hz-subtitle { font-size: 12px; color: var(--muted-foreground); line-height: 1.5; }
+.hz-metric { font-size: 26px; font-weight: 700; font-variant-numeric: tabular-nums; letter-spacing: -0.02em; color: var(--foreground); }
+.hz-hint { font-size: 10px; color: var(--muted-foreground); line-height: 1.45; }
+.hz-code {
+  font-family: ui-monospace, SFMono-Regular, "Cascadia Mono", Consolas, monospace;
+  font-size: 0.9em;
+  background: var(--hover);
+  border: 1px solid var(--hairline);
+  border-radius: 6px;
+  padding: 1px 5px;
+}
+
+/* --- Indicateurs ------------------------------------------------------- */
+.hz-kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--hz-space-1);
+  padding: var(--hz-space-3) var(--hz-space-4);
+  background: var(--card);
+  border: 1px solid var(--hairline);
+  border-radius: var(--hz-radius);
+}
+.hz-kpi__label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--muted-foreground); }
+.hz-kpi__value { font-size: 22px; font-weight: 700; font-variant-numeric: tabular-nums; color: var(--foreground); }
+.hz-kpi--accent { border-color: color-mix(in srgb, var(--accent) 35%, transparent); }
+
+.hz-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--hairline);
+  background: var(--hover);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--muted-foreground);
+  white-space: nowrap;
+}
+.hz-badge--ok { color: var(--success); border-color: color-mix(in srgb, var(--success) 40%, transparent); background: color-mix(in srgb, var(--success) 12%, transparent); }
+.hz-badge--warn { color: var(--warning); border-color: color-mix(in srgb, var(--warning) 40%, transparent); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.hz-badge--danger { color: var(--danger); border-color: color-mix(in srgb, var(--danger) 40%, transparent); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+.hz-badge--accent { color: var(--accent-text); border-color: color-mix(in srgb, var(--accent) 38%, transparent); background: color-mix(in srgb, var(--accent) 12%, transparent); }
+
+/* Changement de thème progressif (jamais de saut brutal), sauf si l'utilisateur
+   a demandé la réduction des animations. */
+@media (prefers-reduced-motion: no-preference) {
+  body, .horizon-nav, .horizon-page { transition: background-color .18s ease, color .18s ease; }
+}
+
+
+
+
+/* --- Actions ----------------------------------------------------------- */
+.hz-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--foreground);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--hz-motion-fast) var(--hz-ease), border-color var(--hz-motion-fast) var(--hz-ease),
+    transform var(--hz-motion-fast) var(--hz-ease), box-shadow var(--hz-motion-fast) var(--hz-ease);
+}
+.hz-btn:hover { background: var(--hover); border-color: color-mix(in srgb, var(--accent) 30%, var(--hairline)); }
+.hz-btn:active { transform: scale(0.98); }
+.hz-btn:focus-visible { outline: none; box-shadow: var(--hz-ring); }
+.hz-btn[disabled], .hz-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; }
+.hz-btn--primary {
+  border-color: color-mix(in srgb, var(--accent) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  color: var(--accent-text);
+}
+.hz-btn--primary:hover { background: color-mix(in srgb, var(--accent) 24%, transparent); }
+.hz-btn--ghost { background: transparent; border-color: transparent; color: var(--muted-foreground); }
+.hz-btn--ghost:hover { background: var(--hover); color: var(--foreground); }
+.hz-btn--icon { padding: 7px; }
+
+/* --- Saisies ----------------------------------------------------------- */
+.hz-input, .hz-textarea, .hz-select {
+  width: 100%;
+  padding: 9px 11px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  color: var(--foreground);
+  font-size: 12px;
+  line-height: 1.5;
+  transition: border-color var(--hz-motion-fast) var(--hz-ease), box-shadow var(--hz-motion-fast) var(--hz-ease);
+}
+.hz-input::placeholder, .hz-textarea::placeholder { color: var(--muted-foreground); opacity: 0.75; }
+.hz-input:hover, .hz-textarea:hover, .hz-select:hover { border-color: color-mix(in srgb, var(--accent) 28%, var(--hairline)); }
+.hz-input:focus, .hz-textarea:focus, .hz-select:focus {
+  outline: none;
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: var(--hz-ring);
+}
+.hz-textarea { resize: vertical; min-height: 64px; }
+
+/* --- Listes et lignes -------------------------------------------------- */
+.hz-list { display: flex; flex-direction: column; gap: var(--hz-space-1); }
+.hz-list-item {
+  padding: var(--hz-space-2) var(--hz-space-3);
+  border-radius: 10px;
+  border: 1px solid transparent;
+  transition: background var(--hz-motion-fast) var(--hz-ease), border-color var(--hz-motion-fast) var(--hz-ease);
+}
+.hz-list-item:hover { background: var(--hover); border-color: var(--hairline); }
+.hz-list-item--active {
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+  border-color: color-mix(in srgb, var(--accent) 32%, transparent);
+}
+
+/* --- Alertes ----------------------------------------------------------- */
+.hz-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 11px 13px;
+  border-radius: var(--hz-radius);
+  border: 1px solid var(--hairline);
+  background: var(--surface-2);
+  color: var(--foreground);
+  font-size: 11px;
+  line-height: 1.55;
+}
+.hz-alert__text { flex: 1; }
+.hz-alert--info { border-color: color-mix(in srgb, var(--accent) 35%, transparent); background: color-mix(in srgb, var(--accent) 10%, transparent); }
+.hz-alert--warn { border-color: color-mix(in srgb, var(--warning) 38%, transparent); background: color-mix(in srgb, var(--warning) 12%, transparent); }
+.hz-alert--danger { border-color: color-mix(in srgb, var(--danger) 38%, transparent); background: color-mix(in srgb, var(--danger) 12%, transparent); }
+
+/* --- Barre de progression (états réellement en cours) ------------------ */
+.hz-track { height: 6px; border-radius: 999px; background: var(--hover); overflow: hidden; }
+.hz-track__fill { height: 100%; border-radius: 999px; background: var(--accent); transition: width var(--hz-motion-slow) var(--hz-ease-out); }
+
+/* --- Défilement local et finitions globales ---------------------------- */
+.hz-scroll { overflow-y: auto; scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--foreground) 22%, transparent) transparent; }
+.hz-scroll::-webkit-scrollbar { width: 9px; height: 9px; }
+.hz-scroll::-webkit-scrollbar-track { background: transparent; }
+.hz-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.hz-scroll::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--foreground) 34%, transparent); background-clip: content-box; }
+
+::selection { background: color-mix(in srgb, var(--accent) 32%, transparent); color: var(--foreground); }
+:focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; }
+
+body { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--foreground) 18%, transparent) transparent; }
+body::-webkit-scrollbar { width: 10px; height: 10px; }
+body::-webkit-scrollbar-track { background: transparent; }
+body::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 18%, transparent);
+  border-radius: 999px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+
+/* ==========================================================================
+   MOTION DESIGN
+   Le mouvement sert la compréhension : apparition, orientation, retour d'état.
+   Aucune animation permanente, sauf l'indicateur d'une opération réellement
+   en cours (jamais pour suggérer une activité inexistante).
+   ========================================================================== */
+
+@keyframes hz-fade-up { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@keyframes hz-fade-in { from { opacity: 0; } to { opacity: 1; } }
+@keyframes hz-slide-in-right { from { opacity: 0; transform: translateX(26px); } to { opacity: 1; transform: none; } }
+@keyframes hz-slide-up-panel { from { opacity: 0; transform: translateY(14px) scale(0.995); } to { opacity: 1; transform: none; } }
+@keyframes hz-pop { from { opacity: 0; transform: scale(0.965); } to { opacity: 1; transform: none; } }
+@keyframes hz-live { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+@keyframes hz-status-ring {
+  from { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 50%, transparent); }
+  to { box-shadow: 0 0 0 10px transparent; }
+}
+@keyframes hz-sweep { from { transform: translateX(-100%); } to { transform: translateX(320%); } }
+
+/* Apparition échelonnée des blocs (cartes, panneaux, listes). */
+.hz-enter { animation: hz-fade-up var(--hz-motion-slow) var(--hz-ease-out) both; }
+.hz-enter--1 { animation-delay: 40ms; }
+.hz-enter--2 { animation-delay: 80ms; }
+.hz-enter--3 { animation-delay: 120ms; }
+.hz-enter--4 { animation-delay: 160ms; }
+
+/* Apparition des fenêtres, tiroirs et panneaux. */
+.hz-drawer { animation: hz-slide-in-right var(--hz-motion-slow) var(--hz-ease-out) both; }
+.hz-overlay { animation: hz-fade-in var(--hz-motion) var(--hz-ease) both; }
+.hz-panel-in { animation: hz-slide-up-panel var(--hz-motion) var(--hz-ease-out) both; }
+.hz-pop { animation: hz-pop var(--hz-motion-fast) var(--hz-ease-out) both; }
+
+/* Changement de page : transition douce et brève. */
+.hz-view { animation: hz-fade-up var(--hz-motion) var(--hz-ease-out) both; }
+
+/* Indicateurs d'activité : utilisés uniquement pendant une opération réelle. */
+.hz-live { animation: hz-live 1.4s var(--hz-ease) infinite; }
+.hz-live-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--accent);
+  animation: hz-status-ring 1.9s var(--hz-ease-out) infinite;
+}
+.hz-sweep { position: relative; overflow: hidden; }
+.hz-sweep::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 30%;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--accent) 26%, transparent), transparent);
+  animation: hz-sweep 1.4s var(--hz-ease) infinite;
+}
+
+/* Micro-interaction : élévation au survol des éléments interactifs. */
+.hz-lift { transition: transform var(--hz-motion) var(--hz-ease), box-shadow var(--hz-motion) var(--hz-ease); }
+.hz-lift:hover { transform: translateY(-2px); box-shadow: var(--hz-shadow-2); }
+
+/* Les indicateurs sémantiques suivent le thème. */
+.hz-dot { display: inline-block; width: 7px; height: 7px; border-radius: 999px; background: var(--muted-foreground); }
+.hz-dot--ok { background: var(--success); }
+.hz-dot--warn { background: var(--warning); }
+.hz-dot--danger { background: var(--danger); }
+.hz-dot--accent { background: var(--accent); }
+
+/* Réduction des animations respectée : aucun mouvement imposé. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+/* Défilement homogène pour tous les conteneurs (pages existantes incluses). */
+.overflow-y-auto { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--foreground) 20%, transparent) transparent; }
+.overflow-y-auto::-webkit-scrollbar { width: 9px; height: 9px; }
+.overflow-y-auto::-webkit-scrollbar-track { background: transparent; }
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--foreground) 20%, transparent);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--foreground) 34%, transparent); background-clip: content-box; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hz-enter, .hz-drawer, .hz-overlay, .hz-panel-in, .hz-pop, .hz-view { animation: none !important; }
+  .hz-live, .hz-live-dot, .hz-sweep::after { animation: none !important; opacity: 1 !important; }
+}
+
+  .hz-lift:hover { transform: none; }
+}
+
+/* ==========================================================================
+   ESPACE DE TRAVAIL — trois zones indépendantes
+   Panneaux redimensionnables (ordinateur), repli en rail, tiroirs (tablette et
+   mobile). Les largeurs viennent de variables posées par l'application.
+   ========================================================================== */
+
+@keyframes hz-slide-in-left {
+  from { opacity: 0; transform: translateX(-24px); }
+  to { opacity: 1; transform: none; }
+}
+
+.ws-shell {
+  display: grid;
+  grid-template-columns: var(--ws-left, 280px) 8px minmax(0, 1fr) 8px var(--ws-right, 330px);
+  gap: 0 6px;
+  padding: 18px;
+  align-items: start;
+  min-width: 0;
+}
+.ws-pane { min-width: 0; }
+.ws-handle {
+  position: relative;
+  align-self: stretch;
+  min-height: 120px;
+  cursor: col-resize;
+  border: 0;
+  background: transparent;
+  touch-action: none;
+}
+.ws-handle::after {
+  content: "";
+  position: absolute;
+  inset: 6% 3px;
+  border-radius: 999px;
+  background: var(--hairline);
+  opacity: 0.6;
+  transition: opacity var(--hz-motion-fast) var(--hz-ease), background var(--hz-motion-fast) var(--hz-ease);
+}
+.ws-handle:hover::after,
+.ws-handle:focus-visible::after {
+  opacity: 1;
+  background: color-mix(in srgb, var(--accent) 55%, transparent);
+}
+body.ws-resizing { cursor: col-resize; user-select: none; }
+
+.ws-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  min-height: 58vh;
+  padding: 8px 0;
+  border-right: 1px solid var(--hairline);
+}
+.ws-rail--right { border-right: 0; border-left: 1px solid var(--hairline); }
+.ws-rail__btn {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  border: 1px solid var(--hairline);
+  background: var(--card);
+  color: var(--muted-foreground);
+  cursor: pointer;
+  transition: color var(--hz-motion-fast) var(--hz-ease), background var(--hz-motion-fast) var(--hz-ease),
+    border-color var(--hz-motion-fast) var(--hz-ease);
+}
+.ws-rail__btn:hover {
+  color: var(--accent-text);
+  border-color: color-mix(in srgb, var(--accent) 40%, transparent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
+}
+.ws-rail__label {
+  writing-mode: vertical-rl;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--muted-foreground);
+}
+
+.ws-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1100;
+  border: 0;
+  padding: 0;
+  background: rgba(0, 0, 0, 0.45);
+  cursor: pointer;
+  animation: hz-fade-in 180ms var(--hz-ease) both;
+}
+
+/* Petit ordinateur : largeurs bornées (sans écraser la préférence utilisateur),
+   libellé de version masqué et sélecteurs compacts pour laisser respirer les onglets. */
+@media (min-width: 1024px) and (max-width: 1279px) {
+  .ws-shell {
+    grid-template-columns:
+      min(232px, var(--ws-left, 232px)) 8px minmax(0, 1fr) 8px min(258px, var(--ws-right, 258px));
+    gap: 0 4px;
+    padding: 14px;
+  }
+  .horizon-build-label { display: none; }
+  .horizon-theme-controls select { max-width: 104px; }
+}
+
+/* Tablette et mobile : une seule zone visible, panneaux en tiroirs. */
+@media (max-width: 1023px) {
+  .ws-shell {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+    padding: 14px;
+  }
+  .ws-handle { display: none; }
+  .ws-rail { display: none; }
+  .ws-pane {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    z-index: 1200;
+    width: min(90vw, 340px);
+    overflow-y: auto;
+    padding: 14px;
+    background: var(--surface);
+    box-shadow: var(--hz-shadow-3);
+  }
+  .ws-pane--left {
+    left: 0;
+    border-right: 1px solid var(--hairline);
+    animation: hz-slide-in-left 260ms var(--hz-ease-out) both;
+  }
+  .ws-pane--right {
+    right: 0;
+    border-left: 1px solid var(--hairline);
+    animation: hz-slide-in-right 260ms var(--hz-ease-out) both;
+  }
+}
+
+/* Aucun débordement horizontal toléré sur les pages. */
+.horizon-page, #root { max-width: 100%; overflow-x: clip; }
+
+/* ==========================================================================
+   RÉFÉRENCE 3 — Workflow Builder : étapes réelles d'une mission
+   ========================================================================== */
+
+.wf-canvas {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  overflow-x: auto;
+  padding: 10px 4px 14px;
+  scrollbar-width: thin;
+}
+.wf-chain { display: flex; align-items: center; }
+.wf-link {
+  flex: 0 0 24px;
+  height: 2px;
+  align-self: center;
+  background: linear-gradient(90deg, transparent, var(--hairline) 35%, var(--hairline) 65%, transparent);
+}
+.wf-start {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+  min-width: 108px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, var(--accent) 40%, transparent);
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--accent) 10%, transparent);
+}
+.wf-start--end { border-style: dashed; }
+.wf-start__label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-text);
+}
+.wf-start__meta { font-size: 10px; color: var(--muted-foreground); }
+
+.wf-node {
+  display: grid;
+  grid-template-columns: auto auto;
+  align-items: center;
+  gap: 2px 6px;
+  min-width: 150px;
+  max-width: 190px;
+  padding: 9px 11px;
+  border: 1px solid var(--hairline);
+  border-radius: 12px;
+  background: var(--card);
+  transition: border-color var(--hz-motion-fast) var(--hz-ease), transform var(--hz-motion-fast) var(--hz-ease);
+}
+.wf-node:hover { transform: translateY(-1px); border-color: color-mix(in srgb, var(--accent) 40%, transparent); }
+.wf-node--done { border-color: color-mix(in srgb, #34d399 45%, transparent); }
+.wf-node--running { border-color: color-mix(in srgb, var(--accent) 60%, transparent); }
+.wf-node--failed { border-color: color-mix(in srgb, #f87171 55%, transparent); }
+.wf-node--skipped { opacity: 0.6; }
+.wf-node__pos {
+  grid-row: span 2;
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--accent) 16%, transparent);
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--accent-text);
+}
+.wf-node__icon { display: flex; color: var(--muted-foreground); }
+.wf-node--done .wf-node__icon { color: #34d399; }
+.wf-node--running .wf-node__icon { color: var(--accent-text); }
+.wf-node--failed .wf-node__icon { color: #f87171; }
+.wf-node__title {
+  grid-column: 2;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--foreground);
+  overflow-wrap: anywhere;
+}
+.wf-node__meta { grid-column: 2; font-size: 9px; color: var(--muted-foreground); }
+
+/* ==========================================================================
+   RÉFÉRENCE 4 — Systems Overview : projets, activité, chronologie
+   ========================================================================== */
+
+.so-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 16px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background:
+    radial-gradient(120% 140% at 0% 0%, color-mix(in srgb, var(--accent) 12%, transparent), transparent 60%),
+    var(--card);
+}
+.so-kpis { display: flex; flex-wrap: wrap; gap: 8px; }
+.so-kpi {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border: 1px solid var(--hairline);
+  border-radius: 999px;
+  font-size: 10px;
+  color: var(--muted-foreground);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+.so-kpi__value { font-size: 13px; font-weight: 700; color: var(--foreground); }
+.so-card {
+  padding: 12px 14px;
+  border: 1px solid var(--hairline);
+  border-radius: 16px;
+  background: var(--card);
+  transition: border-color var(--hz-motion-fast) var(--hz-ease), transform var(--hz-motion-fast) var(--hz-ease);
+}
+.so-card:hover { border-color: color-mix(in srgb, var(--accent) 32%, transparent); transform: translateY(-1px); }
+.so-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, color-mix(in srgb, var(--accent) 55%, transparent), var(--accent));
+  transition: width 420ms var(--hz-ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+.so-dot {
+  position: absolute;
+  left: 0;
+  top: 5px;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--muted-foreground);
+}
+.so-dot--running { background: var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 22%, transparent); }
+.so-dot--completed { background: #34d399; }
+.so-dot--failed { background: #f87171; }
+.so-dot--paused { background: #fbbf24; }
+
+/* ==========================================================================
+   RÉFÉRENCE 2 — Ask me anything : accueil conversationnel épuré
+   ========================================================================== */
+
+.ask-hero { display: flex; flex: 1; align-items: center; justify-content: center; padding: 8px 0 20px; }
+.ask-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  max-width: 620px;
+  min-height: 300px;
+  padding: 26px 22px;
+  border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
+  border-radius: 22px;
+  background:
+    radial-gradient(120% 100% at 50% 0%, color-mix(in srgb, var(--accent) 10%, transparent), transparent 65%),
+    color-mix(in srgb, var(--card) 82%, transparent);
+  box-shadow: 0 24px 60px -32px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+.ask-frame--active {
+  border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--accent) 22%, transparent), 0 28px 70px -34px rgba(0, 0, 0, 0.8);
+}
+.ask-title {
+  margin: 0;
+  text-align: center;
+  font-size: clamp(17px, 2.4vw, 23px);
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--foreground);
+}
+.ask-wave { width: 100%; max-width: 520px; height: auto; color: var(--accent); opacity: 0.55; }
+.ask-wave--active { opacity: 1; }
+.ask-wave--active path {
+  animation: ask-breathe 2.2s ease-in-out infinite alternate;
+  transform-origin: center;
+}
+@keyframes ask-breathe {
+  from { transform: scaleY(0.86); opacity: 0.55; }
+  to { transform: scaleY(1.06); opacity: 1; }
+}
+.ask-hint {
+  max-width: 460px;
+  text-align: center;
+  font-size: 10px;
+  line-height: 1.6;
+  color: var(--muted-foreground);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ask-wave--active path { animation: none; }
+  .so-bar { transition: none; }
+}
+/* ==========================================================================
+   GARDE-FOU MOTEUR LOCAL — écran explicite si le backend devient injoignable
+   ========================================================================== */
+
+.hz-offline {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: 32px 20px;
+  background:
+    radial-gradient(120% 120% at 0% 0%, rgba(248, 113, 113, 0.10), transparent 60%),
+    var(--surface, #0a0b10);
+}
+.hz-offline__card {
+  width: 100%;
+  max-width: 620px;
+  padding: 26px 28px;
+  border: 1px solid color-mix(in srgb, #f87171 38%, transparent);
+  border-radius: 18px;
+  background: var(--card, #12151e);
+  box-shadow: 0 30px 70px -40px rgba(0, 0, 0, 0.9);
+}
+.hz-offline__eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #f87171;
+}
+.hz-offline__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 10px 0 8px;
+  font-size: 19px;
+  font-weight: 600;
+  color: var(--foreground, #e2e8f0);
+}
+.hz-offline__text,
+.hz-offline__detail {
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--muted-foreground, #94a3b8);
+}
+.hz-offline__text code {
+  padding: 2px 6px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.07);
+  font-family: Consolas, "Courier New", monospace;
+  font-size: 11px;
+}
+.hz-offline__list {
+  margin: 12px 0;
+  padding-left: 18px;
+  font-size: 12px;
+  line-height: 1.8;
+  color: var(--muted-foreground, #cbd5e1);
+}
+.hz-offline__detail {
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px dashed rgba(255, 255, 255, 0.14);
+}
+.hz-offline__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+@media (max-width: 767px) {
+  .ask-frame { min-height: 240px; padding: 20px 16px; border-radius: 18px; }
+  .wf-node { min-width: 132px; }
+  .hz-offline__card { padding: 20px 16px; }
+}

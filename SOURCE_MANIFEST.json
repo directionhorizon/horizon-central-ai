@@ -1,0 +1,44 @@
+[
+  {
+    "space": "Main Workbench",
+    "archive": "Main Workbench.zip",
+    "main_component": "MainWorkbench.tsx",
+    "source_bytes": 10049,
+    "source_lines": 155
+  },
+  {
+    "space": "magicpath-project",
+    "archive": "magicpath-project.zip",
+    "main_component": "ModelManager.tsx",
+    "source_bytes": 15477,
+    "source_lines": 194
+  },
+  {
+    "space": "Agents & Tools Catalog",
+    "archive": "Agents & Tools Catalog.zip",
+    "main_component": "AgentsToolsCatalog.tsx",
+    "source_bytes": 7480,
+    "source_lines": 80
+  },
+  {
+    "space": "knowledge & Memory HUB",
+    "archive": "knowledge & Memory HUB.zip",
+    "main_component": "KnowledgeMemoryHub.tsx",
+    "source_bytes": 13580,
+    "source_lines": 158
+  },
+  {
+    "space": "AI Control Center",
+    "archive": "AI Control Center.zip",
+    "main_component": "AIControlCenter.tsx",
+    "source_bytes": 7815,
+    "source_lines": 76
+  },
+  {
+    "space": "System Monitor",
+    "archive": "System Monitor.zip",
+    "main_component": "SystemMonitor.tsx",
+    "source_bytes": 8978,
+    "source_lines": 91
+  }
+]

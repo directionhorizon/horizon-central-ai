@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "generated_at": null,
+  "capabilities": [
+    { "id": "llm.default", "status": "not_configured", "verified_at": null, "detail": "Aucun fournisseur testé dans cette livraison." },
+    { "id": "memory.local", "status": "unverified", "verified_at": null, "detail": "Le stockage navigateur de l'interface n'est pas la mémoire locale de référence." },
+    { "id": "memory.google_drive", "status": "not_configured", "verified_at": null, "detail": "Connecteur non raccordé." },
+    { "id": "repository.github", "status": "not_configured", "verified_at": null, "detail": "Aucune synchronisation GitHub dans cette livraison." },
+    { "id": "system.metrics", "status": "unverified", "verified_at": null, "detail": "Les mesures réelles nécessitent une sonde locale." }
+  ]
+}
