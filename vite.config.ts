@@ -11,4 +11,14 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  // En développement (`npm run dev`), l'interface et l'API restent sur la même
+  // origine : les appels relatifs `/api/...` sont relayés vers le moteur local.
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://127.0.0.1:8000',
+        changeOrigin: false,
+      },
+    },
+  },
 });

@@ -5,7 +5,13 @@
  * Aucune clé, aucun secret, aucun token n'est lu ici : uniquement des URL publiques.
  */
 
-const DEFAULT_API_BASE_URL = 'http://127.0.0.1:8000';
+/**
+ * Par défaut : même origine que l'interface (`''`), donc aucune adresse en dur.
+ * C'est indispensable dès que l'application n'est plus ouverte sur la machine
+ * qui l'héberge (test distant, HTTPS, domaine public) : `127.0.0.1` désignerait
+ * alors le poste du visiteur et non le serveur.
+ */
+const DEFAULT_API_BASE_URL = '';
 
 const trimTrailingSlashes = (value: string): string => value.replace(/\/+$/, '');
 

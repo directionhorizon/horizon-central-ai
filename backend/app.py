@@ -11,12 +11,14 @@ from pathlib import Path
 from typing import Literal
 
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from horizon import llm as llm_adapter
 from horizon import sync_worker
+from horizon.auth import auth_enabled
 from horizon.repositories import llm as llm_repo
 from horizon.repositories import operations as operations_repo
 from horizon.routers import core as core_router
@@ -81,6 +83,80 @@ app.add_middleware(
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
     allow_headers=["Content-Type", "Authorization", "X-Horizon-Token"],
 )
+
+# --- Garde-fou réseau et en-têtes de sécurité ---------------------------------
+# L'application a été conçue pour un poste unique : sans authentification, elle
+# ne doit jamais être joignable depuis un autre hôte. Si un nom d'hôte non local
+# arrive (proxy, tunnel, domaine public) et qu'aucune authentification n'est
+# configurée, l'API refuse de répondre au lieu d'exposer les données.
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0", "testserver"}
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "Referrer-Policy": "no-referrer",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+    "Cross-Origin-Opener-Policy": "same-origin",
+    "Cross-Origin-Resource-Policy": "same-origin",
+}
+CONTENT_SECURITY_POLICY = "; ".join([
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    "img-src 'self' data: blob:",
+    "font-src 'self' data:",
+    "style-src 'self' 'unsafe-inline'",
+    "script-src 'self'",
+    "worker-src 'self' blob:",
+    "connect-src 'self' " + " ".join(ORIGINS),
+])
+
+
+def _host_name(request: Request) -> str:
+    """Nom d'hôte demandé, sans port ni crochets IPv6."""
+    raw = request.headers.get("host", "")
+    if raw.startswith("["):
+        return raw[1:].split("]", 1)[0].strip().lower()
+    return raw.split(":", 1)[0].strip().lower()
+
+
+def _is_local_host(host: str) -> bool:
+    return host in LOCAL_HOSTS or host.endswith(".localhost")
+
+
+@app.middleware("http")
+async def harden(request: Request, call_next):
+    host = _host_name(request)
+    path = request.url.path
+    if (
+        not _is_local_host(host)
+        and not auth_enabled()
+        and path.startswith("/api/")
+        and path != "/api/v1/health"
+    ):
+        return JSONResponse(
+            status_code=503,
+            content={
+                "detail": (
+                    "Accès distant refusé : aucune authentification n'est configurée. "
+                    "Définir HORIZON_ADMIN_TOKEN (ou l'authentification Google) avant "
+                    "d'exposer l'application hors de cette machine."
+                ),
+                "code": "auth_required_for_remote_access",
+            },
+        )
+
+    response = await call_next(request)
+    for name, value in SECURITY_HEADERS.items():
+        response.headers.setdefault(name, value)
+    response.headers.setdefault("Content-Security-Policy", CONTENT_SECURITY_POLICY)
+    forwarded = request.headers.get("x-forwarded-proto", request.url.scheme)
+    if forwarded.split(",", 1)[0].strip().lower() == "https":
+        response.headers.setdefault(
+            "Strict-Transport-Security", "max-age=31536000; includeSubDomains"
+        )
+    return response
 
 # Modules métier (monolithe modulaire) : projets, orchestrateurs, missions,
 # fournisseurs LLM, journal, supervision et moteur de planification.
