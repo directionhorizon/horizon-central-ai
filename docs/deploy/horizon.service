@@ -1,0 +1,21 @@
+[Unit]
+Description=HORIZON CORE (API + interface)
+After=network.target
+
+[Service]
+Type=simple
+User=horizon
+Group=horizon
+WorkingDirectory=/opt/horizon/backend
+EnvironmentFile=/opt/horizon/backend/.env
+ExecStart=/opt/horizon/.venv/bin/uvicorn app:app --host 127.0.0.1 --port 8000 --proxy-headers --forwarded-allow-ips=127.0.0.1
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/lib/horizon
+
+[Install]
+WantedBy=multi-user.target
