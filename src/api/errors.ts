@@ -44,7 +44,7 @@ export function describeApiError(value: unknown): string {
     case 'timeout':
       return 'Le service local ne répond pas dans le délai prévu. Vérifiez que le backend FastAPI est démarré.';
     case 'network':
-      return 'Service local injoignable. Vérifiez le backend (http://127.0.0.1:8000) et la configuration CORS.';
+      return 'Service injoignable. Vérifiez que le moteur HORIZON est démarré et que l’adresse du service est correcte.';
     case 'aborted':
       return 'Requête annulée.';
     case 'validation':
