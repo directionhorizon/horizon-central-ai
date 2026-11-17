@@ -1,0 +1,17 @@
+﻿HORIZON LOCAL AI - PLAN DE CLASSEMENT LOCAL
+Date : 2026-11-07 22:30:49
+Racine : C:\Users\hp\HORIZON LOCAL AI
+Zone complémentaire : C:\Users\hp\Desktop\Nouveau dossier
+
+TOTAL FICHIERS ANALYSES : 58
+
+REPARTITION PAR CATEGORIE :
+ARCHITECTURE_TECHNIQUE : 6 fichiers
+ARCHIVES_ET_VERSIONS : 10 fichiers
+DOCUMENTATION_A_ANALYSER : 17 fichiers
+DOCUMENTATION_ET_AUDITS : 5 fichiers
+FONCTIONNEMENT : 15 fichiers
+MEMOIRE_LOCALE : 5 fichiers
+
+IMPORTANT : aucune modification ni aucun déplacement effectué.
+Les destinations proposées doivent être vérifiées avant classement.
