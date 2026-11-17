@@ -25,6 +25,33 @@ interface BackendErrorBody {
   detail?: unknown;
 }
 
+/**
+ * Jeton administrateur (mode déploiement distant).
+ * Saisi une seule fois via la boîte de dialogue affichée sur un 401,
+ * puis conservé dans le stockage local du navigateur.
+ */
+const TOKEN_STORAGE_KEY = 'horizon-local-ai:admin-token:v1';
+
+const readToken = (): string => {
+  try {
+    return window.localStorage.getItem(TOKEN_STORAGE_KEY)?.trim() ?? '';
+  } catch {
+    return '';
+  }
+};
+
+const askToken = (): string => {
+  const value = window.prompt('Jeton administrateur HORIZON :')?.trim() ?? '';
+  if (value) {
+    try {
+      window.localStorage.setItem(TOKEN_STORAGE_KEY, value);
+    } catch {
+      /* stockage indisponible : le jeton reste valable pour la session */
+    }
+  }
+  return value;
+};
+
 const buildUrl = (path: string): string => {
   const base = apiConfig.baseUrl;
   if (/^https?:\/\//i.test(path)) return path;
@@ -82,16 +109,25 @@ export async function request<T>(path: string, options: RequestOptions = {}): Pr
   }
 
   try {
-    const response = await fetch(buildUrl(path), {
-      method,
-      signal: controller.signal,
-      headers: {
-        Accept: 'application/json',
-        ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
-        ...headers,
-      },
-      ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
-    });
+    const send = (token: string) =>
+      fetch(buildUrl(path), {
+        method,
+        signal: controller.signal,
+        headers: {
+          Accept: 'application/json',
+          ...(body !== undefined ? { 'Content-Type': 'application/json' } : {}),
+          ...(token ? { 'X-Horizon-Token': token } : {}),
+          ...headers,
+        },
+        ...(body !== undefined ? { body: JSON.stringify(body) } : {}),
+      });
+
+    let response = await send(readToken());
+
+    if (response.status === 401) {
+      const token = askToken();
+      if (token) response = await send(token);
+    }
 
     const payload = await readBody(response);
 
