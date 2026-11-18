@@ -1,7 +1,6 @@
-import { useEffect, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Sun, Moon, Palette, Plug } from 'lucide-react';
-import { BackendHealth } from './components/BackendHealth';
+import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Plug } from 'lucide-react';
 import { BackendUnavailable } from './components/BackendUnavailable';
 import { MainWorkbench } from './pages/main-workbench/MainWorkbench';
 import { ModelManagerLive } from './pages/model-manager/ModelManagerLive';
@@ -13,8 +12,6 @@ import { SystemMonitorLive } from './pages/system-monitor/SystemMonitorLive';
 import { SyncCenter } from './pages/sync-center/SyncCenter';
 import { Integrations } from './pages/integrations/Integrations';
 import { Cockpit } from './pages/cockpit/Cockpit';
-import { useTheme } from './theme/ThemeProvider';
-import { ACCENTS, THEME_OPTIONS } from './theme/theme';
 import { ChatSessionProvider, useChatSession } from './shared/ChatSessionContext';
 import { ConnectionsProvider } from './shared/ConnectionsContext';
 
@@ -52,27 +49,9 @@ const workspace = (id: PageId, node: ReactNode) => (
 function AppShell() {
   const location = useLocation();
   const navigate = useNavigate();
-  const { sessions, sessionId, refreshSessions, createSession } = useChatSession();
-  const { preference, resolved, settings, setPreference, setAccent } = useTheme();
+  const { sessionId } = useChatSession();
 
   const active = pages.find((page) => location.pathname.startsWith(page.path)) ?? pages[0];
-
-  useEffect(() => {
-    void refreshSessions();
-  }, [refreshSessions]);
-
-  const handleSessionChange = (value: string) => {
-    const base = location.pathname.startsWith('/control')
-      ? '/control'
-      : location.pathname.startsWith('/cockpit')
-        ? '/cockpit'
-        : '/workbench';
-    if (value === '__new__') {
-      void createSession();
-      return;
-    }
-    if (value) navigate(`${base}/${value}`, { replace: false });
-  };
 
   return (
     <div className="horizon-integration">
@@ -106,54 +85,6 @@ function AppShell() {
             );
           })}
         </div>
-        <select
-          className="horizon-session-select"
-          aria-label="Sélection de session"
-          value={sessionId ?? ''}
-          onChange={(event) => handleSessionChange(event.target.value)}
-        >
-          {!sessionId && <option value="">Aucune session</option>}
-          {sessions.map((item) => (
-            <option key={item.id} value={item.id}>
-              {item.title} · {item.id.slice(0, 8)}
-            </option>
-          ))}
-          <option value="__new__">+ Nouvelle session</option>
-        </select>
-        <div className="horizon-theme-controls">
-          <Palette size={12} aria-hidden="true" />
-          <button
-            type="button"
-            className="horizon-theme-toggle"
-            onClick={() => setPreference(resolved === 'light' ? 'dark' : 'light')}
-            title={resolved === 'light' ? 'Passer en thème sombre' : 'Passer en thème clair'}
-            aria-label="Basculer clair/sombre"
-          >
-            {resolved === 'light' ? <Moon size={13} /> : <Sun size={13} />}
-          </button>
-          <select
-            className="horizon-session-select"
-            aria-label="Thème de l’interface"
-            value={preference}
-            onChange={(event) => setPreference(event.target.value as typeof preference)}
-          >
-            {THEME_OPTIONS.map((option) => (
-              <option key={option.id} value={option.id}>{option.label}</option>
-            ))}
-          </select>
-          <select
-            className="horizon-session-select"
-            aria-label="Palette d’accentuation"
-            value={settings.accent}
-            onChange={(event) => setAccent(event.target.value as typeof settings.accent)}
-          >
-            {ACCENTS.map((accent) => (
-              <option key={accent.id} value={accent.id}>{accent.label}</option>
-            ))}
-          </select>
-        </div>
-        <BackendHealth />
-        <span className="horizon-build-label">POSTE DE PILOTAGE CENTRAL</span>
       </nav>
       <div className="horizon-page">
         <Routes>
