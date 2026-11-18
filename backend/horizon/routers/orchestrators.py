@@ -6,6 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_admin
 from ..db import connect
+from ..hermes import build_config, check_health as check_hermes_health
 from ..models import (
     CapabilityCreate,
     OrchestratorCreate,
@@ -152,6 +153,8 @@ def set_model(orchestrator_id: str, payload: OrchestratorModelSelection, actor: 
 async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_admin)):
     """Teste réellement la disponibilité de l'endpoint déclaré.
 
+    Hermes utilise son adaptateur dédié : le statut, la version et le détail
+    viennent de `/health`, sans jamais lire ni journaliser le secret.
     Sans endpoint configuré, la vérification reste `unverified` : aucune
     disponibilité n'est inventée.
     """
@@ -168,6 +171,31 @@ async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_
             "id": orchestrator_id,
             "health_status": "unverified",
             "detail": "Aucun endpoint déclaré : vérification impossible.",
+        }
+
+    is_hermes = str(item.get("kind") or "").strip().lower() == "hermes"
+    if is_hermes:
+        config = build_config(item)
+        health = await check_hermes_health(config)
+        health_status = str(health["status"])
+        detail = str(health["detail"])
+        version = str(health.get("version") or "")
+        target = f"{config.base_url}/health"
+        with connect() as db:
+            orchestrators.set_health(db, orchestrator_id, health_status)
+            if version and version != (item.get("version") or ""):
+                orchestrators.update_orchestrator(db, orchestrator_id, {"version": version})
+            operations.log(
+                db, actor=actor, action="orchestrator.check", target_type="orchestrator",
+                target_id=orchestrator_id, result=health_status,
+                detail=f"{detail} Version : {version or 'inconnue'}.",
+            )
+        return {
+            "id": orchestrator_id,
+            "health_status": health_status,
+            "detail": detail,
+            "target": target,
+            "version": version,
         }
 
     base = endpoint.rstrip("/")
