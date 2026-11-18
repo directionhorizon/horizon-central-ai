@@ -40,3 +40,4 @@ _patch_auth.py
 *.orig
 *.rej
 *.tmp
+*.lnk
