@@ -16,6 +16,7 @@ import { Cockpit } from './pages/cockpit/Cockpit';
 import { useTheme } from './theme/ThemeProvider';
 import { ACCENTS, THEME_OPTIONS } from './theme/theme';
 import { ChatSessionProvider, useChatSession } from './shared/ChatSessionContext';
+import { ConnectionsProvider } from './shared/ConnectionsContext';
 
 type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' | 'integrations' | 'memory' | 'control' | 'monitor' | 'sync';
 /**
@@ -183,9 +184,11 @@ export default function App() {
   return (
     <BackendUnavailable>
       <BrowserRouter>
-        <ChatSessionProvider>
-          <AppShell />
-        </ChatSessionProvider>
+        <ConnectionsProvider>
+          <ChatSessionProvider>
+            <AppShell />
+          </ChatSessionProvider>
+        </ConnectionsProvider>
       </BrowserRouter>
     </BackendUnavailable>
   );

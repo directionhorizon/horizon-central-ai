@@ -26,6 +26,7 @@ import { ThemeControls } from '../../theme/ThemeControls';
 import { useTheme } from '../../theme/ThemeProvider';
 import { useWorkspaceLayout, RAIL_WIDTH } from '../../workspace/useWorkspaceLayout';
 import { CoreActivity, MissionPipeline, deriveCoreState } from '../../components/CoreActivity';
+import { ExecutionView } from '../../components/ExecutionView';
 
 type DrawerId = 'models' | 'memory' | 'tools' | 'security' | 'sync' | 'monitor' | 'settings';
 
@@ -566,6 +567,13 @@ export function Cockpit() {
                 <MissionPipeline mission={activeMission} />
               </div>
             </section>
+            {activeMission && (
+              <ExecutionView
+                missionId={activeMission.id}
+                missionTitle={activeMission.title}
+                disabled={!activeMission.id}
+              />
+            )}
             <section className={panel}>
               <div className="flex items-center justify-between px-3 py-2.5">
                 <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-slate-500">Orchestrateurs</p>

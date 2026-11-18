@@ -6,6 +6,7 @@ import {
 import { http } from '../api/http';
 import { API_ROUTES } from '../config/env';
 import type { Mission, MissionStep, Orchestrator, StepStatus } from '../api/entities';
+import { ExecutionView } from './ExecutionView';
 
 /** Référence « Workflow Builder » : étapes RÉELLES d'une mission (aucun bloc inventé). */
 
@@ -194,6 +195,17 @@ export function MissionWorkflow() {
             )}
             <p className="hz-hint mt-3 flex items-center gap-1"><ArrowRight size={10} /> Blocs = étapes réellement enregistrées.</p>
           </aside>
+        </div>
+      )}
+
+      {detail && (
+        <div className="border-t border-white/10 p-3">
+          <ExecutionView
+            missionId={detail.id}
+            missionTitle={detail.title}
+            stepId={steps.find((step) => step.status === 'running')?.id ?? null}
+            stepTitle={steps.find((step) => step.status === 'running')?.title ?? null}
+          />
         </div>
       )}
     </section>

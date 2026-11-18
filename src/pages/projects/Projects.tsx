@@ -1,11 +1,12 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
-import { AlertTriangle, Boxes, CheckCircle2, FolderKanban, ListChecks, Loader2, Plus, RefreshCw, Sparkles } from 'lucide-react';
+import { AlertTriangle, Boxes, CheckCircle2, FolderKanban, ListChecks, Loader2, PlayCircle, Plus, RefreshCw, Sparkles } from 'lucide-react';
 import { projectsApi } from '../../api/projects';
 import { missionsApi } from '../../api/missions';
 import { coreApi } from '../../api/system';
 import { describeApiError } from '../../api/errors';
 import type { Mission, ProjectDetail, ProjectSummary, StepStatus } from '../../api/entities';
 import { ProjectOverview } from '../../components/ProjectOverview';
+import { ExecutionView } from '../../components/ExecutionView';
 
 const statusStyle: Record<string, string> = {
   active: 'bg-emerald-400/10 text-emerald-300',
@@ -58,6 +59,7 @@ export const Projects = () => {
   const [missionTitle, setMissionTitle] = useState('');
   const [planRequest, setPlanRequest] = useState('');
   const [stepDraft, setStepDraft] = useState<Record<string, string>>({});
+  const [executionMissionId, setExecutionMissionId] = useState<string | null>(null);
 
   const loadProjects = useCallback(async () => {
     const response = await projectsApi.list();
@@ -340,6 +342,13 @@ export const Projects = () => {
                         <div className="flex flex-wrap items-center justify-between gap-2">
                           <span className="text-xs font-medium text-white">{mission.title}</span>
                           <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => setExecutionMissionId(mission.id)}
+                              className="inline-flex items-center gap-1 rounded border border-cyan-400/30 px-2 py-0.5 text-[10px] text-cyan-200 hover:bg-cyan-400/10"
+                            >
+                              <PlayCircle size={11} /> Exécuter
+                            </button>
                             <span className={badge(mission.priority)}>{mission.priority}</span>
                             <span className={badge(mission.status)}>{mission.status}</span>
                           </div>
@@ -425,6 +434,13 @@ export const Projects = () => {
                     </p>
                   )}
                 </div>
+
+                {executionMissionId && (
+                  <ExecutionView
+                    missionId={executionMissionId}
+                    missionTitle={missions.find((item) => item.id === executionMissionId)?.title ?? 'Mission'}
+                  />
+                )}
               </>
             ) : (
               <div className="rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-8 text-center text-xs text-slate-500">
