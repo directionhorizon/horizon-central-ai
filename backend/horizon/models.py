@@ -108,6 +108,29 @@ class CheckpointCreate(BaseModel):
     state: dict = Field(default_factory=dict)
 
 
+# --- Exécution CORE ↔ Hermes -----------------------------------------------
+
+class DispatchRequest(BaseModel):
+    """Lance l'exécution réelle d'une mission via l'orchestrateur pilote.
+
+    `step_id` est optionnel : sans étape, toute la mission est envoyée.
+    """
+    step_id: str | None = None
+    orchestrator_id: str | None = None
+
+
+class ApprovalRequest(BaseModel):
+    request_id: str = Field(min_length=1, max_length=300)
+    execution_generation: int = Field(ge=0)
+    choice: Literal["once", "deny"]
+
+
+class ClarifyRequest(BaseModel):
+    request_id: str = Field(min_length=1, max_length=300)
+    execution_generation: int = Field(ge=0)
+    answer: str = Field(min_length=1, max_length=4000)
+
+
 # --- Fournisseurs LLM ------------------------------------------------------
 
 class ProviderCreate(BaseModel):

@@ -249,7 +249,50 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_integrations_archived ON integrations(archived)",
         ),
     ),
+    (
+        6,
+        "orchestrator_runs",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS orchestrator_runs (
+                id TEXT PRIMARY KEY,
+                mission_id TEXT NOT NULL REFERENCES missions(id) ON DELETE CASCADE,
+                step_id TEXT REFERENCES mission_steps(id) ON DELETE SET NULL,
+                orchestrator_id TEXT REFERENCES orchestrators(id) ON DELETE SET NULL,
+                run_id TEXT NOT NULL DEFAULT '',
+                session_id TEXT NOT NULL DEFAULT '',
+                idempotency_key TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'started',
+                phase TEXT NOT NULL DEFAULT 'dispatching',
+                replayed_count INTEGER NOT NULL DEFAULT 0,
+                requested_at TEXT NOT NULL,
+                started_at TEXT,
+                finished_at TEXT,
+                output TEXT NOT NULL DEFAULT '',
+                error TEXT NOT NULL DEFAULT '',
+                usage_json TEXT NOT NULL DEFAULT '{}',
+                runtime_json TEXT NOT NULL DEFAULT '{}',
+                raw_status_json TEXT NOT NULL DEFAULT '{}',
+                UNIQUE(idempotency_key)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_runs_mission ON orchestrator_runs(mission_id)",
+            "CREATE INDEX IF NOT EXISTS idx_runs_run_id ON orchestrator_runs(run_id)",
+            "CREATE INDEX IF NOT EXISTS idx_runs_status ON orchestrator_runs(status)",
+        ),
+    ),
 ]
+
+# Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
+HERMES_SEED = {
+    "id": "orchestrator-hermes",
+    "name": "Hermes",
+    "kind": "hermes",
+    "description": "Orchestrateur d'exécution pilote : API server Hermes sur le poste local.",
+    "endpoint": "http://127.0.0.1:8642",
+    "version": "0.22.4",
+    "config_json": '{"api_key_env": "HERMES_API_SERVER_KEY", "profile": "default"}',
+}
 
 DEFAULT_PROJECT_ID = "project-default"
 
@@ -272,6 +315,46 @@ def _ensure_default_project(db: sqlite3.Connection) -> None:
             "Projet créé automatiquement pour rattacher les sessions antérieures à la gestion par projet.",
             "active",
             stamp,
+            stamp,
+        ),
+    )
+
+
+def _ensure_hermes_orchestrator(db: sqlite3.Connection) -> None:
+    """Enregistre le pilote Hermes une fois, sans jamais écraser une édition locale."""
+    exists = db.execute("SELECT id FROM orchestrators WHERE id=?", (HERMES_SEED["id"],)).fetchone()
+    if exists:
+        return
+    stamp = now()
+    db.execute(
+        """INSERT INTO orchestrators
+           (id,name,kind,description,endpoint,version,status,health_status,config_json,created_at,updated_at)
+           VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+        (
+            HERMES_SEED["id"],
+            HERMES_SEED["name"],
+            HERMES_SEED["kind"],
+            HERMES_SEED["description"],
+            HERMES_SEED["endpoint"],
+            HERMES_SEED["version"],
+            "active",
+            "unverified",
+            HERMES_SEED["config_json"],
+            stamp,
+            stamp,
+        ),
+    )
+    # Capacité d'exécution : CORE peut router une mission vers ce pilote.
+    db.execute(
+        """INSERT OR IGNORE INTO orchestrator_capabilities
+           (id,orchestrator_id,capability_id,level,detail,created_at)
+           VALUES(?,?,?,?,?,?)""",
+        (
+            "cap-hermes-execution",
+            HERMES_SEED["id"],
+            "execution",
+            "primary",
+            "Exécution réelle des missions via l'API server Hermes.",
             stamp,
         ),
     )
@@ -304,5 +387,6 @@ def run_migrations() -> list[str]:
             )
             applied.append(f"{version}:{name}")
         _ensure_default_project(db)
+        _ensure_hermes_orchestrator(db)
         db.commit()
     return applied
