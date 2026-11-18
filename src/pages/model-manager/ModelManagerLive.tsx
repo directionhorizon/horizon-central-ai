@@ -3,6 +3,24 @@ import { AlertTriangle, CheckCircle2, Cpu, KeyRound, Loader2, Plus, RefreshCw, S
 import { modelsApi } from '../../api/models';
 import { describeApiError } from '../../api/errors';
 import type { LlmProvider, ModelSelection } from '../../api/entities';
+import { useConnections, type LlmConnection } from '../../shared/ConnectionsContext';
+
+type LlmPreset = {
+  id: string;
+  name: string;
+  baseUrl: string;
+  keyEnv: string;
+  model: string;
+};
+
+const LLM_PRESETS: LlmPreset[] = [
+  { id: 'hermes', name: 'Hermes local', baseUrl: 'http://127.0.0.1:8642/v1', keyEnv: 'HERMES_API_SERVER_KEY', model: 'hermes-agent' },
+  { id: 'lmstudio', name: 'LM Studio', baseUrl: 'http://127.0.0.1:1234/v1', keyEnv: '', model: '' },
+  { id: 'ollama', name: 'Ollama', baseUrl: 'http://127.0.0.1:11434/v1', keyEnv: '', model: '' },
+  { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', keyEnv: 'OPENAI_API_KEY', model: 'gpt-4o-mini' },
+  { id: 'openrouter', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', keyEnv: 'OPENROUTER_API_KEY', model: '' },
+  { id: 'custom', name: 'Personnalisé', baseUrl: '', keyEnv: '', model: '' },
+];
 
 const statusStyle: Record<string, string> = {
   available: 'bg-emerald-400/10 text-emerald-300',
@@ -29,6 +47,14 @@ export const ModelManagerLive = () => {
   const [baseUrl, setBaseUrl] = useState('');
   const [keyEnv, setKeyEnv] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
+
+  const { llmConnections, addLlmConnection, updateLlmConnection, removeLlmConnection } = useConnections();
+  const [localPreset, setLocalPreset] = useState(LLM_PRESETS[0].id);
+  const [localName, setLocalName] = useState(LLM_PRESETS[0].name);
+  const [localBaseUrl, setLocalBaseUrl] = useState(LLM_PRESETS[0].baseUrl);
+  const [localKeyEnv, setLocalKeyEnv] = useState(LLM_PRESETS[0].keyEnv);
+  const [localModel, setLocalModel] = useState(LLM_PRESETS[0].model);
+  const [localNotice, setLocalNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -127,6 +153,48 @@ export const ModelManagerLive = () => {
       },
       `Sélection par défaut enregistrée (${describeSelection(draft)}).`,
     );
+  };
+
+  const applyLlmPreset = (presetId: string) => {
+    setLocalPreset(presetId);
+    const preset = LLM_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    setLocalName(preset.name);
+    setLocalBaseUrl(preset.baseUrl);
+    setLocalKeyEnv(preset.keyEnv);
+    setLocalModel(preset.model);
+  };
+
+  const handleAddLocalLlm = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cleanName = localName.trim();
+    const cleanBaseUrl = localBaseUrl.trim();
+    if (!cleanName || !cleanBaseUrl) return;
+    addLlmConnection({
+      name: cleanName,
+      baseUrl: cleanBaseUrl,
+      keyEnv: localKeyEnv.trim(),
+      model: localModel.trim(),
+      enabled: true,
+    });
+    setLocalNotice(`Connexion « ${cleanName} » enregistrée dans le navigateur.`);
+    setLocalPreset('custom');
+    setLocalName('');
+    setLocalBaseUrl('');
+    setLocalKeyEnv('');
+    setLocalModel('');
+  };
+
+  const toggleLocalLlm = (connection: LlmConnection) => {
+    updateLlmConnection(connection.id, { enabled: !connection.enabled });
+    setLocalNotice(
+      `Connexion « ${connection.name} » ${connection.enabled ? 'désactivée' : 'activée'} dans l’interface.`,
+    );
+  };
+
+  const handleRemoveLocalLlm = (connection: LlmConnection) => {
+    removeLlmConnection(connection.id);
+    setLocalNotice(`Connexion « ${connection.name} » retirée de l’interface.`);
   };
 
   const availableProviders = providers.filter((provider) => provider.status === 'available');
@@ -354,6 +422,136 @@ export const ModelManagerLive = () => {
             </section>
           </aside>
         </div>
+
+        <section className="mt-6 rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-5">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3 border-b border-white/[0.07] pb-4">
+            <div>
+              <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-400">
+                <Server size={14} /> Connexions interface
+              </div>
+              <h2 className="text-lg font-semibold text-white">Connexions LLM déclarées ici</h2>
+              <p className="mt-1 max-w-3xl text-xs leading-5 text-slate-500">
+                Fiches conservées dans ce navigateur, distinctes des fournisseurs vérifiés par le moteur. Aucun appel réseau,
+                aucun test et aucune clé ne sont effectués ou stockés ici : indiquez seulement un nom de variable d’environnement.
+              </p>
+            </div>
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-3 py-1 text-[10px] text-cyan-200">
+              {llmConnections.length} fiche(s)
+            </span>
+          </div>
+
+          {localNotice && (
+            <div className="mb-4 flex items-start gap-3 rounded-lg border border-cyan-400/20 bg-cyan-400/[0.05] p-3">
+              <CheckCircle2 size={15} className="mt-0.5 shrink-0 text-cyan-300" />
+              <p className="text-xs leading-5 text-cyan-100">{localNotice}</p>
+            </div>
+          )}
+
+          <div className="grid gap-5 lg:grid-cols-[1fr_380px]">
+            <div className="space-y-3">
+              {llmConnections.map((connection) => (
+                <article key={connection.id} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-white">{connection.name}</p>
+                      <p className="mt-1 truncate text-[11px] text-slate-500">{connection.baseUrl}</p>
+                      <p className="mt-1 text-[10px] text-slate-600">
+                        Modèle : {connection.model || 'non défini'} · Variable : {connection.keyEnv || 'aucune'}
+                      </p>
+                    </div>
+                    <span
+                      className={
+                        connection.enabled
+                          ? 'rounded-full bg-emerald-400/10 px-2 py-0.5 text-[10px] text-emerald-300'
+                          : 'rounded-full bg-slate-500/10 px-2 py-0.5 text-[10px] text-slate-300'
+                      }
+                    >
+                      {connection.enabled ? 'active dans l’interface' : 'désactivée'}
+                    </span>
+                  </div>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleLocalLlm(connection)}
+                      className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-1.5 text-[11px] text-slate-300 hover:bg-white/5"
+                    >
+                      <CheckCircle2 size={13} /> {connection.enabled ? 'Désactiver' : 'Activer'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveLocalLlm(connection)}
+                      className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-1.5 text-[11px] text-slate-300 hover:bg-white/5"
+                    >
+                      <Trash2 size={13} /> Retirer
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {llmConnections.length === 0 && (
+                <p className="rounded-lg border border-dashed border-white/10 p-6 text-center text-xs text-slate-500">
+                  Aucune connexion locale. Choisissez un modèle prédéfini ou saisissez une URL personnalisée.
+                </p>
+              )}
+            </div>
+
+            <form onSubmit={handleAddLocalLlm} className="space-y-2 rounded-lg border border-white/[0.07] bg-black/20 p-4">
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500">
+                  Modèle prédéfini
+                </span>
+                <select
+                  value={localPreset}
+                  onChange={(event) => applyLlmPreset(event.target.value)}
+                  className="h-9 w-full rounded-lg border border-white/10 bg-[#171a24] px-3 text-xs text-slate-300"
+                >
+                  {LLM_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <input
+                value={localName}
+                onChange={(event) => setLocalName(event.target.value)}
+                placeholder="Nom affiché"
+                className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs outline-none focus:border-cyan-400/50"
+              />
+              <input
+                value={localBaseUrl}
+                onChange={(event) => setLocalBaseUrl(event.target.value)}
+                placeholder="URL de base (http://127.0.0.1:…/v1)"
+                className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs outline-none focus:border-cyan-400/50"
+              />
+              <div className="relative">
+                <KeyRound size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  value={localKeyEnv}
+                  onChange={(event) => setLocalKeyEnv(event.target.value)}
+                  placeholder="Nom de la variable de clé (facultatif)"
+                  className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] pl-8 pr-3 text-xs outline-none focus:border-cyan-400/50"
+                />
+              </div>
+              <input
+                value={localModel}
+                onChange={(event) => setLocalModel(event.target.value)}
+                placeholder="Modèle par défaut (facultatif)"
+                className="h-9 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs outline-none focus:border-cyan-400/50"
+              />
+              <button
+                type="submit"
+                disabled={!localName.trim() || !localBaseUrl.trim()}
+                className="flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-cyan-400/15 text-xs font-medium text-cyan-200 hover:bg-cyan-400/25 disabled:opacity-40"
+              >
+                <Plus size={14} /> Enregistrer la fiche
+              </button>
+              <p className="flex items-start gap-2 text-[10px] leading-4 text-slate-600">
+                <Server size={12} className="mt-0.5 shrink-0" />
+                Ne saisissez jamais une clé : seulement le nom de la variable qui la contient.
+              </p>
+            </form>
+          </div>
+        </section>
       </main>
     </div>
   );

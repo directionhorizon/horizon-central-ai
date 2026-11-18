@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import { integrationsApi } from '../../api/integrations';
 import { describeApiError } from '../../api/errors';
+import { useConnections, type ToolConnection } from '../../shared/ConnectionsContext';
 import type {
   Integration,
   IntegrationCatalogResponse,
@@ -30,6 +31,27 @@ const STATUS_TEXT: Record<IntegrationStatus, string> = {
   partial: 'Connexion partielle',
 };
 
+type ToolPreset = {
+  id: string;
+  name: string;
+  category: string;
+  method: string;
+  endpoint: string;
+  keyEnv: string;
+  permissions: string;
+  capabilities: string;
+};
+
+const TOOL_PRESETS: ToolPreset[] = [
+  { id: 'supabase', name: 'Supabase', category: 'storage', method: 'api_key', endpoint: '', keyEnv: 'HORIZON_SUPABASE_KEY', permissions: 'read,write', capabilities: 'sync,knowledge' },
+  { id: 'drive', name: 'Google Drive', category: 'storage', method: 'oauth2', endpoint: '', keyEnv: 'HORIZON_GOOGLE_DRIVE_TOKEN', permissions: 'drive.file', capabilities: 'memory-sync' },
+  { id: 'github', name: 'GitHub privé', category: 'storage', method: 'api_key', endpoint: 'https://api.github.com', keyEnv: 'HORIZON_GITHUB_TOKEN', permissions: 'repo', capabilities: 'code-sync' },
+  { id: 'hermes', name: 'Hermes local', category: 'orchestrator', method: 'endpoint', endpoint: 'http://127.0.0.1:8642/v1', keyEnv: 'HERMES_API_SERVER_KEY', permissions: 'runs:read,runs:write', capabilities: 'runs,sse,approval' },
+  { id: 'windows', name: 'PC Windows local', category: 'machine', method: 'cli', endpoint: 'local://windows', keyEnv: '', permissions: 'local-execution', capabilities: 'system,metrics,files' },
+  { id: 'mcp', name: 'Serveur MCP', category: 'mcp', method: 'mcp', endpoint: '', keyEnv: '', permissions: 'tools', capabilities: 'tools' },
+  { id: 'custom', name: 'Personnalisé', category: 'app', method: 'rest', endpoint: '', keyEnv: '', permissions: '', capabilities: '' },
+];
+
 /**
  * Espace « Connexions et intégrations ».
  *
@@ -57,6 +79,17 @@ export function Integrations() {
     permissions: '',
     capabilities: '',
   });
+
+  const { toolConnections, addToolConnection, updateToolConnection, removeToolConnection } = useConnections();
+  const [toolPreset, setToolPreset] = useState(TOOL_PRESETS[0].id);
+  const [toolName, setToolName] = useState(TOOL_PRESETS[0].name);
+  const [toolCategory, setToolCategory] = useState(TOOL_PRESETS[0].category);
+  const [toolMethod, setToolMethod] = useState(TOOL_PRESETS[0].method);
+  const [toolEndpoint, setToolEndpoint] = useState(TOOL_PRESETS[0].endpoint);
+  const [toolKeyEnv, setToolKeyEnv] = useState(TOOL_PRESETS[0].keyEnv);
+  const [toolPermissions, setToolPermissions] = useState(TOOL_PRESETS[0].permissions);
+  const [toolCapabilities, setToolCapabilities] = useState(TOOL_PRESETS[0].capabilities);
+  const [localNotice, setLocalNotice] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -146,6 +179,56 @@ export function Integrations() {
     }
   };
 
+  const applyToolPreset = (presetId: string) => {
+    setToolPreset(presetId);
+    const preset = TOOL_PRESETS.find((item) => item.id === presetId);
+    if (!preset) return;
+    setToolName(preset.name);
+    setToolCategory(preset.category);
+    setToolMethod(preset.method);
+    setToolEndpoint(preset.endpoint);
+    setToolKeyEnv(preset.keyEnv);
+    setToolPermissions(preset.permissions);
+    setToolCapabilities(preset.capabilities);
+  };
+
+  const handleAddLocalTool = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const cleanName = toolName.trim();
+    if (!cleanName) return;
+    addToolConnection({
+      name: cleanName,
+      category: toolCategory.trim() || 'app',
+      method: toolMethod.trim() || 'rest',
+      endpoint: toolEndpoint.trim(),
+      keyEnv: toolKeyEnv.trim(),
+      permissions: toolPermissions.trim(),
+      capabilities: toolCapabilities.trim(),
+      enabled: true,
+    });
+    setLocalNotice(`Connexion « ${cleanName} » enregistrée dans le navigateur.`);
+    setToolPreset('custom');
+    setToolName('');
+    setToolCategory('app');
+    setToolMethod('rest');
+    setToolEndpoint('');
+    setToolKeyEnv('');
+    setToolPermissions('');
+    setToolCapabilities('');
+  };
+
+  const toggleLocalTool = (connection: ToolConnection) => {
+    updateToolConnection(connection.id, { enabled: !connection.enabled });
+    setLocalNotice(
+      `Connexion « ${connection.name} » ${connection.enabled ? 'désactivée' : 'activée'} dans l’interface.`,
+    );
+  };
+
+  const handleRemoveLocalTool = (connection: ToolConnection) => {
+    removeToolConnection(connection.id);
+    setLocalNotice(`Connexion « ${connection.name} » retirée de l’interface.`);
+  };
+
   return (
     <div className="min-h-screen bg-[#090c13] text-slate-100">
       <header className="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 px-5 py-4">
@@ -194,6 +277,162 @@ export function Integrations() {
           <div className={stats && stats.needs_action > 0 ? 'hz-kpi hz-kpi--accent' : 'hz-kpi'}>
             <p className="hz-kpi__label">À traiter</p>
             <p className="hz-kpi__value">{stats?.needs_action ?? 0}</p>
+          </div>
+        </section>
+
+        <section className="hz-panel p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="hz-eyebrow">Interface locale · sans backend</p>
+              <h2 className="mt-1 text-base font-semibold text-slate-100">Connexions outils déclarées ici</h2>
+              <p className="hz-hint mt-1 max-w-3xl">
+                Fiches conservées dans ce navigateur, distinctes des connexions vérifiées par le moteur. Aucun appel réseau,
+                aucun test et aucune clé ne sont effectués ou stockés ici : indiquez seulement un nom de variable
+                d’environnement.
+              </p>
+            </div>
+            <span className="hz-badge hz-badge--ok">{toolConnections.length} fiche(s)</span>
+          </div>
+
+          {localNotice && (
+            <div className="hz-alert hz-alert--info mt-4">
+              <CheckCircle2 size={15} className="mt-0.5 shrink-0" />
+              <p className="hz-alert__text">{localNotice}</p>
+            </div>
+          )}
+
+          <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_400px]">
+            <div className="space-y-2">
+              {toolConnections.map((connection) => (
+                <article key={connection.id} className="hz-card p-3">
+                  <div className="flex flex-wrap items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-semibold text-slate-100">{connection.name}</p>
+                      <p className="hz-hint mt-1 truncate">{connection.endpoint || 'aucun endpoint'}</p>
+                      <p className="hz-hint mt-1">
+                        catégorie : {connection.category || 'app'} · méthode : {connection.method || 'rest'}
+                        {connection.keyEnv ? ` · variable : ${connection.keyEnv}` : ''}
+                      </p>
+                      {connection.permissions && (
+                        <p className="hz-hint mt-1">permissions : {connection.permissions}</p>
+                      )}
+                      {connection.capabilities && (
+                        <p className="hz-hint mt-1">capacités : {connection.capabilities}</p>
+                      )}
+                    </div>
+                    <span
+                      className={
+                        connection.enabled
+                          ? 'hz-badge hz-badge--ok'
+                          : 'hz-badge'
+                      }
+                    >
+                      {connection.enabled ? 'active dans l’interface' : 'désactivée'}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      className="hz-btn"
+                      onClick={() => toggleLocalTool(connection)}
+                    >
+                      <CheckCircle2 size={12} /> {connection.enabled ? 'Désactiver' : 'Activer'}
+                    </button>
+                    <button
+                      type="button"
+                      className="hz-btn hz-btn--ghost"
+                      onClick={() => handleRemoveLocalTool(connection)}
+                    >
+                      <Trash2 size={12} /> Retirer
+                    </button>
+                  </div>
+                </article>
+              ))}
+              {toolConnections.length === 0 && (
+                <p className="hz-card p-6 text-center text-xs text-slate-500">
+                  Aucune connexion locale. Choisissez un outil prédéfini ou créez une fiche personnalisée.
+                </p>
+              )}
+            </div>
+
+            <form onSubmit={handleAddLocalTool} className="space-y-2 rounded-lg border border-white/[0.07] bg-black/20 p-4">
+              <label className="block">
+                <span className="mb-1 block text-[10px] font-semibold uppercase tracking-[.12em] text-slate-500">
+                  Outil prédéfini
+                </span>
+                <select
+                  className="hz-select"
+                  value={toolPreset}
+                  onChange={(event) => applyToolPreset(event.target.value)}
+                >
+                  {TOOL_PRESETS.map((preset) => (
+                    <option key={preset.id} value={preset.id}>
+                      {preset.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <input
+                className="hz-input"
+                placeholder="Nom affiché"
+                value={toolName}
+                onChange={(event) => setToolName(event.target.value)}
+              />
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  className="hz-input"
+                  placeholder="Catégorie"
+                  value={toolCategory}
+                  onChange={(event) => setToolCategory(event.target.value)}
+                />
+                <input
+                  className="hz-input"
+                  placeholder="Méthode"
+                  value={toolMethod}
+                  onChange={(event) => setToolMethod(event.target.value)}
+                />
+              </div>
+              <input
+                className="hz-input"
+                placeholder="Endpoint (facultatif)"
+                value={toolEndpoint}
+                onChange={(event) => setToolEndpoint(event.target.value)}
+              />
+              <div className="relative">
+                <ShieldCheck size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
+                <input
+                  className="hz-input pl-8"
+                  placeholder="Nom de la variable de clé (facultatif)"
+                  value={toolKeyEnv}
+                  onChange={(event) => setToolKeyEnv(event.target.value)}
+                />
+              </div>
+              <div className="grid gap-2 sm:grid-cols-2">
+                <input
+                  className="hz-input"
+                  placeholder="Permissions"
+                  value={toolPermissions}
+                  onChange={(event) => setToolPermissions(event.target.value)}
+                />
+                <input
+                  className="hz-input"
+                  placeholder="Capacités"
+                  value={toolCapabilities}
+                  onChange={(event) => setToolCapabilities(event.target.value)}
+                />
+              </div>
+              <button
+                type="submit"
+                className="hz-btn hz-btn--primary w-full justify-center"
+                disabled={!toolName.trim()}
+              >
+                <Plus size={12} /> Enregistrer la fiche
+              </button>
+              <p className="hz-hint flex items-start gap-1.5">
+                <ShieldCheck size={12} className="mt-0.5 shrink-0" />
+                Ne saisissez jamais une clé : seulement le nom de la variable qui la contient.
+              </p>
+            </form>
           </div>
         </section>
 
