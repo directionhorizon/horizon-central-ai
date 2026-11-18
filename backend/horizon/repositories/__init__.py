@@ -5,7 +5,7 @@ Chaque module expose des fonctions pures qui prennent une connexion SQLite
 plus tard l'implémentation locale par un adaptateur distant sans toucher aux
 routeurs.
 """
-from . import documents, integrations, llm, missions, operations, orchestrators, projects, sync
+from . import documents, integrations, llm, missions, operations, orchestrators, projects, runs, sync
 
 __all__ = [
     "documents",
@@ -15,5 +15,6 @@ __all__ = [
     "operations",
     "orchestrators",
     "projects",
+    "runs",
     "sync",
 ]
