@@ -1,7 +1,19 @@
 /** API missions — routes réelles /api/v1/missions. */
 import { API_ROUTES } from '../config/env';
 import { http } from './http';
-import type { Mission, MissionStatus, Priority, StepStatus } from './entities';
+import type {
+  DispatchResult, Mission, MissionStatus, OrchestratorRun, Priority, StepStatus,
+} from './entities';
+
+export interface RunListResponse {
+  items: OrchestratorRun[];
+}
+
+export interface RunActionResult {
+  status: string;
+  run?: OrchestratorRun;
+  response?: Record<string, unknown>;
+}
 
 export interface MissionListResponse {
   items: Mission[];
@@ -40,5 +52,28 @@ export const missionsApi = {
     http.request<Mission>(API_ROUTES.missionCheckpoints(id), {
       method: 'POST',
       body: { label, step_id: stepId ?? null, state },
+    }),
+
+  /* --- Exécution réelle CORE ↔ Hermes ----------------------------------- */
+  dispatch: (id: string, input: { step_id?: string | null; orchestrator_id?: string | null } = {}): Promise<DispatchResult> =>
+    http.request<DispatchResult>(API_ROUTES.missionDispatch(id), { method: 'POST', body: input }),
+  listRuns: (id: string): Promise<RunListResponse> =>
+    http.requestWithRetry<RunListResponse>(API_ROUTES.missionRuns(id)),
+  getRun: (id: string, runId: string, refresh = true): Promise<OrchestratorRun> =>
+    http.request<OrchestratorRun>(
+      `${API_ROUTES.missionRun(id, runId)}?refresh=${refresh ? 'true' : 'false'}`,
+      { timeoutMs: 20000 },
+    ),
+  stopRun: (id: string, runId: string): Promise<RunActionResult> =>
+    http.request<RunActionResult>(API_ROUTES.missionRunStop(id, runId), { method: 'POST' }),
+  approveRun: (id: string, runId: string, requestId: string, generation: number, choice: 'once' | 'deny'): Promise<RunActionResult> =>
+    http.request<RunActionResult>(API_ROUTES.missionRunApproval(id, runId), {
+      method: 'POST',
+      body: { request_id: requestId, execution_generation: generation, choice },
+    }),
+  clarifyRun: (id: string, runId: string, requestId: string, generation: number, answer: string): Promise<RunActionResult> =>
+    http.request<RunActionResult>(API_ROUTES.missionRunClarify(id, runId), {
+      method: 'POST',
+      body: { request_id: requestId, execution_generation: generation, answer },
     }),
 } as const;

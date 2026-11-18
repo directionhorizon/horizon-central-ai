@@ -116,6 +116,57 @@ export interface Mission {
   checkpoint_count?: number;
 }
 
+/* --- Exécution CORE ↔ Hermes --------------------------------------------- */
+
+export type RunPhase =
+  | 'dispatching' | 'running' | 'completed' | 'failed' | 'cancelled'
+  | 'paused' | 'error' | 'stopping';
+
+export interface OrchestratorRun {
+  id: string;
+  mission_id: string;
+  step_id: string | null;
+  orchestrator_id: string | null;
+  run_id: string;
+  session_id: string;
+  idempotency_key: string;
+  status: string;
+  phase: RunPhase;
+  replayed_count: number;
+  requested_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+  output: string;
+  error: string;
+  usage: Record<string, unknown>;
+  runtime: Record<string, unknown>;
+  raw_status: {
+    status?: string;
+    model?: string;
+    turn_exit_reason?: string;
+    pending_controls?: Array<{
+      request_id?: string;
+      prompt_id?: string;
+      execution_generation?: number;
+      kind?: string;
+      type?: string;
+    }>;
+    runtime?: Record<string, unknown>;
+  };
+}
+
+export interface DispatchResult {
+  run: OrchestratorRun;
+  replayed: boolean;
+  detail: string;
+}
+
+export interface PendingControl {
+  request_id: string;
+  execution_generation: number;
+  kind?: string;
+}
+
 export interface LlmProvider {
   id: string;
   name: string;

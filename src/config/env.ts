@@ -57,6 +57,16 @@ export const API_ROUTES = {
   missionStep: (id: string, stepId: string) =>
     `/api/v1/missions/${encodeURIComponent(id)}/steps/${encodeURIComponent(stepId)}`,
   missionCheckpoints: (id: string) => `/api/v1/missions/${encodeURIComponent(id)}/checkpoints`,
+  missionDispatch: (id: string) => `/api/v1/missions/${encodeURIComponent(id)}/dispatch`,
+  missionRuns: (id: string) => `/api/v1/missions/${encodeURIComponent(id)}/runs`,
+  missionRun: (id: string, runId: string) =>
+    `/api/v1/missions/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}`,
+  missionRunStop: (id: string, runId: string) =>
+    `/api/v1/missions/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}/stop`,
+  missionRunApproval: (id: string, runId: string) =>
+    `/api/v1/missions/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}/approval`,
+  missionRunClarify: (id: string, runId: string) =>
+    `/api/v1/missions/${encodeURIComponent(id)}/runs/${encodeURIComponent(runId)}/clarify`,
 
   models: '/api/v1/models',
   model: (id: string) => `/api/v1/models/${encodeURIComponent(id)}`,
