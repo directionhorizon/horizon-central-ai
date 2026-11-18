@@ -4,17 +4,18 @@ from __future__ import annotations
 import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
+from ..adapters import AdapterError, available_kinds, get_adapter
 from ..auth import require_admin
 from ..db import connect
-from ..hermes import build_config, check_health as check_hermes_health
 from ..models import (
     CapabilityCreate,
     OrchestratorCreate,
     OrchestratorModelSelection,
     OrchestratorProjectLink,
     OrchestratorUpdate,
+    SkillAttach,
 )
-from ..repositories import operations, orchestrators, projects, sync
+from ..repositories import operations, orchestrators, projects, skills, sync
 
 router = APIRouter(prefix="/api/v1/orchestrators", tags=["orchestrators"])
 
@@ -36,6 +37,17 @@ def create_orchestrator(payload: OrchestratorCreate, actor: str = Depends(requir
         )
         sync.enqueue(db, "orchestrators", item.get("id") or "", "create", item)
     return item
+
+
+@router.get("/kinds")
+def list_supported_kinds():
+    """Types de systèmes d'orchestration pris en charge (Universal Manager).
+
+    L'interface s'en sert pour proposer les branchements disponibles lorsqu'on
+    enregistre un nouveau système. Aucun type n'est imposé : la liste est
+    construite depuis le registre d'adaptateurs.
+    """
+    return {"items": available_kinds()}
 
 
 @router.get("/{orchestrator_id}")
@@ -153,10 +165,9 @@ def set_model(orchestrator_id: str, payload: OrchestratorModelSelection, actor: 
 async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_admin)):
     """Teste réellement la disponibilité de l'endpoint déclaré.
 
-    Hermes utilise son adaptateur dédié : le statut, la version et le détail
-    viennent de `/health`, sans jamais lire ni journaliser le secret.
-    Sans endpoint configuré, la vérification reste `unverified` : aucune
-    disponibilité n'est inventée.
+    L'adaptateur du système (UOIM) fournit le statut, la version et le détail,
+    sans jamais lire ni journaliser de secret. Sans endpoint configuré, la
+    vérification reste `unverified` : aucune disponibilité n'est inventée.
     """
     with connect() as db:
         item = orchestrators.get_orchestrator(db, orchestrator_id)
@@ -173,14 +184,16 @@ async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_
             "detail": "Aucun endpoint déclaré : vérification impossible.",
         }
 
-    is_hermes = str(item.get("kind") or "").strip().lower() == "hermes"
-    if is_hermes:
-        config = build_config(item)
-        health = await check_hermes_health(config)
-        health_status = str(health["status"])
-        detail = str(health["detail"])
-        version = str(health.get("version") or "")
-        target = f"{config.base_url}/health"
+    adapter = get_adapter(str(item.get("kind") or ""))
+    if adapter is not None:
+        try:
+            health = await adapter.health(item)
+            health_status = health.status
+            detail = health.detail
+            version = health.version
+            target = health.target
+        except AdapterError as error:
+            health_status, detail, version, target = "unavailable", str(error), "", ""
         with connect() as db:
             orchestrators.set_health(db, orchestrator_id, health_status)
             if version and version != (item.get("version") or ""):
@@ -216,3 +229,48 @@ async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_
             target_id=orchestrator_id, result=health_status, detail=detail,
         )
     return {"id": orchestrator_id, "health_status": health_status, "detail": detail, "target": target}
+
+
+# --- Compétences associées (bibliothèque de skills) -------------------------
+
+@router.get("/{orchestrator_id}/skills")
+def list_orchestrator_skills(orchestrator_id: str):
+    with connect() as db:
+        if orchestrators.get_orchestrator(db, orchestrator_id) is None:
+            raise HTTPException(404, "Système d'orchestration introuvable.")
+        items = skills.list_for_orchestrator(db, orchestrator_id)
+    return {"items": items}
+
+
+@router.post("/{orchestrator_id}/skills")
+def attach_orchestrator_skill(
+    orchestrator_id: str, payload: SkillAttach, actor: str = Depends(require_admin)
+):
+    with connect() as db:
+        if orchestrators.get_orchestrator(db, orchestrator_id) is None:
+            raise HTTPException(404, "Système d'orchestration introuvable.")
+        if skills.get_skill(db, payload.skill_id) is None:
+            raise HTTPException(404, "Compétence introuvable.")
+        skills.attach_skill(db, orchestrator_id, payload.skill_id)
+        operations.log(
+            db, actor=actor, action="orchestrator.skill.attach", target_type="orchestrator",
+            target_id=orchestrator_id, detail=f"Compétence associée : {payload.skill_id}",
+        )
+        item = orchestrators.get_orchestrator(db, orchestrator_id)
+    return item
+
+
+@router.delete("/{orchestrator_id}/skills/{skill_id}")
+def detach_orchestrator_skill(
+    orchestrator_id: str, skill_id: str, actor: str = Depends(require_admin)
+):
+    with connect() as db:
+        if orchestrators.get_orchestrator(db, orchestrator_id) is None:
+            raise HTTPException(404, "Système d'orchestration introuvable.")
+        skills.detach_skill(db, orchestrator_id, skill_id)
+        operations.log(
+            db, actor=actor, action="orchestrator.skill.detach", target_type="orchestrator",
+            target_id=orchestrator_id, detail=f"Compétence retirée : {skill_id}",
+        )
+        item = orchestrators.get_orchestrator(db, orchestrator_id)
+    return item

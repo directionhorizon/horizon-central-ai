@@ -6,7 +6,10 @@ ajoutent des tables ou des colonnes nullables.
 """
 from __future__ import annotations
 
+import json
+import re
 import sqlite3
+from pathlib import Path
 
 from .db import connect, now
 
@@ -281,6 +284,67 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_runs_status ON orchestrator_runs(status)",
         ),
     ),
+    (
+        7,
+        "authorship_signatures",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS authorship (
+                id TEXT PRIMARY KEY,
+                entity_type TEXT NOT NULL,
+                entity_id TEXT NOT NULL DEFAULT '',
+                agent_auteur TEXT NOT NULL DEFAULT '',
+                systeme TEXT NOT NULL DEFAULT '',
+                projet TEXT NOT NULL DEFAULT '',
+                provenance TEXT NOT NULL DEFAULT '',
+                version TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_authorship_entity ON authorship(entity_type, entity_id)",
+            "CREATE INDEX IF NOT EXISTS idx_authorship_created ON authorship(created_at)",
+        ),
+    ),
+    (
+        8,
+        "skills_library",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS skills (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                category TEXT NOT NULL DEFAULT 'general',
+                description TEXT NOT NULL DEFAULT '',
+                level TEXT NOT NULL DEFAULT 'standard',
+                tags TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'active'
+                    CHECK(status IN ('active','disabled')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_skills_category ON skills(category)",
+            "CREATE INDEX IF NOT EXISTS idx_skills_status ON skills(status)",
+            """
+            CREATE TABLE IF NOT EXISTS orchestrator_skills (
+                orchestrator_id TEXT NOT NULL REFERENCES orchestrators(id) ON DELETE CASCADE,
+                skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (orchestrator_id, skill_id)
+            )
+            """,
+        ),
+    ),
+    (
+        9,
+        "skills_provenance",
+        (
+            "ALTER TABLE skills ADD COLUMN origin TEXT NOT NULL DEFAULT 'integrated'",
+            "ALTER TABLE skills ADD COLUMN source_url TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE skills ADD COLUMN author TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE skills ADD COLUMN license TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
@@ -294,12 +358,45 @@ HERMES_SEED = {
     "config_json": '{"api_key_env": "HERMES_API_SERVER_KEY", "profile": "default"}',
 }
 
+#: Système d'orchestration de repli quand une mission n'en désigne aucun.
+#: Hermes est le premier branchement de l'UOIM, pas une dépendance obligatoire :
+#: une mission peut désigner un autre système via son champ `orchestrator_id`.
+DEFAULT_ORCHESTRATOR_ID = HERMES_SEED["id"]
+
+#: Répertoire des fichiers sources du catalogue de skills, classés par catégorie.
+#: Chaque fichier JSON décrit une série de compétences (métadonnées uniquement,
+#: jamais de code exécutable). C'est la source de vérité, versionnée dans le dépôt.
+SKILLS_CATALOG_DIR = Path(__file__).resolve().parent / "skills_catalog"
+
+
+def load_catalog_entries() -> list[dict]:
+    """Lit tous les fichiers du catalogue classé et renvoie leurs compétences."""
+    entries: list[dict] = []
+    if not SKILLS_CATALOG_DIR.is_dir():
+        return entries
+    for path in sorted(SKILLS_CATALOG_DIR.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):
+            entries.extend(item for item in data if isinstance(item, dict) and item.get("name"))
+    return entries
+
 DEFAULT_PROJECT_ID = "project-default"
 
 
 def _table_has_column(db: sqlite3.Connection, table: str, column: str) -> bool:
     rows = db.execute(f"PRAGMA table_info({table})").fetchall()
     return any(row["name"] == column for row in rows)
+
+
+def _skip_existing_column(db: sqlite3.Connection, statement: str) -> bool:
+    """Vrai si l'instruction ajoute une colonne déjà présente (migration rejouable)."""
+    match = re.match(r"\s*ALTER\s+TABLE\s+(\w+)\s+ADD\s+COLUMN\s+(\w+)", statement, re.IGNORECASE)
+    if not match:
+        return False
+    return _table_has_column(db, match.group(1), match.group(2))
 
 
 def _ensure_default_project(db: sqlite3.Connection) -> None:
@@ -360,6 +457,42 @@ def _ensure_hermes_orchestrator(db: sqlite3.Connection) -> None:
     )
 
 
+def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
+    """Installe le catalogue de skills depuis les fichiers classés du dépôt.
+
+    Idempotent : une compétence déjà présente (par identifiant) n'est jamais
+    écrasée, afin de préserver les modifications locales de l'utilisateur.
+    """
+    stamp = now()
+    for item in load_catalog_entries():
+        skill_id = str(item.get("id") or "").strip()
+        if not skill_id:
+            continue
+        exists = db.execute("SELECT id FROM skills WHERE id=?", (skill_id,)).fetchone()
+        if exists:
+            continue
+        db.execute(
+            """INSERT INTO skills(
+                   id,name,category,description,level,tags,status,
+                   origin,source_url,author,license,created_at,updated_at
+               ) VALUES(?,?,?,?,?,?,'active',?,?,?,?,?,?)""",
+            (
+                skill_id,
+                item["name"],
+                item.get("category", "Général"),
+                item.get("description", ""),
+                item.get("level", "standard"),
+                item.get("tags", ""),
+                item.get("origin", "integrated"),
+                item.get("source_url", ""),
+                item.get("author", ""),
+                item.get("license", ""),
+                stamp,
+                stamp,
+            ),
+        )
+
+
 def run_migrations() -> list[str]:
     """Applique les migrations manquantes et renvoie la liste de celles exécutées."""
     applied: list[str] = []
@@ -376,9 +509,9 @@ def run_migrations() -> list[str]:
             if version in done:
                 continue
             for statement in statements:
-                # La colonne peut déjà exister si la base a été préparée
+                # Une colonne peut déjà exister si la base a été préparée
                 # manuellement : on vérifie avant d'altérer la table.
-                if "ADD COLUMN project_id" in statement and _table_has_column(db, "sessions", "project_id"):
+                if _skip_existing_column(db, statement):
                     continue
                 db.execute(statement)
             db.execute(
@@ -388,5 +521,6 @@ def run_migrations() -> list[str]:
             applied.append(f"{version}:{name}")
         _ensure_default_project(db)
         _ensure_hermes_orchestrator(db)
+        _ensure_skills_catalog(db)
         db.commit()
     return applied

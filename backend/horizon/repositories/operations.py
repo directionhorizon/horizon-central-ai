@@ -9,6 +9,7 @@ import uuid
 from typing import Any
 
 from ..db import now
+from . import signatures
 
 FIELDS = "id,actor,action,target_type,target_id,result,detail,created_at"
 
@@ -22,6 +23,10 @@ def log(
     target_id: str | None = None,
     result: str = "success",
     detail: str = "",
+    systeme: str = "",
+    projet: str = "",
+    provenance: str = "",
+    version: str = "",
 ) -> dict[str, Any]:
     entry = {
         "id": str(uuid.uuid4()),
@@ -45,6 +50,18 @@ def log(
             entry["detail"],
             entry["created_at"],
         ),
+    )
+    # Signature d'auteur de l'écriture : stockée côté serveur, jamais exposée
+    # par l'API ni affichée dans l'interface (gouvernance §4.2).
+    signatures.sign(
+        db,
+        entity_type=target_type,
+        entity_id=target_id,
+        agent_auteur=actor,
+        systeme=systeme,
+        projet=projet,
+        provenance=provenance or action,
+        version=version,
     )
     db.commit()
     return entry

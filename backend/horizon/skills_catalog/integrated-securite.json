@@ -1,0 +1,4 @@
+[
+  {"id": "skill-audit-securite", "name": "Audit de sécurité", "category": "Sécurité", "description": "Vérifier permissions, secrets et surfaces d'exposition d'un système.", "level": "avance", "tags": "securite,audit,permissions", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
+  {"id": "skill-gestion-secrets", "name": "Gestion des secrets", "category": "Sécurité", "description": "Vérifier qu'aucun secret n'est exposé et que les clés restent côté serveur.", "level": "standard", "tags": "secrets,cles,securite", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
+]

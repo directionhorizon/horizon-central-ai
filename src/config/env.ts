@@ -96,6 +96,14 @@ export const API_ROUTES = {
   integration: (id: string) => `/api/v1/integrations/${encodeURIComponent(id)}`,
   integrationTest: (id: string) => `/api/v1/integrations/${encodeURIComponent(id)}/test`,
 
+  skills: '/api/v1/skills',
+  skillsCategories: '/api/v1/skills/categories',
+  skillsImport: '/api/v1/skills/import',
+  skill: (id: string) => `/api/v1/skills/${encodeURIComponent(id)}`,
+  orchestratorSkills: (id: string) => `/api/v1/orchestrators/${encodeURIComponent(id)}/skills`,
+  orchestratorSkill: (id: string, skillId: string) =>
+    `/api/v1/orchestrators/${encodeURIComponent(id)}/skills/${encodeURIComponent(skillId)}`,
+
   adminDiagnostics: '/api/v1/admin/diagnostics',
 } as const;
 

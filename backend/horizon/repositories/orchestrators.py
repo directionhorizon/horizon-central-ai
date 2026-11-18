@@ -63,6 +63,26 @@ def _projects(db: sqlite3.Connection, orchestrator_ids: list[str]) -> dict[str, 
     return grouped
 
 
+def _skills(db: sqlite3.Connection, orchestrator_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
+    if not orchestrator_ids:
+        return {}
+    placeholders = ",".join("?" for _ in orchestrator_ids)
+    rows = db.execute(
+        f"""SELECT os.orchestrator_id, s.id, s.name, s.category, s.description,
+                   s.level, s.tags, s.status, s.origin, s.source_url, s.author
+            FROM orchestrator_skills os
+            JOIN skills s ON s.id = os.skill_id
+            WHERE os.orchestrator_id IN ({placeholders})
+            ORDER BY s.category, s.name""",
+        orchestrator_ids,
+    ).fetchall()
+    grouped: dict[str, list[dict[str, Any]]] = {}
+    for row in rows:
+        item = dict(row)
+        grouped.setdefault(item.pop("orchestrator_id"), []).append(item)
+    return grouped
+
+
 def _models(db: sqlite3.Connection, orchestrator_ids: list[str]) -> dict[str, list[dict[str, Any]]]:
     if not orchestrator_ids:
         return {}
@@ -98,10 +118,12 @@ def list_orchestrators(
     items = [_decode(row) for row in rows]
     ids = [item["id"] for item in items]
     caps, projects, models = _capabilities(db, ids), _projects(db, ids), _models(db, ids)
+    skills_by_id = _skills(db, ids)
     for item in items:
         item["capabilities"] = caps.get(item["id"], [])
         item["projects"] = projects.get(item["id"], [])
         item["model_selection"] = models.get(item["id"], [])
+        item["skills"] = skills_by_id.get(item["id"], [])
     return items
 
 
@@ -113,6 +135,7 @@ def get_orchestrator(db: sqlite3.Connection, orchestrator_id: str) -> dict[str, 
     item["capabilities"] = _capabilities(db, [orchestrator_id]).get(orchestrator_id, [])
     item["projects"] = _projects(db, [orchestrator_id]).get(orchestrator_id, [])
     item["model_selection"] = _models(db, [orchestrator_id]).get(orchestrator_id, [])
+    item["skills"] = _skills(db, [orchestrator_id]).get(orchestrator_id, [])
     return item
 
 

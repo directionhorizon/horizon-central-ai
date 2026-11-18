@@ -1,6 +1,6 @@
 import { type ReactNode } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Plug } from 'lucide-react';
+import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Plug, Sparkles } from 'lucide-react';
 import { BackendUnavailable } from './components/BackendUnavailable';
 import { MainWorkbench } from './pages/main-workbench/MainWorkbench';
 import { ModelManagerLive } from './pages/model-manager/ModelManagerLive';
@@ -11,11 +11,12 @@ import { AIControlCenter } from './pages/ai-control-center/AIControlCenter';
 import { SystemMonitorLive } from './pages/system-monitor/SystemMonitorLive';
 import { SyncCenter } from './pages/sync-center/SyncCenter';
 import { Integrations } from './pages/integrations/Integrations';
+import { SkillsLibrary } from './pages/skills/SkillsLibrary';
 import { Cockpit } from './pages/cockpit/Cockpit';
 import { ChatSessionProvider, useChatSession } from './shared/ChatSessionContext';
 import { ConnectionsProvider } from './shared/ConnectionsContext';
 
-type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' | 'integrations' | 'memory' | 'control' | 'monitor' | 'sync';
+type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' | 'integrations' | 'skills' | 'memory' | 'control' | 'monitor' | 'sync';
 /**
  * Ordre de navigation = ordre de travail réel :
  * 1. on travaille (Espace de travail), 2. on pilote (Poste de pilotage),
@@ -34,6 +35,7 @@ const pages = [
   { id: 'orchestrators' as const, path: '/orchestrators', label: 'Orchestrateurs', icon: Network },
   { id: 'models' as const, path: '/models', label: 'Modèles', icon: Cpu },
   { id: 'integrations' as const, path: '/integrations', label: 'Connexions', icon: Plug },
+  { id: 'skills' as const, path: '/skills', label: 'Compétences', icon: Sparkles },
   { id: 'memory' as const, path: '/memory', label: 'Mémoire & connaissance', icon: Database },
   { id: 'control' as const, path: '/control', label: 'Centre de contrôle', icon: Bot },
   { id: 'monitor' as const, path: '/monitor', label: 'Supervision', icon: Activity },
@@ -99,6 +101,7 @@ function AppShell() {
           {/* Ancienne page « Agents & Tools » : doublon d'Orchestrateurs + Connexions. */}
           <Route path="/catalog" element={<Navigate to="/orchestrators" replace />} />
           <Route path="/integrations" element={workspace('integrations', <Integrations />)} />
+          <Route path="/skills" element={workspace('skills', <SkillsLibrary />)} />
           <Route path="/memory" element={workspace('memory', <KnowledgeMemoryLive />)} />
           <Route path="/control" element={workspace('control', <AIControlCenter />)} />
           <Route path="/control/:sessionId" element={workspace('control', <AIControlCenter />)} />

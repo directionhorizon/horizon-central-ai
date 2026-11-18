@@ -1,0 +1,74 @@
+[
+  {
+    "id": "github-anthropic-algorithmic-art",
+    "name": "algorithmic-art",
+    "category": "Création",
+    "description": "Creating algorithmic art using p5.js with seeded randomness and interactive parameter exploration. Use this when users request creating art using code, generative art, algorithmic art, flow fields, or particle systems. Create original algorithmic art rather than copying existing artists' work to avoid copyright violations.",
+    "level": "avance",
+    "tags": "algorithmic,art",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/algorithmic-art/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  },
+  {
+    "id": "github-anthropic-brand-guidelines",
+    "name": "brand-guidelines",
+    "category": "Création",
+    "description": "Applies Anthropic's official brand colors and typography to any sort of artifact that may benefit from having Anthropic's look-and-feel. Use it when brand colors or style guidelines, visual formatting, or company design standards apply.",
+    "level": "avance",
+    "tags": "brand,guidelines",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/brand-guidelines/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  },
+  {
+    "id": "github-anthropic-canvas-design",
+    "name": "canvas-design",
+    "category": "Création",
+    "description": "Create beautiful visual art in .png and .pdf documents using design philosophy. You should use this skill when the user asks to create a poster, piece of art, design, or other static piece. Create original visual designs, never copying existing artists' work to avoid copyright violations.",
+    "level": "avance",
+    "tags": "canvas,design",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/canvas-design/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  },
+  {
+    "id": "github-anthropic-frontend-design",
+    "name": "frontend-design",
+    "category": "Création",
+    "description": "Guidance for distinctive, intentional visual design when building new UI or reshaping an existing one. Helps with aesthetic direction, typography, and making choices that don't read as templated defaults.",
+    "level": "avance",
+    "tags": "frontend,design",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/frontend-design/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  },
+  {
+    "id": "github-anthropic-slack-gif-creator",
+    "name": "slack-gif-creator",
+    "category": "Création",
+    "description": "Knowledge and utilities for creating animated GIFs optimized for Slack. Provides constraints, validation tools, and animation concepts. Use when users request animated GIFs for Slack like \"make me a GIF of X doing Y for Slack.",
+    "level": "avance",
+    "tags": "slack,gif,creator",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/slack-gif-creator/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  },
+  {
+    "id": "github-anthropic-theme-factory",
+    "name": "theme-factory",
+    "category": "Création",
+    "description": "Toolkit for styling artifacts with a theme. These artifacts can be slides, docs, reportings, HTML landing pages, etc. There are 10 pre-set themes with colors/fonts that you can apply to any artifact that has been creating, or can generate a new theme on-the-fly.",
+    "level": "avance",
+    "tags": "theme,factory",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/theme-factory/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills"
+  }
+]

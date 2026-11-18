@@ -3,10 +3,9 @@ from __future__ import annotations
 
 from typing import Any
 
-import httpx
 from fastapi import APIRouter, Depends, HTTPException
 
-from .. import hermes
+from ..adapters import AdapterError, get_adapter
 from ..auth import require_admin
 from ..db import connect, now
 from ..models import (
@@ -14,7 +13,7 @@ from ..models import (
     MissionCreate, MissionStepCreate, MissionStepUpdate, MissionUpdate,
 )
 from ..repositories import missions, operations, orchestrators, projects, runs, sync
-from ..schema import HERMES_SEED
+from ..schema import DEFAULT_ORCHESTRATOR_ID
 
 router = APIRouter(prefix="/api/v1/missions", tags=["missions"])
 
@@ -151,13 +150,23 @@ def _safe_status_snapshot(payload: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _config_for(db, orchestrator_id: str) -> hermes.HermesConfig:
+def _adapter_for(db, orchestrator_id: str):
+    """Résout le système d'orchestration et son adaptateur (UOIM).
+
+    HORIZON choisit le système ; le registre rend l'adaptateur du `kind`.
+    Aucun orchestrateur n'est codé en dur : un `kind` inconnu est refusé.
+    """
     row = orchestrators.get_orchestrator(db, orchestrator_id)
     if row is None:
-        raise HTTPException(404, "Orchestrateur d'exécution introuvable.")
+        raise HTTPException(404, "Système d'orchestration introuvable.")
     if row.get("status") == "disabled":
-        raise HTTPException(409, "Cet orchestrateur est désactivé.")
-    return hermes.build_config(row)
+        raise HTTPException(409, "Ce système d'orchestration est désactivé.")
+    adapter = get_adapter(str(row.get("kind") or ""))
+    if adapter is None:
+        raise HTTPException(
+            409, f"Type de système non pris en charge : {row.get('kind') or '(vide)'}."
+        )
+    return adapter, row
 
 
 def _find_step(mission: dict[str, Any], step_id: str | None) -> dict[str, Any] | None:
@@ -177,9 +186,9 @@ def _checkpoint_once(db, mission_id: str, label: str, state: dict[str, Any]) -> 
 
 
 def _apply_mapping(db, run: dict[str, Any], mapped: dict[str, Any]) -> dict[str, Any]:
-    """Persiste le statut Hermes dans la ligne de run, la mission et l'étape."""
+    """Persiste le statut du système d'orchestration dans la ligne, la mission, l'étape."""
     updates: dict[str, Any] = {
-        "status": mapped["hermes_status"],
+        "status": mapped["provider_status"],
         "output": mapped["output"],
         "error": mapped["error"],
         "usage": mapped["usage"],
@@ -201,15 +210,9 @@ def _apply_mapping(db, run: dict[str, Any], mapped: dict[str, Any]) -> dict[str,
     if checkpoint:
         _checkpoint_once(
             db, run["mission_id"], checkpoint,
-            {"run_id": run.get("run_id", ""), "status": mapped["hermes_status"]},
+            {"run_id": run.get("run_id", ""), "status": mapped["provider_status"]},
         )
     return updated
-
-
-def _mapping_from_payload(payload: dict[str, Any], snapshot: dict[str, Any]) -> dict[str, Any]:
-    mapped = hermes.map_status(payload)
-    mapped["raw_status"] = snapshot
-    return mapped
 
 
 def _require_run(db, mission_id: str, run_id: str) -> dict[str, Any]:
@@ -222,11 +225,12 @@ def _require_run(db, mission_id: str, run_id: str) -> dict[str, Any]:
 
 
 async def _refresh(db, run: dict[str, Any]) -> dict[str, Any]:
-    """Interroge Hermes et met à jour la ligne locale. Retourne la ligne à jour."""
-    config = _config_for(db, run.get("orchestrator_id") or HERMES_SEED["id"])
-    payload = await hermes.get_status(config, run["run_id"])
+    """Interroge le système d'orchestration et met à jour la ligne locale."""
+    adapter, row = _adapter_for(db, run.get("orchestrator_id") or DEFAULT_ORCHESTRATOR_ID)
+    payload = await adapter.status(row, run["run_id"])
     snapshot = _safe_status_snapshot(payload)
-    mapped = _mapping_from_payload(payload, snapshot)
+    mapped = adapter.map_status(payload)
+    mapped["raw_status"] = snapshot
     return _apply_mapping(db, run, mapped)
 
 
@@ -246,10 +250,10 @@ async def dispatch_mission(
             if existing.get("status") in NON_TERMINAL and existing.get("run_id"):
                 return {"run": existing, "replayed": True, "detail": "Exécution déjà en cours."}
 
-        orchestrator_id = payload.orchestrator_id or mission.get("orchestrator_id") or HERMES_SEED["id"]
-        config = _config_for(db, orchestrator_id)
-        key = hermes.new_idempotency_key()
-        session_id = hermes.mission_session_id(mission_id)
+        orchestrator_id = payload.orchestrator_id or mission.get("orchestrator_id") or DEFAULT_ORCHESTRATOR_ID
+        adapter, row = _adapter_for(db, orchestrator_id)
+        key = adapter.new_idempotency_key()
+        session_id = adapter.mission_session_id(mission_id)
         run = runs.create_run(
             db,
             {
@@ -264,8 +268,8 @@ async def dispatch_mission(
         )
 
     try:
-        result = await hermes.dispatch(config, mission=mission, step=step, idempotency_key=key)
-    except (hermes.HermesError, httpx.HTTPError) as error:
+        result = await adapter.dispatch(row, mission=mission, step=step, idempotency_key=key)
+    except AdapterError as error:
         message = str(error)
         with connect() as db:
             runs.update_run(
@@ -281,7 +285,7 @@ async def dispatch_mission(
             missions.update_mission(db, mission_id, {"status": "failed"})
             operations.log(
                 db, actor=actor, action="mission.dispatch", target_type="mission",
-                target_id=mission_id, result="error", detail=f"Échec dispatch Hermes : {message[:300]}",
+                target_id=mission_id, result="error", detail=f"Échec dispatch : {message[:300]}",
             )
         raise HTTPException(502, f"Exécution impossible : {message}")
 
@@ -290,10 +294,10 @@ async def dispatch_mission(
             db,
             run["id"],
             {
-                "run_id": result["run_id"],
-                "status": result["status"],
-                "phase": "running" if result["status"] in NON_TERMINAL else result["status"],
-                "replayed_count": 1 if result["replayed"] else 0,
+                "run_id": result.run_id,
+                "status": result.status,
+                "phase": "running" if result.status in NON_TERMINAL else result.status,
+                "replayed_count": 1 if result.replayed else 0,
                 "started_at": now(),
             },
         )
@@ -302,7 +306,7 @@ async def dispatch_mission(
             missions.update_step(db, mission_id, step["id"], {"status": "running"})
         operations.log(
             db, actor=actor, action="mission.dispatch", target_type="mission",
-            target_id=mission_id, detail=f"Dispatch Hermes {result['run_id'][:40]}{' (rejoué)' if result['replayed'] else ''}",
+            target_id=mission_id, detail=f"Dispatch {result.run_id[:40]}{' (rejoué)' if result.replayed else ''}",
         )
         sync.enqueue(db, "missions", mission_id, "update", {"status": "running"})
     return {"run": updated, "replayed": bool(result["replayed"]), "detail": "Exécution lancée."}
@@ -333,10 +337,10 @@ async def stop_run_route(
 ):
     with connect() as db:
         run = _require_run(db, mission_id, run_id)
-        config = _config_for(db, run.get("orchestrator_id") or HERMES_SEED["id"])
+        adapter, row = _adapter_for(db, run.get("orchestrator_id") or DEFAULT_ORCHESTRATOR_ID)
     try:
-        response = await hermes.stop(config, run["run_id"])
-    except (hermes.HermesError, httpx.HTTPError) as error:
+        response = await adapter.stop(row, run["run_id"])
+    except AdapterError as error:
         raise HTTPException(502, f"Arrêt impossible : {error}")
     with connect() as db:
         _checkpoint_once(
@@ -345,7 +349,7 @@ async def stop_run_route(
         )
         operations.log(
             db, actor=actor, action="mission.run.stop", target_type="orchestrator_run",
-            target_id=run_id, detail="Arrêt demandé à Hermes.",
+            target_id=run_id, detail="Arrêt demandé au système d'orchestration.",
         )
     return {"status": "stopping", "run": run}
 
@@ -379,21 +383,21 @@ async def _control_route(
     with connect() as db:
         run = _require_run(db, mission_id, run_id)
         current = await _refresh(db, run)
-        config = _config_for(db, run.get("orchestrator_id") or HERMES_SEED["id"])
+        adapter, row = _adapter_for(db, run.get("orchestrator_id") or DEFAULT_ORCHESTRATOR_ID)
     _pending_control(current, request_id, generation)
     try:
         if action == "approval_once":
-            result = await hermes.approval(config, run["run_id"], request_id, generation, "once")
+            result = await adapter.approval(row, run["run_id"], request_id, generation, "once")
         elif action == "approval_deny":
-            result = await hermes.approval(config, run["run_id"], request_id, generation, "deny")
+            result = await adapter.approval(row, run["run_id"], request_id, generation, "deny")
         else:
-            result = await hermes.clarify(config, run["run_id"], request_id, generation, answer)
-    except (hermes.HermesError, httpx.HTTPError) as error:
+            result = await adapter.clarify(row, run["run_id"], request_id, generation, answer)
+    except AdapterError as error:
         raise HTTPException(502, f"Contrôle impossible : {error}")
     with connect() as db:
         operations.log(
             db, actor=actor, action=f"mission.run.{action}", target_type="orchestrator_run",
-            target_id=run_id, detail=f"Contrôle {action} transmis à Hermes.",
+            target_id=run_id, detail=f"Contrôle {action} transmis au système d'orchestration.",
         )
     return {"status": "accepted", "response": result}
 

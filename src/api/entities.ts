@@ -78,6 +78,31 @@ export interface Orchestrator {
     provider_name: string;
     provider_status: ProviderStatus;
   }>;
+  skills: SkillSummary[];
+}
+
+/* --- Bibliothèque de skills (compétences) -------------------------------- */
+
+export type SkillStatus = 'active' | 'disabled';
+
+export interface SkillSummary {
+  id: string;
+  name: string;
+  category: string;
+  description: string;
+  level: string;
+  tags: string;
+  status: SkillStatus;
+  /** Provenance : 'github', 'integrated' (catalogue du dépôt) ou 'manual'. */
+  origin: string;
+  source_url: string;
+  author: string;
+}
+
+export interface Skill extends SkillSummary {
+  license: string;
+  created_at: string;
+  updated_at: string;
 }
 
 export interface MissionStep {

@@ -171,3 +171,43 @@ class DocumentUpdate(BaseModel):
     project_id: str | None = None
     tags: str | None = Field(default=None, max_length=600)
     source: str | None = Field(default=None, max_length=600)
+
+
+# --- Bibliothèque de skills (compétences) ----------------------------------
+
+class SkillCreate(BaseModel):
+    name: str = Field(min_length=1, max_length=160)
+    category: str = Field(default="general", max_length=80)
+    description: str = Field(default="", max_length=4000)
+    level: str = Field(default="standard", max_length=40)
+    tags: str = Field(default="", max_length=400)
+    status: Literal["active", "disabled"] = "active"
+    origin: str = Field(default="manual", max_length=40)
+    source_url: str = Field(default="", max_length=600)
+    author: str = Field(default="", max_length=200)
+    license: str = Field(default="", max_length=200)
+
+
+class SkillUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    category: str | None = Field(default=None, max_length=80)
+    description: str | None = Field(default=None, max_length=4000)
+    level: str | None = Field(default=None, max_length=40)
+    tags: str | None = Field(default=None, max_length=400)
+    status: Literal["active", "disabled"] | None = None
+    origin: str | None = Field(default=None, max_length=40)
+    source_url: str | None = Field(default=None, max_length=600)
+    author: str | None = Field(default=None, max_length=200)
+    license: str | None = Field(default=None, max_length=200)
+
+
+class SkillAttach(BaseModel):
+    skill_id: str = Field(min_length=1)
+
+
+class SkillImportRequest(BaseModel):
+    """Import sécurisé : bundle JSON direct, ou URL GitHub (hôtes autorisés)."""
+
+    url: str | None = Field(default=None, max_length=1000)
+    bundle: list[dict] = Field(default_factory=list)
+    origin: str = Field(default="github", max_length=40)

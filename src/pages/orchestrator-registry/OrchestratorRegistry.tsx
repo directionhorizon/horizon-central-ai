@@ -2,8 +2,9 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { AlertTriangle, CheckCircle2, Loader2, Network, Plus, RefreshCw, Search, ShieldCheck, Wifi, WifiOff } from 'lucide-react';
 import { orchestratorsApi } from '../../api/orchestrators';
 import { projectsApi } from '../../api/projects';
+import { skillsApi } from '../../api/skills';
 import { describeApiError } from '../../api/errors';
-import type { Orchestrator, ProjectSummary } from '../../api/entities';
+import type { Orchestrator, ProjectSummary, SkillSummary } from '../../api/entities';
 import { MissionWorkflow } from '../../components/MissionWorkflow';
 
 const healthStyle: Record<string, string> = {
@@ -66,13 +67,20 @@ export const OrchestratorRegistry = () => {
   const [description, setDescription] = useState('');
   const [capability, setCapability] = useState('');
   const [linkTarget, setLinkTarget] = useState<Record<string, string>>({});
+  const [allSkills, setAllSkills] = useState<SkillSummary[]>([]);
+  const [skillTarget, setSkillTarget] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     setError(null);
     try {
-      const [list, projectList] = await Promise.all([orchestratorsApi.list(), projectsApi.list()]);
+      const [list, projectList, skillList] = await Promise.all([
+        orchestratorsApi.list(),
+        projectsApi.list(),
+        skillsApi.list({ status: 'active' }),
+      ]);
       setOrchestrators(list.items);
       setProjects(projectList.items);
+      setAllSkills(skillList.items);
     } catch (caught) {
       setError(describeApiError(caught));
     } finally {
@@ -354,6 +362,76 @@ export const OrchestratorRegistry = () => {
                                 'Projet associé.',
                               );
                             }}
+                            className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
+                          >
+                            Associer
+                          </button>
+                        </div>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Compétences</p>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          {item.skills.map((skill) => (
+                            <span
+                              key={skill.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
+                            >
+                              {skill.name}
+                              <button
+                                type="button"
+                                disabled={busy === item.id}
+                                onClick={() =>
+                                  void run(
+                                    item.id,
+                                    async () => {
+                                      await orchestratorsApi.detachSkill(item.id, skill.id);
+                                    },
+                                    'Compétence retirée.',
+                                  )
+                                }
+                                className="ml-1 text-violet-300 hover:text-rose-300 disabled:opacity-40"
+                                title="Retirer cette compétence"
+                              >
+                                ×
+                              </button>
+                            </span>
+                          ))}
+                          {item.skills.length === 0 && (
+                            <span className="text-[11px] text-slate-500">Aucune compétence associée.</span>
+                          )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <select
+                            value={skillTarget[item.id] ?? ''}
+                            onChange={(event) =>
+                              setSkillTarget((current) => ({ ...current, [item.id]: event.target.value }))
+                            }
+                            className="h-8 rounded-md border border-white/10 bg-[#171a24] px-2 text-[11px] text-slate-300"
+                          >
+                            <option value="">Sélectionner une compétence…</option>
+                            {allSkills
+                              .filter((skill) => !item.skills.some((assigned) => assigned.id === skill.id))
+                              .map((skill) => (
+                                <option key={skill.id} value={skill.id}>
+                                  {skill.name} — {skill.category}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={busy === item.id || !skillTarget[item.id]}
+                            onClick={() =>
+                              void run(
+                                item.id,
+                                async () => {
+                                  const target = skillTarget[item.id];
+                                  if (!target) return;
+                                  await orchestratorsApi.attachSkill(item.id, target);
+                                  setSkillTarget((current) => ({ ...current, [item.id]: '' }));
+                                },
+                                'Compétence associée.',
+                              )
+                            }
                             className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
                           >
                             Associer

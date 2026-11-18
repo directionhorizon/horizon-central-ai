@@ -58,4 +58,11 @@ export const orchestratorsApi = {
       method: 'PUT',
       body: { provider_id: providerId, model },
     }),
+  attachSkill: (id: string, skillId: string): Promise<Orchestrator> =>
+    http.request<Orchestrator>(API_ROUTES.orchestratorSkills(id), {
+      method: 'POST',
+      body: { skill_id: skillId },
+    }),
+  detachSkill: (id: string, skillId: string): Promise<Orchestrator> =>
+    http.request<Orchestrator>(API_ROUTES.orchestratorSkill(id, skillId), { method: 'DELETE' }),
 } as const;

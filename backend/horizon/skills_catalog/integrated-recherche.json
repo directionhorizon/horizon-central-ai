@@ -1,0 +1,4 @@
+[
+  {"id": "skill-recherche-web", "name": "Recherche web", "category": "Recherche", "description": "Rechercher et synthétiser des informations fiables depuis le web, en citant les sources.", "level": "standard", "tags": "web,recherche,veille", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
+  {"id": "skill-veille", "name": "Veille", "category": "Recherche", "description": "Suivre un sujet dans le temps et signaler les évolutions importantes.", "level": "standard", "tags": "veille,suivi,sujet", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
+]
