@@ -353,7 +353,11 @@ if (DIST_DIR / "index.html").exists():
     # Le shell HTML n'est jamais mis en cache : apres un rebuild, une fenetre
     # deja ouverte ne peut donc pas rester bloquee sur un ancien bundle supprime.
     # Les fichiers /assets sont hachés par Vite : leur cache est sans risque.
-    NO_STORE = {"Cache-Control": "no-store, no-cache, must-revalidate", "Pragma": "no-cache"}
+    NO_STORE = {
+        "Cache-Control": "no-store, no-cache, must-revalidate, private",
+        "Pragma": "no-cache",
+        "Expires": "0",
+    }
 
     @app.get("/{full_path:path}", include_in_schema=False)
     def serve_ui(full_path: str):

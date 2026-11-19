@@ -9,6 +9,9 @@ on:
       - ".github/workflows/supabase-migrations.yml"
   workflow_dispatch:
 
+permissions:
+  contents: read
+
 jobs:
   migrate:
     runs-on: ubuntu-latest
