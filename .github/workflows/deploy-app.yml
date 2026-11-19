@@ -1,0 +1,44 @@
+name: Deploy app
+
+on:
+  push:
+    branches: [main]
+    paths-ignore:
+      - "supabase/migrations/**"
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-app
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Construire l'interface
+        run: |
+          npm ci
+          npm run build
+
+      - name: Préparer SSH
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.SSH_PRIVATE_KEY }}" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H vps126758.serveur-vps.net >> ~/.ssh/known_hosts 2>/dev/null
+
+      - name: Déployer l'interface (dist)
+        run: rsync -az --delete dist/ "root@vps126758.serveur-vps.net:/opt/horizon/dist/"
+
+      - name: Mettre à jour le code et redémarrer
+        run: |
+          ssh "root@vps126758.serveur-vps.net" \
+            "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && systemctl restart horizon"
