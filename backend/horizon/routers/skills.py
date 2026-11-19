@@ -18,7 +18,15 @@ from ..repositories import operations, skills
 router = APIRouter(prefix="/api/v1/skills", tags=["skills"])
 
 #: Hôtes autorisés pour l'import depuis une URL (sécurité : jamais d'URL arbitraire).
-ALLOWED_IMPORT_HOSTS = {"raw.githubusercontent.com", "github.com", "gist.githubusercontent.com"}
+#: Plusieurs sources sont acceptées (GitHub, Hugging Face). En ajouter une se fait
+#: ici, sans toucher au reste du code.
+ALLOWED_IMPORT_HOSTS = {
+    "raw.githubusercontent.com",
+    "github.com",
+    "gist.githubusercontent.com",
+    "huggingface.co",
+    "hf.co",
+}
 MAX_IMPORT_BYTES = 1_000_000
 
 
@@ -38,12 +46,11 @@ def list_categories():
 
 @router.post("/import")
 async def import_skills(payload: SkillImportRequest, actor: str = Depends(require_admin)):
-    """Importe des compétences — depuis un bundle JSON ou une URL GitHub.
+    """Importe des compétences — depuis un bundle JSON ou une URL d'une source autorisée.
 
-    Sécurité : seules les URL GitHub en HTTPS sont acceptées, la taille est
-    bornée, le contenu doit être une liste JSON, et seules les métadonnées
-    déclaratives sont conservées (aucun code n'est exécuté). L'import ne
-    remplace jamais une compétence existante.
+    Sources acceptées : GitHub et Hugging Face (voir ALLOWED_IMPORT_HOSTS). Sécurité :
+    HTTPS uniquement, taille bornée, contenu JSON en liste, métadonnées déclaratives
+    seulement (aucun code exécuté). L'import ne remplace jamais une compétence existante.
     """
     items = list(payload.bundle or [])
     source_ref = ""

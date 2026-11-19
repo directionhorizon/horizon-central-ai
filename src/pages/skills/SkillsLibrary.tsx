@@ -281,17 +281,17 @@ export const SkillsLibrary = () => {
 
       <section className="mt-5 rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-5">
         <h2 className="mb-2 flex items-center gap-2 text-base font-semibold text-slate-100">
-          <GitBranch size={16} className="text-cyan-300" /> Importer depuis GitHub
+          <GitBranch size={16} className="text-cyan-300" /> Importer depuis une source externe
         </h2>
         <p className="mb-3 text-xs leading-5 text-slate-500">
-          URL d'un fichier JSON de compétences hébergé sur GitHub (raw.githubusercontent.com).
-          Seules les métadonnées sont importées — aucun code n'est exécuté, rien n'est écrasé.
+          URL d'un fichier JSON de compétences (GitHub, Hugging Face…). Seules les métadonnées
+          sont importées — aucun code n'est exécuté, rien n'est écrasé.
         </p>
         <div className="flex flex-col gap-2 sm:flex-row">
           <input
             value={importUrl}
             onChange={(event) => setImportUrl(event.target.value)}
-            placeholder="https://raw.githubusercontent.com/…/skills.json"
+            placeholder="https://raw.githubusercontent.com/… ou huggingface.co/…"
             className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-cyan-400/50"
           />
           <button
