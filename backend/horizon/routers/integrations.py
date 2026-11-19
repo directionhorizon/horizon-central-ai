@@ -9,6 +9,7 @@ déclenché explicitement par l'utilisateur.
 """
 from __future__ import annotations
 
+import ipaddress
 import os
 import socket
 from typing import Any
@@ -58,12 +59,52 @@ STATUS_LABELS = {
 }
 
 
+def _is_safe_host(host: str) -> bool:
+    """Anti-SSRF : n'autorise que des hôtes résolvant vers des adresses publiques.
+
+    Refuse les adresses privées, la boucle locale, les adresses lien-local
+    (métadonnées cloud 169.254.x.x), réservées, multicast et non spécifiées.
+    """
+    if not host:
+        return False
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except OSError:
+        return False
+    if not infos:
+        return False
+    for info in infos:
+        address = info[4][0]
+        try:
+            ip = ipaddress.ip_address(address)
+        except ValueError:
+            return False
+        if (
+            ip.is_private
+            or ip.is_loopback
+            or ip.is_link_local
+            or ip.is_reserved
+            or ip.is_multicast
+            or ip.is_unspecified
+        ):
+            return False
+    return True
+
+
 def _probe(endpoint: str) -> tuple[bool, str]:
-    """Test réel et borné : HTTP(S) ou TCP. Aucune donnée sensible renvoyée."""
+    """Test réel et borné : HTTP(S) ou TCP. Aucune donnée sensible renvoyée.
+
+    Sécurité (anti-SSRF) : l'hôte fourni par l'appelant est refusé s'il résout
+    vers une adresse interne — le serveur ne peut pas être détourné vers le
+    réseau privé ou les métadonnées cloud.
+    """
     target = endpoint.strip()
     if not target:
         return False, "aucun endpoint renseigné"
     if target.startswith(("http://", "https://")):
+        host = urlsplit(target).hostname or ""
+        if not _is_safe_host(host):
+            return False, "endpoint interne ou invalide refusé"
         try:
             response = httpx.get(target, timeout=4.0, follow_redirects=False)
         except httpx.HTTPError as exc:
@@ -72,6 +113,8 @@ def _probe(endpoint: str) -> tuple[bool, str]:
             return False, f"HTTP {response.status_code}"
         return True, f"HTTP {response.status_code}"
     host, _, port = target.partition(":")
+    if not _is_safe_host(host):
+        return False, "hôte interne ou invalide refusé"
     try:
         with socket.create_connection((host, int(port or "443")), timeout=3.0):
             return True, "connexion TCP établie"
