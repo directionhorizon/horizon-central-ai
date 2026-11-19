@@ -83,7 +83,7 @@ export const KnowledgeMemoryHub = () => {
   const [isIndexing, setIsIndexing] = useState(false);
   const filteredDocuments = useMemo(() => DOCUMENTS.filter(document => `${document.name} ${document.type} ${document.project}`.toLowerCase().includes(query.toLowerCase())), [query]);
   return <div className="min-h-screen bg-[#0a0b10] text-slate-100">
-      <main className="mx-auto min-h-screen w-full max-w-[1500px] px-5 pb-12 pt-8 sm:px-8">
+      <div className="mx-auto min-h-screen w-full max-w-[1500px] px-5 pb-12 pt-8 sm:px-8">
         <div className="mx-auto max-w-[1440px]">
           <div className="mb-8 flex flex-wrap items-end justify-between gap-5">
             <div>
@@ -149,6 +149,6 @@ export const KnowledgeMemoryHub = () => {
             </section>}
           <div className="mt-6 flex items-center gap-2 text-xs text-slate-600"><Sparkles size={14} className="text-cyan-500/70" /><span>Context engine ready · local-first processing enabled</span></div>
         </div>
-      </main>
+      </div>
     </div>;
 };

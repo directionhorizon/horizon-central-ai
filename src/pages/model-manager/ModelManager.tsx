@@ -111,7 +111,7 @@ export const ModelManager = () => {
     setShowForm(false);
   }
   return <div className="min-h-screen bg-[#0a0b10] text-slate-100">
-      <main className="mx-auto min-h-screen w-full max-w-[1500px] px-5 pb-12 pt-8 sm:px-8 lg:px-10">
+      <div className="mx-auto min-h-screen w-full max-w-[1500px] px-5 pb-12 pt-8 sm:px-8 lg:px-10">
         <div className="mx-auto max-w-[1440px]">
           <header className="mb-8 flex flex-col justify-between gap-5 border-b border-white/[0.07] pb-7 xl:flex-row xl:items-end">
             <div>
@@ -185,6 +185,6 @@ export const ModelManager = () => {
             </section>
           </div>
         </div>
-      </main>
+      </div>
     </div>;
 };

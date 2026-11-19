@@ -156,7 +156,7 @@ export const Projects = () => {
 
   return (
     <div className="min-h-screen bg-[#0a0b10] text-slate-100">
-      <main className="mx-auto w-full max-w-[1500px] px-5 pb-14 pt-8 sm:px-8 lg:px-10">
+      <div className="mx-auto w-full max-w-[1500px] px-5 pb-14 pt-8 sm:px-8 lg:px-10">
         <header className="mb-7 border-b border-white/[0.07] pb-6">
           <div className="mb-2 flex items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.22em] text-cyan-400">
             <FolderKanban size={14} /> Projets &amp; missions
@@ -449,7 +449,7 @@ export const Projects = () => {
             )}
           </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

@@ -72,7 +72,7 @@ export const SystemMonitorLive = () => {
           <RefreshCw size={14} className={loading ? 'animate-spin' : ''} /> Actualiser
         </button>
       </header>
-      <main className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
+      <div className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
         {error && (
           <div className="flex items-start gap-3 rounded-xl border border-rose-400/25 bg-rose-400/[0.07] p-4">
             <AlertTriangle size={18} className="mt-0.5 shrink-0 text-rose-300" />
@@ -160,7 +160,7 @@ export const SystemMonitorLive = () => {
         <p className="flex items-center gap-2 text-center text-[10px] text-slate-600">
           <Activity size={12} /> Mesures issues de /api/v1/system/metrics, /system/status et /operations. Aucune valeur n'est simulée.
         </p>
-      </main>
+      </div>
     </div>
   );
 };

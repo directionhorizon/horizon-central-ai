@@ -44,7 +44,7 @@ export const MainWorkbench = () => {
   };
   return <div className="min-h-screen bg-[#0a0b10] text-slate-100">
 
-      <main className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col">
+      <div className="mx-auto flex min-h-screen w-full max-w-[1500px] flex-col">
         <section className="mx-auto flex w-full max-w-5xl flex-1 flex-col px-5 pb-8 pt-8 sm:px-8" aria-labelledby="workbench-title">
           <header className="mb-6 flex items-end justify-between gap-6">
             <div>
@@ -107,7 +107,7 @@ export const MainWorkbench = () => {
             <p className="mt-3 flex items-center justify-center gap-1.5 text-center text-[11px] text-slate-600"><Sparkles size={12} /> HORIZON can make mistakes. Verify critical decisions against your local sources.</p>
           </div>
         </section>
-      </main>
+      </div>
     </div>;
 };
 export default MainWorkbench;

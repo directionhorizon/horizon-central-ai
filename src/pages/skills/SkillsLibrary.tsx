@@ -126,7 +126,7 @@ export const SkillsLibrary = () => {
   };
 
   return (
-    <main className="mx-auto max-w-6xl p-6">
+    <div className="mx-auto max-w-6xl p-6">
       <header className="mb-6 flex items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/10 text-violet-200">
           <Sparkles size={18} />
@@ -409,7 +409,7 @@ export const SkillsLibrary = () => {
           </div>
         </div>
       )}
-    </main>
+    </div>
   );
 };
 

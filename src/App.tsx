@@ -88,7 +88,7 @@ function AppShell() {
           })}
         </div>
       </nav>
-      <div className="horizon-page">
+      <main className="horizon-page" id="main-content">
         <Routes>
           <Route path="/" element={<Navigate to="/workbench" replace />} />
           <Route path="/cockpit" element={workspace('cockpit', <Cockpit />)} />
@@ -109,7 +109,7 @@ function AppShell() {
           <Route path="/sync" element={workspace('sync', <SyncCenter />)} />
           <Route path="*" element={<Navigate to="/workbench" replace />} />
         </Routes>
-      </div>
+      </main>
     </div>
   );
 }

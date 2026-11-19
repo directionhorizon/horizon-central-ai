@@ -127,7 +127,7 @@ export const SyncCenter = () => {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
+      <div className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
         {error && (
           <div className="flex items-start gap-3 rounded-xl border border-rose-400/25 bg-rose-400/[0.07] p-4">
             <AlertTriangle size={18} className="mt-0.5 shrink-0 text-rose-300" />
@@ -335,7 +335,7 @@ export const SyncCenter = () => {
           <ShieldCheck size={12} /> Vos données restent locales. Les détails techniques (chemins, sondes,
           variables attendues) sont réservés au diagnostic protégé.
         </p>
-      </main>
+      </div>
     </div>
   );
 };

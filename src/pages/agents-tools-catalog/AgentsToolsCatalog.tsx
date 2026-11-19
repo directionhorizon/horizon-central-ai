@@ -64,7 +64,7 @@ export const AgentsToolsCatalog = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0B10] text-slate-100">
-      <main className="mx-auto w-full max-w-[1500px] px-6 py-8 lg:px-10">
+      <div className="mx-auto w-full max-w-[1500px] px-6 py-8 lg:px-10">
         <header className="mb-6">
           <div className="mb-2 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
             <Boxes size={14} /> Outils, agents et services
@@ -188,7 +188,7 @@ export const AgentsToolsCatalog = () => {
           <ShieldQuestion size={12} /> Une ligne n’est « vérifiée » qu’après un test réel exécuté par
           le moteur. <CheckCircle2 size={12} /> Aucune donnée de démonstration sur cette page.
         </p>
-      </main>
+      </div>
     </div>
   );
 };

@@ -15,7 +15,7 @@ export const AIControlCenter = () => {
   };
   return <div className="min-h-screen bg-[#090c13] text-slate-100">
       <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-[1500px] grid-cols-1 lg:grid-cols-[minmax(0,1fr)_290px]">
-        <main className="flex min-h-[calc(100vh-5rem)] min-w-0 flex-col">
+        <div className="flex min-h-[calc(100vh-5rem)] min-w-0 flex-col">
           <div className="flex flex-wrap items-center justify-between gap-3 border-b border-white/[0.07] px-6 py-4">
             <div><p className="text-xs text-slate-500">WORKSPACE / NEW SESSION</p><h1 className="mt-1 text-lg font-semibold">How can I help you today?</h1></div>
             <button onClick={() => void createSession()} disabled={busy} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:bg-white/5 disabled:cursor-not-allowed disabled:opacity-40"><Plus size={14} /> New session</button>
@@ -45,7 +45,7 @@ export const AIControlCenter = () => {
             </div>
             <p className="mt-3 text-center text-[10px] text-slate-600">{busy ? 'Synchronisation avec le backend local…' : 'Messages are persisted by the local FastAPI backend · no AI model connected (accepted_no_model).'}</p>
           </section>
-        </main>
+        </div>
         <aside className="border-t border-white/[0.07] bg-white/[0.015] p-5 lg:border-l lg:border-t-0">
           <div className="mb-5 flex items-center justify-between"><h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400">Session context</h2><button onClick={() => setShowContext(!showContext)} className="rounded p-1 text-slate-500 hover:bg-white/5" aria-label="Toggle context"><PanelRight size={15} /></button></div>
           {showContext && <div className="space-y-3">

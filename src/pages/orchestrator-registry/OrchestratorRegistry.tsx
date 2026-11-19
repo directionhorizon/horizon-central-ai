@@ -155,7 +155,7 @@ export const OrchestratorRegistry = () => {
 
   return (
     <div className="min-h-screen bg-[#0A0B10] text-slate-100">
-      <main className="mx-auto min-h-screen w-full max-w-[1500px]">
+      <div className="mx-auto min-h-screen w-full max-w-[1500px]">
         <div className="mx-auto max-w-[1500px] px-8 py-8 lg:px-10">
           <header className="mb-8">
             <div className="mb-3 flex items-center gap-2 text-[11px] font-bold uppercase tracking-[0.2em] text-cyan-400">
@@ -497,7 +497,7 @@ export const OrchestratorRegistry = () => {
             </form>
           </section>
         </div>
-      </main>
+      </div>
     </div>
   );
 };

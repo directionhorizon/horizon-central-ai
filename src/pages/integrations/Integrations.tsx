@@ -251,7 +251,7 @@ export function Integrations() {
         </div>
       </header>
 
-      <main className="mx-auto max-w-[1400px] space-y-4 p-5">
+      <div className="mx-auto max-w-[1400px] space-y-4 p-5">
         {error && (
           <div className="hz-alert hz-alert--danger">
             <AlertTriangle size={15} className="mt-0.5 shrink-0" />
@@ -539,7 +539,7 @@ export function Integrations() {
             </p>
           )}
         </section>
-      </main>
+      </div>
     </div>
   );
 }

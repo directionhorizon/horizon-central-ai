@@ -455,7 +455,7 @@ export function Cockpit() {
         />
 
         {/* ---------------- Zone centrale : conversation HORIZON CORE ---------------- */}
-        <main className="hz-enter hz-enter--2 flex flex-col">
+        <div className="hz-enter hz-enter--2 flex flex-col">
           <section className={`${panel} flex flex-1 flex-col`}>
             <div className="flex flex-wrap items-center justify-between gap-2 border-b border-white/10 px-3 py-2">
               <p className="text-[11px] font-semibold uppercase tracking-[.14em] text-slate-500">Conversation HORIZON CORE</p>
@@ -545,7 +545,7 @@ export function Cockpit() {
               </div>
             </div>
           </section>
-        </main>
+        </div>
 
         {/* ---------------- Panneau droit : orchestrateurs, ressources, état ---------------- */}
         <div

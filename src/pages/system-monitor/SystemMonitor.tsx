@@ -48,7 +48,7 @@ export const SystemMonitor = () => {
       <div><p className="text-[11px] font-semibold uppercase tracking-[.18em] text-cyan-300">HORIZON / OPERATIONS</p><h1 className="mt-1 text-2xl font-semibold tracking-tight">System Monitor</h1><p className="mt-1 text-sm text-slate-500">Infrastructure, devices and service connectivity</p></div>
       <button onClick={refresh} className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:bg-white/5"><RefreshCw size={14} /> Refresh status</button>
     </header>
-    <main className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
+    <div className="mx-auto max-w-[1400px] space-y-6 p-5 sm:p-7">
       <div className="flex items-start gap-3 rounded-xl border border-amber-300/20 bg-amber-300/[0.06] p-4"><AlertTriangle className="mt-0.5 shrink-0 text-amber-300" size={18} /><div><p className="text-sm font-medium text-amber-100">Monitoring is not connected yet</p><p className="mt-1 text-xs leading-5 text-slate-400">These are initial configuration states, not live measurements. Device agents, health checks and backend telemetry must be connected before this page can report real status.</p></div></div>
       <section className="grid gap-3 sm:grid-cols-3">
         <div className="rounded-xl border border-white/[0.08] bg-white/[0.025] p-4"><div className="flex items-center justify-between text-xs text-slate-400"><span>Online</span><CheckCircle2 size={16} className="text-emerald-300" /></div><p className="mt-3 text-3xl font-semibold tabular-nums">{counts.online}</p><p className="mt-1 text-[11px] text-slate-600">Connected nodes</p></div>
@@ -86,6 +86,6 @@ export const SystemMonitor = () => {
         <section className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-5"><div className="flex items-center gap-2"><Shield size={16} className="text-cyan-300" /><h2 className="text-sm font-semibold">Monitoring prerequisites</h2></div><ul className="mt-4 space-y-3 text-xs leading-5 text-slate-400"><li className="flex gap-2"><CircleHelp size={14} className="mt-0.5 shrink-0 text-slate-600" />Install and authorize a lightweight local device agent.</li><li className="flex gap-2"><CircleHelp size={14} className="mt-0.5 shrink-0 text-slate-600" />Expose authenticated health endpoints for the API and services.</li><li className="flex gap-2"><CircleHelp size={14} className="mt-0.5 shrink-0 text-slate-600" />Send timestamped heartbeats and metrics to the central backend.</li><li className="flex gap-2"><CircleHelp size={14} className="mt-0.5 shrink-0 text-slate-600" />Apply explicit permissions and retention rules to telemetry.</li></ul></section>
       </div>
       <p className="text-center text-[10px] text-slate-600">Prototype state only · No devices are contacted and no system metrics are fabricated.</p>
-    </main>
+    </div>
   </div>;
 };
