@@ -44,4 +44,4 @@ jobs:
       - name: Mettre à jour le code et redémarrer
         run: |
           ssh "root@vps126758.serveur-vps.net" \
-            "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && systemctl restart horizon"
+            "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && /opt/horizon/.venv/bin/pip install -q -r backend/requirements.txt && systemctl restart horizon"
