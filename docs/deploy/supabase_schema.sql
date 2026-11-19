@@ -310,6 +310,33 @@ create table if not exists sync_conflicts (
 -- exposée publiquement. La clé de service n'est JAMAIS dans le frontend.
 -- RLS activée partout : sans politique pour le rôle `anon`, aucun accès public.
 
+-- RLS activée EXPLICITEMENT sur chaque table (le backend utilise la clé
+-- service_role, qui contourne la RLS ; aucune exposition publique). Forme
+-- explicite = lisible par les scanners statiques et les auditeurs.
+alter table public.projects enable row level security;
+alter table public.orchestrators enable row level security;
+alter table public.orchestrator_capabilities enable row level security;
+alter table public.orchestrator_projects enable row level security;
+alter table public.missions enable row level security;
+alter table public.mission_steps enable row level security;
+alter table public.mission_checkpoints enable row level security;
+alter table public.orchestrator_runs enable row level security;
+alter table public.documents enable row level security;
+alter table public.llm_providers enable row level security;
+alter table public.orchestrator_model_selection enable row level security;
+alter table public.integrations enable row level security;
+alter table public.settings enable row level security;
+alter table public.sessions enable row level security;
+alter table public.messages enable row level security;
+alter table public.authorship enable row level security;
+alter table public.operation_log enable row level security;
+alter table public.skills enable row level security;
+alter table public.orchestrator_skills enable row level security;
+alter table public.sync_outbox enable row level security;
+alter table public.sync_state enable row level security;
+alter table public.sync_conflicts enable row level security;
+
+-- Filet de sécurité : couvre aussi toute table ajoutée ultérieurement.
 do $$
 declare t text;
 begin
