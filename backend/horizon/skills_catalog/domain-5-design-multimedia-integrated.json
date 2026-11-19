@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger des prompts optimisés pour les générateurs d'images.",
+    "outputs": "Des prompts et une direction visuelle cohérente.",
+    "example": "« Aide-moi à rédiger des prompts optimisés pour les générateurs d'images »"
   },
   {
     "id": "skill-charte-graphique",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez définir couleurs, typographies et règles d'usage d'une identité.",
+    "outputs": "Des prompts et une direction visuelle cohérente.",
+    "example": "« Aide-moi à définir couleurs, typographies et règles d'usage d'une identité »"
   },
   {
     "id": "skill-direction-artistique",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez proposer une direction visuelle cohérente pour un projet.",
+    "outputs": "Des prompts et une direction visuelle cohérente.",
+    "example": "« Aide-moi à proposer une direction visuelle cohérente pour un projet »"
   },
   {
     "id": "skill-scenario-video",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire un scénario vidéo : séquences, intentions, messages.",
+    "outputs": "Un script ou une structure audiovisuelle.",
+    "example": "« Aide-moi à écrire un scénario vidéo : séquences, intentions, messages »"
   },
   {
     "id": "skill-storyboard",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez découper une vidéo en plans avec description visuelle.",
+    "outputs": "Un script ou une structure audiovisuelle.",
+    "example": "« Aide-moi à découper une vidéo en plans avec description visuelle »"
   },
   {
     "id": "skill-script-voix-off",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger un texte à lire, au bon rythme et au bon ton.",
+    "outputs": "Un script ou une structure audiovisuelle.",
+    "example": "« Aide-moi à rédiger un texte à lire, au bon rythme et au bon ton »"
   },
   {
     "id": "skill-idees-de-contenu-visuel",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez générer des idées de visuels et de formats pour un canal.",
+    "outputs": "Un script ou une structure audiovisuelle.",
+    "example": "« Aide-moi à générer des idées de visuels et de formats pour un canal »"
   },
   {
     "id": "skill-micro-copie-ux",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire libellés, messages d'erreur et textes d'interface.",
+    "outputs": "Un parcours ou une interface clarifiés.",
+    "example": "« Aide-moi à écrire libellés, messages d'erreur et textes d'interface »"
   },
   {
     "id": "skill-personas-utilisateurs",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez décrire des profils utilisateurs représentatifs et leurs besoins.",
+    "outputs": "Un parcours ou une interface clarifiés.",
+    "example": "« Aide-moi à décrire des profils utilisateurs représentatifs et leurs besoins »"
   },
   {
     "id": "skill-parcours-clients",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez structurer un parcours utilisateur étape par étape.",
+    "outputs": "Un parcours ou une interface clarifiés.",
+    "example": "« Aide-moi à structurer un parcours utilisateur étape par étape »"
   },
   {
     "id": "skill-audit-d-interface",
@@ -140,6 +170,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez repérer les frictions d'une interface et proposer des correctifs.",
+    "outputs": "Un parcours ou une interface clarifiés.",
+    "example": "« Aide-moi à repérer les frictions d'une interface et proposer des correctifs »"
   }
 ]

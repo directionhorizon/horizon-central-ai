@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger une fiche de poste : missions, compétences, profil.",
+    "outputs": "Un document RH prêt à l'emploi.",
+    "example": "« Aide-moi à rédiger une fiche de poste : missions, compétences, profil »"
   },
   {
     "id": "skill-grille-d-entretien",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez préparer des questions structurées et des critères d'évaluation.",
+    "outputs": "Un document RH prêt à l'emploi.",
+    "example": "« Aide-moi à préparer des questions structurées et des critères d'évaluation »"
   },
   {
     "id": "skill-plan-d-integration",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez organiser l'accueil et la montée en compétence d'un arrivant.",
+    "outputs": "Un document RH prêt à l'emploi.",
+    "example": "« Aide-moi à organiser l'accueil et la montée en compétence d'un arrivant »"
   },
   {
     "id": "skill-evaluation-de-performance",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez préparer un entretien annuel et formuler des retours.",
+    "outputs": "Un document RH prêt à l'emploi.",
+    "example": "« Aide-moi à préparer un entretien annuel et formuler des retours »"
   },
   {
     "id": "skill-analyse-de-clauses-contractuelles",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez repérer et expliquer les clauses standards d'un contrat.",
+    "outputs": "Une analyse ou un texte juridique clair.",
+    "example": "« Aide-moi à repérer et expliquer les clauses standards d'un contrat »"
   },
   {
     "id": "skill-redaction-de-cgv",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger des conditions générales de vente claires.",
+    "outputs": "Une analyse ou un texte juridique clair.",
+    "example": "« Aide-moi à rédiger des conditions générales de vente claires »"
   },
   {
     "id": "skill-vulgarisation-de-textes-de-loi",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez expliquer un texte juridique en langage clair.",
+    "outputs": "Une analyse ou un texte juridique clair.",
+    "example": "« Aide-moi à expliquer un texte juridique en langage clair »"
   },
   {
     "id": "skill-conformite-rgpd",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez vérifier les bases d'un traitement de données personnelles.",
+    "outputs": "Une analyse ou un texte juridique clair.",
+    "example": "« Aide-moi à vérifier les bases d'un traitement de données personnelles »"
   },
   {
     "id": "skill-analyse-de-bilan",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez lire un bilan simplifié et en dégager les points clés.",
+    "outputs": "Une analyse financière lisible.",
+    "example": "« Aide-moi à lire un bilan simplifié et en dégager les points clés »"
   },
   {
     "id": "skill-previsionnel",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez construire un prévisionnel de trésorerie ou de résultat.",
+    "outputs": "Une analyse financière lisible.",
+    "example": "« Aide-moi à construire un prévisionnel de trésorerie ou de résultat »"
   },
   {
     "id": "skill-indicateurs-financiers",
@@ -140,7 +170,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez expliquer marge, rentabilité et principaux ratios.",
+    "outputs": "Une analyse financière lisible.",
+    "example": "« Aide-moi à expliquer marge, rentabilité et principaux ratios »"
   },
   {
     "id": "skill-quiz",
@@ -153,7 +186,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez créer des questions et corrigés pour évaluer des acquis.",
+    "outputs": "Un support pédagogique structuré.",
+    "example": "« Aide-moi à créer des questions et corrigés pour évaluer des acquis »"
   },
   {
     "id": "skill-plan-de-cours",
@@ -166,7 +202,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez structurer un cours : objectifs, séquences, supports.",
+    "outputs": "Un support pédagogique structuré.",
+    "example": "« Aide-moi à structurer un cours : objectifs, séquences, supports »"
   },
   {
     "id": "skill-vulgarisation-de-concepts",
@@ -179,6 +218,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez expliquer un concept complexe avec des mots simples.",
+    "outputs": "Un support pédagogique structuré.",
+    "example": "« Aide-moi à expliquer un concept complexe avec des mots simples »"
   }
 ]

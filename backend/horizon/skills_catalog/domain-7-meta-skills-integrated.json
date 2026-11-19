@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez réécrire un prompt pour le rendre plus clair et fiable.",
+    "outputs": "Un prompt ou des consignes améliorés.",
+    "example": "« Aide-moi à réécrire un prompt pour le rendre plus clair et fiable »"
   },
   {
     "id": "skill-personas-ia",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez définir un rôle et un comportement pour un agent IA.",
+    "outputs": "Un prompt ou des consignes améliorés.",
+    "example": "« Aide-moi à définir un rôle et un comportement pour un agent IA »"
   },
   {
     "id": "skill-consignes-systeme",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez structurer des instructions système complètes et sans ambiguïté.",
+    "outputs": "Un prompt ou des consignes améliorés.",
+    "example": "« Aide-moi à structurer des instructions système complètes et sans ambiguïté »"
   },
   {
     "id": "skill-chaine-de-raisonnement",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez guider un raisonnement étape par étape vers une réponse.",
+    "outputs": "Un prompt ou des consignes améliorés.",
+    "example": "« Aide-moi à guider un raisonnement étape par étape vers une réponse »"
   },
   {
     "id": "skill-verification-des-faits",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez contrôler la véracité d'affirmations et signaler les incertitudes.",
+    "outputs": "Une évaluation argumentée.",
+    "example": "« Aide-moi à contrôler la véracité d'affirmations et signaler les incertitudes »"
   },
   {
     "id": "skill-detection-de-biais",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez repérer les biais dans une réponse ou un jeu de données.",
+    "outputs": "Une évaluation argumentée.",
+    "example": "« Aide-moi à repérer les biais dans une réponse ou un jeu de données »"
   },
   {
     "id": "skill-test-de-robustesse",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez éprouver une réponse avec cas limites et reformulations.",
+    "outputs": "Une évaluation argumentée.",
+    "example": "« Aide-moi à éprouver une réponse avec cas limites et reformulations »"
   },
   {
     "id": "skill-evaluation-de-qualite",
@@ -101,6 +122,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez noter une réponse selon des critères explicites.",
+    "outputs": "Une évaluation argumentée.",
+    "example": "« Aide-moi à noter une réponse selon des critères explicites »"
   }
 ]

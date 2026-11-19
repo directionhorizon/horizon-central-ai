@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez transformer un objectif en tâches ordonnées et réalisables.",
+    "outputs": "Un plan clair et priorisé.",
+    "example": "« Aide-moi à transformer un objectif en tâches ordonnées et réalisables »"
   },
   {
     "id": "skill-feuille-de-route",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez construire une feuille de route avec jalons et échéances.",
+    "outputs": "Un plan clair et priorisé.",
+    "example": "« Aide-moi à construire une feuille de route avec jalons et échéances »"
   },
   {
     "id": "skill-gestion-des-priorites",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez arbitrer et classer les tâches selon l'impact et l'urgence.",
+    "outputs": "Un plan clair et priorisé.",
+    "example": "« Aide-moi à arbitrer et classer les tâches selon l'impact et l'urgence »"
   },
   {
     "id": "skill-estimation-de-charge",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez estimer l'effort d'un lot de tâches et repérer les risques.",
+    "outputs": "Un plan clair et priorisé.",
+    "example": "« Aide-moi à estimer l'effort d'un lot de tâches et repérer les risques »"
   },
   {
     "id": "skill-compte-rendu-de-reunion",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger un compte-rendu : décisions, actions, responsables.",
+    "outputs": "Un message ou une note prêts à envoyer.",
+    "example": "« Aide-moi à rédiger un compte-rendu : décisions, actions, responsables »"
   },
   {
     "id": "skill-ordre-du-jour",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez préparer un ordre du jour structuré avec objectifs et durées.",
+    "outputs": "Un message ou une note prêts à envoyer.",
+    "example": "« Aide-moi à préparer un ordre du jour structuré avec objectifs et durées »"
   },
   {
     "id": "skill-emails-difficiles",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger un message délicat au ton mesuré et constructif.",
+    "outputs": "Un message ou une note prêts à envoyer.",
+    "example": "« Aide-moi à rédiger un message délicat au ton mesuré et constructif »"
   },
   {
     "id": "skill-note-de-synthese",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez produire une note courte et claire pour décider.",
+    "outputs": "Un message ou une note prêts à envoyer.",
+    "example": "« Aide-moi à produire une note courte et claire pour décider »"
   },
   {
     "id": "skill-matrice-comparative",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez comparer des options selon des critères pondérés.",
+    "outputs": "Une recommandation argumentée.",
+    "example": "« Aide-moi à comparer des options selon des critères pondérés »"
   },
   {
     "id": "skill-analyse-swot",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez établir forces, faiblesses, opportunités et menaces.",
+    "outputs": "Une recommandation argumentée.",
+    "example": "« Aide-moi à établir forces, faiblesses, opportunités et menaces »"
   },
   {
     "id": "skill-simulation-de-scenarios",
@@ -140,7 +170,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez explorer plusieurs scénarios et leurs conséquences.",
+    "outputs": "Une recommandation argumentée.",
+    "example": "« Aide-moi à explorer plusieurs scénarios et leurs conséquences »"
   },
   {
     "id": "skill-analyse-des-risques",
@@ -153,6 +186,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez identifier, coter et prioriser les risques d'un projet.",
+    "outputs": "Une recommandation argumentée.",
+    "example": "« Aide-moi à identifier, coter et prioriser les risques d'un projet »"
   }
 ]

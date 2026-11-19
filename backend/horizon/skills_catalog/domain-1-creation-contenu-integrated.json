@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez générer un article structuré (plan, titres, intention de recherche).",
+    "outputs": "Un contenu web optimisé, prêt à publier.",
+    "example": "« Aide-moi à générer un article structuré (plan, titres, intention de recherche) »"
   },
   {
     "id": "skill-optimisation-seo",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez optimiser un contenu : mots-clés, méta-descriptions, structure, maillage.",
+    "outputs": "Un contenu web optimisé, prêt à publier.",
+    "example": "« Aide-moi à optimiser un contenu : mots-clés, méta-descriptions, structure, maillage »"
   },
   {
     "id": "skill-plan-d-article",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez construire un plan détaillé à partir d'un sujet et d'un objectif.",
+    "outputs": "Un contenu web optimisé, prêt à publier.",
+    "example": "« Aide-moi à construire un plan détaillé à partir d'un sujet et d'un objectif »"
   },
   {
     "id": "skill-meta-descriptions",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger titres SEO et méta-descriptions incitatifs et concis.",
+    "outputs": "Un contenu web optimisé, prêt à publier.",
+    "example": "« Aide-moi à rédiger titres SEO et méta-descriptions incitatifs et concis »"
   },
   {
     "id": "skill-page-de-vente",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger une page de vente persuasive (accroche, bénéfices, CTA).",
+    "outputs": "Un texte persuasif avec un appel à l'action.",
+    "example": "« Aide-moi à rédiger une page de vente persuasive (accroche, bénéfices, CTA) »"
   },
   {
     "id": "skill-accroche-publicitaire",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez créer des accroches et slogans mémorables.",
+    "outputs": "Un texte persuasif avec un appel à l'action.",
+    "example": "« Aide-moi à créer des accroches et slogans mémorables »"
   },
   {
     "id": "skill-emails-marketing",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger des emails marketing et des séquences de relance.",
+    "outputs": "Un texte persuasif avec un appel à l'action.",
+    "example": "« Aide-moi à rédiger des emails marketing et des séquences de relance »"
   },
   {
     "id": "skill-posts-reseaux-sociaux",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez créer des publications adaptées à chaque plateforme.",
+    "outputs": "Des publications adaptées à chaque plateforme.",
+    "example": "« Aide-moi à créer des publications adaptées à chaque plateforme »"
   },
   {
     "id": "skill-script-de-video-courte",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire un script court (accroche, corps, chute) pour vidéo verticale.",
+    "outputs": "Des publications adaptées à chaque plateforme.",
+    "example": "« Aide-moi à écrire un script court (accroche, corps, chute) pour vidéo verticale »"
   },
   {
     "id": "skill-calendrier-editorial",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez planifier les publications dans le temps selon les objectifs.",
+    "outputs": "Des publications adaptées à chaque plateforme.",
+    "example": "« Aide-moi à planifier les publications dans le temps selon les objectifs »"
   },
   {
     "id": "skill-correction-et-relecture",
@@ -140,7 +170,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez corriger grammaire, orthographe et style d'un texte.",
+    "outputs": "Un texte corrigé et fluidifié.",
+    "example": "« Aide-moi à corriger grammaire, orthographe et style d'un texte »"
   },
   {
     "id": "skill-reformulation-de-ton",
@@ -153,7 +186,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez réécrire un texte en changeant le ton (formel, amical, neutre).",
+    "outputs": "Un texte corrigé et fluidifié.",
+    "example": "« Aide-moi à réécrire un texte en changeant le ton (formel, amical, neutre) »"
   },
   {
     "id": "skill-traduction-nuancee",
@@ -166,7 +202,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez traduire en conservant le sens, le ton et les nuances.",
+    "outputs": "Un texte corrigé et fluidifié.",
+    "example": "« Aide-moi à traduire en conservant le sens, le ton et les nuances »"
   },
   {
     "id": "skill-resume-de-texte-long",
@@ -179,6 +218,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez condenser un document long en points clés structurés.",
+    "outputs": "Un texte corrigé et fluidifié.",
+    "example": "« Aide-moi à condenser un document long en points clés structurés »"
   }
 ]

@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez structurer des données brutes, corriger et normaliser.",
+    "outputs": "Un jeu de données propre et structuré.",
+    "example": "« Aide-moi à structurer des données brutes, corriger et normaliser »"
   },
   {
     "id": "skill-conversion-de-formats",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez convertir entre CSV, JSON, Excel et autres formats tabulaires.",
+    "outputs": "Un jeu de données propre et structuré.",
+    "example": "« Aide-moi à convertir entre CSV, JSON, Excel et autres formats tabulaires »"
   },
   {
     "id": "skill-detection-d-anomalies",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez repérer valeurs aberrantes et incohérences.",
+    "outputs": "Un jeu de données propre et structuré.",
+    "example": "« Aide-moi à repérer valeurs aberrantes et incohérences »"
   },
   {
     "id": "skill-analyse-de-jeux-de-donnees",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez interpréter un jeu de données et en extraire des constats.",
+    "outputs": "Des constats et un rendu visuel clair.",
+    "example": "« Aide-moi à interpréter un jeu de données et en extraire des constats »"
   },
   {
     "id": "skill-formules-excel",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez construire formules et tableaux croisés dynamiques complexes.",
+    "outputs": "Des constats et un rendu visuel clair.",
+    "example": "« Aide-moi à construire formules et tableaux croisés dynamiques complexes »"
   },
   {
     "id": "skill-suggestions-de-graphiques",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez choisir le graphique adapté et le rendre lisible.",
+    "outputs": "Des constats et un rendu visuel clair.",
+    "example": "« Aide-moi à choisir le graphique adapté et le rendre lisible »"
   },
   {
     "id": "skill-tableau-de-bord",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez structurer un tableau de bord avec indicateurs clés.",
+    "outputs": "Des constats et un rendu visuel clair.",
+    "example": "« Aide-moi à structurer un tableau de bord avec indicateurs clés »"
   },
   {
     "id": "skill-recherche-web",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rechercher et synthétiser des informations fiables en citant les sources.",
+    "outputs": "Une synthèse sourcée et nuancée.",
+    "example": "« Aide-moi à rechercher et synthétiser des informations fiables en citant les sources »"
   },
   {
     "id": "skill-resume-d-articles-scientifiques",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez résumer un article : méthode, résultats et limites.",
+    "outputs": "Une synthèse sourcée et nuancée.",
+    "example": "« Aide-moi à résumer un article : méthode, résultats et limites »"
   },
   {
     "id": "skill-analyse-concurrentielle",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez comparer plusieurs acteurs et dégager leur positionnement.",
+    "outputs": "Une synthèse sourcée et nuancée.",
+    "example": "« Aide-moi à comparer plusieurs acteurs et dégager leur positionnement »"
   },
   {
     "id": "skill-extraction-depuis-pdf",
@@ -140,7 +170,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez extraire données et informations clés d'un document PDF.",
+    "outputs": "Une synthèse sourcée et nuancée.",
+    "example": "« Aide-moi à extraire données et informations clés d'un document PDF »"
   },
   {
     "id": "skill-synthese-de-sources-multiples",
@@ -153,6 +186,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez croiser plusieurs sources et produire une synthèse nuancée.",
+    "outputs": "Une synthèse sourcée et nuancée.",
+    "example": "« Aide-moi à croiser plusieurs sources et produire une synthèse nuancée »"
   }
 ]

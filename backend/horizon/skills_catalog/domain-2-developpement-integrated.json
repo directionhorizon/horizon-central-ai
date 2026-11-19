@@ -10,7 +10,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire une fonction ou un module à partir d'une spécification.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à écrire une fonction ou un module à partir d'une spécification »"
   },
   {
     "id": "skill-refactoring",
@@ -23,7 +26,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez réorganiser du code existant sans changer son comportement.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à réorganiser du code existant sans changer son comportement »"
   },
   {
     "id": "skill-detection-de-bugs",
@@ -36,7 +42,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez analyser du code pour repérer erreurs et cas limites.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à analyser du code pour repérer erreurs et cas limites »"
   },
   {
     "id": "skill-revue-de-code",
@@ -49,7 +58,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez relire une contribution et proposer des améliorations concrètes.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à relire une contribution et proposer des améliorations concrètes »"
   },
   {
     "id": "skill-tests-unitaires",
@@ -62,7 +74,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire des tests couvrant cas nominaux et cas limites.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à écrire des tests couvrant cas nominaux et cas limites »"
   },
   {
     "id": "skill-optimisation-de-performances",
@@ -75,7 +90,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez identifier les goulots d'étranglement et proposer des optimisations.",
+    "outputs": "Du code lisible et fonctionnel.",
+    "example": "« Aide-moi à identifier les goulots d'étranglement et proposer des optimisations »"
   },
   {
     "id": "skill-conception-de-schema-sql-nosql",
@@ -88,7 +106,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez concevoir un schéma de données cohérent et évolutif.",
+    "outputs": "Un schéma ou une requête validés.",
+    "example": "« Aide-moi à concevoir un schéma de données cohérent et évolutif »"
   },
   {
     "id": "skill-requetes-complexes",
@@ -101,7 +122,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire et optimiser des requêtes (jointures, agrégations, index).",
+    "outputs": "Un schéma ou une requête validés.",
+    "example": "« Aide-moi à écrire et optimiser des requêtes (jointures, agrégations, index) »"
   },
   {
     "id": "skill-choix-de-stack-technique",
@@ -114,7 +138,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez comparer des technologies selon le besoin et la maintenance.",
+    "outputs": "Un schéma ou une requête validés.",
+    "example": "« Aide-moi à comparer des technologies selon le besoin et la maintenance »"
   },
   {
     "id": "skill-scripts-bash-python",
@@ -127,7 +154,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire des scripts d'automatisation fiables et lisibles.",
+    "outputs": "Un script ou une configuration opérationnels.",
+    "example": "« Aide-moi à écrire des scripts d'automatisation fiables et lisibles »"
   },
   {
     "id": "skill-pipeline-ci-cd",
@@ -140,7 +170,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez configurer une chaîne de build, test et déploiement.",
+    "outputs": "Un script ou une configuration opérationnels.",
+    "example": "« Aide-moi à configurer une chaîne de build, test et déploiement »"
   },
   {
     "id": "skill-conteneurs-docker",
@@ -153,7 +186,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez écrire des Dockerfile et composer des services isolés.",
+    "outputs": "Un script ou une configuration opérationnels.",
+    "example": "« Aide-moi à écrire des Dockerfile et composer des services isolés »"
   },
   {
     "id": "skill-configuration-serveur",
@@ -166,7 +202,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez préparer un serveur : utilisateurs, services, sauvegardes.",
+    "outputs": "Un script ou une configuration opérationnels.",
+    "example": "« Aide-moi à préparer un serveur : utilisateurs, services, sauvegardes »"
   },
   {
     "id": "skill-documentation-technique",
@@ -179,7 +218,10 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez rédiger README, guides d'installation et commentaires utiles.",
+    "outputs": "Une documentation claire et à jour.",
+    "example": "« Aide-moi à rédiger README, guides d'installation et commentaires utiles »"
   },
   {
     "id": "skill-documentation-d-api",
@@ -192,6 +234,9 @@
     "origin": "integrated",
     "source_url": "",
     "author": "HORIZON",
-    "license": "Interne"
+    "license": "Interne",
+    "usage": "Quand vous devez documenter des endpoints, paramètres et exemples.",
+    "outputs": "Une documentation claire et à jour.",
+    "example": "« Aide-moi à documenter des endpoints, paramètres et exemples »"
   }
 ]

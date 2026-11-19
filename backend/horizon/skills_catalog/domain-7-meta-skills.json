@@ -10,7 +10,10 @@
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/discernment-nudge/SKILL.md",
     "author": "Anthropic",
     "license": "Voir le dépôt source anthropics/skills",
-    "subcategory": "Évaluation et contrôle"
+    "subcategory": "Évaluation et contrôle",
+    "usage": "Quand vous devez >.",
+    "outputs": "Une évaluation argumentée.",
+    "example": "« Aide-moi à > »"
   },
   {
     "id": "github-anthropic-skill-creator",
@@ -23,6 +26,9 @@
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md",
     "author": "Anthropic",
     "license": "Voir le dépôt source anthropics/skills",
-    "subcategory": "Prompt Engineering"
+    "subcategory": "Prompt Engineering",
+    "usage": "Quand vous devez create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
+    "outputs": "Un prompt ou des consignes améliorés.",
+    "example": "« Aide-moi à create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy »"
   }
 ]
