@@ -352,6 +352,15 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "ALTER TABLE skills ADD COLUMN subcategory TEXT NOT NULL DEFAULT ''",
         ),
     ),
+    (
+        11,
+        "skills_detail",
+        (
+            "ALTER TABLE skills ADD COLUMN usage TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE skills ADD COLUMN outputs TEXT NOT NULL DEFAULT ''",
+            "ALTER TABLE skills ADD COLUMN example TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
@@ -480,13 +489,14 @@ def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
             continue
         db.execute(
             """INSERT INTO skills(
-                   id,name,category,description,level,tags,status,
-                   origin,source_url,author,license,created_at,updated_at
-               ) VALUES(?,?,?,?,?,?,'active',?,?,?,?,?,?)""",
+                   id,name,category,subcategory,description,level,tags,status,
+                   origin,source_url,author,license,usage,outputs,example,created_at,updated_at
+               ) VALUES(?,?,?,?,?,?,?,'active',?,?,?,?,?,?,?,?,?)""",
             (
                 skill_id,
                 item["name"],
                 item.get("category", "Général"),
+                item.get("subcategory", ""),
                 item.get("description", ""),
                 item.get("level", "standard"),
                 item.get("tags", ""),
@@ -494,6 +504,9 @@ def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
                 item.get("source_url", ""),
                 item.get("author", ""),
                 item.get("license", ""),
+                item.get("usage", ""),
+                item.get("outputs", ""),
+                item.get("example", ""),
                 stamp,
                 stamp,
             ),

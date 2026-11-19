@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { GitBranch, Loader2, Plus, Search, Sparkles, Tag } from 'lucide-react';
+import { GitBranch, Loader2, Plus, Search, Sparkles, Tag, X } from 'lucide-react';
 import { skillsApi, type CreateSkillInput } from '../../api/skills';
 import { describeApiError } from '../../api/errors';
 import type { Skill } from '../../api/entities';
@@ -46,7 +46,10 @@ export const SkillsLibrary = () => {
   const [level, setLevel] = useState('standard');
   const [tags, setTags] = useState('');
   const [importUrl, setImportUrl] = useState('');
+  const [importSource, setImportSource] = useState<'url' | 'npm' | 'pypi'>('url');
+  const [importPackage, setImportPackage] = useState('');
   const [importing, setImporting] = useState(false);
+  const [selected, setSelected] = useState<Skill | null>(null);
 
   const refresh = useCallback(async (search: string, cat: string) => {
     setError(null);
@@ -100,14 +103,20 @@ export const SkillsLibrary = () => {
   };
 
   const handleImport = async () => {
-    if (!importUrl.trim()) return;
+    const isPackage = importSource === 'npm' || importSource === 'pypi';
+    if (isPackage && !importPackage.trim()) return;
+    if (!isPackage && !importUrl.trim()) return;
     setImporting(true);
     setError(null);
     setNotice(null);
     try {
-      const result = await skillsApi.import({ url: importUrl.trim(), origin: 'github' });
+      const payload = isPackage
+        ? { source: importSource, package: importPackage.trim() }
+        : { url: importUrl.trim(), origin: 'github' };
+      const result = await skillsApi.import(payload);
       setNotice(`Import terminé : ${result.created} ajoutée(s), ${result.skipped} déjà présente(s).`);
       setImportUrl('');
+      setImportPackage('');
       await refresh(query, category);
     } catch (caught) {
       setError(describeApiError(caught));
@@ -183,7 +192,8 @@ export const SkillsLibrary = () => {
             {skills.map((skill) => (
               <article
                 key={skill.id}
-                className="flex flex-col rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-4 transition hover:border-violet-400/30"
+                onClick={() => setSelected(skill)}
+                className="flex cursor-pointer flex-col rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-4 transition hover:border-violet-400/30"
               >
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <h3 className="text-sm font-semibold text-slate-100">{skill.name}</h3>
@@ -284,20 +294,45 @@ export const SkillsLibrary = () => {
           <GitBranch size={16} className="text-cyan-300" /> Importer depuis une source externe
         </h2>
         <p className="mb-3 text-xs leading-5 text-slate-500">
-          URL d'un fichier JSON de compétences (GitHub, Hugging Face…). Seules les métadonnées
-          sont importées — aucun code n'est exécuté, rien n'est écrasé.
+          URL d'un fichier JSON (GitHub, Hugging Face…) ou paquet npm / PyPI. Seules les
+          métadonnées sont importées — aucun code n'est exécuté, rien n'est écrasé.
         </p>
+        <div className="mb-2 flex flex-wrap gap-2">
+          {(['url', 'npm', 'pypi'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => setImportSource(item)}
+              className={`rounded-full border px-3 py-1 text-[11px] transition ${
+                importSource === item
+                  ? 'border-cyan-400/40 bg-cyan-400/15 text-cyan-100'
+                  : 'border-white/10 text-slate-400 hover:bg-white/5'
+              }`}
+            >
+              {item === 'url' ? 'URL (GitHub, Hugging Face)' : item === 'npm' ? 'Paquet npm' : 'Paquet PyPI'}
+            </button>
+          ))}
+        </div>
         <div className="flex flex-col gap-2 sm:flex-row">
-          <input
-            value={importUrl}
-            onChange={(event) => setImportUrl(event.target.value)}
-            placeholder="https://raw.githubusercontent.com/… ou huggingface.co/…"
-            className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-cyan-400/50"
-          />
+          {importSource === 'url' ? (
+            <input
+              value={importUrl}
+              onChange={(event) => setImportUrl(event.target.value)}
+              placeholder="https://raw.githubusercontent.com/… ou huggingface.co/…"
+              className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-cyan-400/50"
+            />
+          ) : (
+            <input
+              value={importPackage}
+              onChange={(event) => setImportPackage(event.target.value)}
+              placeholder={importSource === 'npm' ? 'nom du paquet npm (ex. react)' : 'nom du paquet PyPI (ex. httpx)'}
+              className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-cyan-400/50"
+            />
+          )}
           <button
             type="button"
             onClick={() => void handleImport()}
-            disabled={importing || !importUrl.trim()}
+            disabled={importing || (importSource === 'url' ? !importUrl.trim() : !importPackage.trim())}
             className="flex h-9 items-center justify-center gap-2 rounded-lg bg-cyan-400/15 px-4 text-xs font-medium text-cyan-200 hover:bg-cyan-400/25 disabled:opacity-40"
           >
             {importing ? <Loader2 size={14} className="animate-spin" /> : <GitBranch size={14} />}
@@ -305,6 +340,75 @@ export const SkillsLibrary = () => {
           </button>
         </div>
       </section>
+
+      {selected && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setSelected(null)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-2xl overflow-auto rounded-2xl border border-white/10 bg-[#12151e] p-6"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-4 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold text-slate-100">{selected.name}</h2>
+                <p className="text-xs text-slate-500">
+                  {selected.category} · {selected.subcategory}
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setSelected(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                aria-label="Fermer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Description</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">{selected.description || '—'}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Quand l'utiliser</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">{selected.usage || '—'}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Livrable attendu</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">{selected.outputs || '—'}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Exemple</p>
+                <p className="mt-1 text-xs leading-relaxed text-slate-300">{selected.example || '—'}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Niveau</p>
+                <p className="mt-1 text-xs text-slate-300">{LEVEL_LABEL[selected.level] ?? selected.level}</p>
+              </div>
+              <div className="rounded-xl border border-white/[0.08] bg-white/[0.02] p-3">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">Provenance</p>
+                <p className="mt-1 text-xs text-slate-300">
+                  {ORIGIN_LABEL[selected.origin] ?? selected.origin}
+                  {selected.author ? ` · ${selected.author}` : ''}
+                </p>
+                {selected.source_url && (
+                  <a
+                    href={selected.source_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-1 block break-all text-[11px] text-cyan-300 hover:underline"
+                  >
+                    {selected.source_url}
+                  </a>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   );
 };

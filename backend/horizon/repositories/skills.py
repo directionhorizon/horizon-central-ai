@@ -14,19 +14,19 @@ from ..db import now
 
 FIELDS = (
     "id,name,category,subcategory,description,level,tags,status,"
-    "origin,source_url,author,license,created_at,updated_at"
+    "origin,source_url,author,license,usage,outputs,example,created_at,updated_at"
 )
 PREFIXED = ", ".join(f"s.{name}" for name in FIELDS.split(","))
 
 INSERT_COLUMNS = (
     "id,name,category,subcategory,description,level,tags,status,"
-    "origin,source_url,author,license,created_at,updated_at"
+    "origin,source_url,author,license,usage,outputs,example,created_at,updated_at"
 )
 
 
 def _insert(db: sqlite3.Connection, data: dict[str, Any], stamp: str) -> None:
     db.execute(
-        f"INSERT INTO skills({INSERT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        f"INSERT INTO skills({INSERT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             data["id"],
             str(data["name"]).strip(),
@@ -40,6 +40,9 @@ def _insert(db: sqlite3.Connection, data: dict[str, Any], stamp: str) -> None:
             str(data.get("source_url") or ""),
             str(data.get("author") or ""),
             str(data.get("license") or ""),
+            str(data.get("usage") or ""),
+            str(data.get("outputs") or ""),
+            str(data.get("example") or ""),
             stamp,
             stamp,
         ),
@@ -126,7 +129,7 @@ def update_skill(
         return None
     allowed: dict[str, Any] = {}
     for key in ("name", "category", "subcategory", "description", "level", "tags", "status",
-                "origin", "source_url", "author", "license"):
+                "origin", "source_url", "author", "license", "usage", "outputs", "example"):
         if changes.get(key) is not None:
             allowed[key] = changes[key]
     if allowed:

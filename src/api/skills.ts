@@ -38,6 +38,8 @@ export const skillsApi = {
     url?: string;
     bundle?: unknown[];
     origin?: string;
+    source?: string;
+    package?: string;
   }): Promise<{ status: string; created: number; skipped: number }> =>
     http.request<{ status: string; created: number; skipped: number }>(API_ROUTES.skillsImport, {
       method: 'POST',

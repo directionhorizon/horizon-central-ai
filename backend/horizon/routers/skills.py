@@ -29,6 +29,61 @@ ALLOWED_IMPORT_HOSTS = {
 }
 MAX_IMPORT_BYTES = 1_000_000
 
+#: Registres de paquets pris en charge (hôtes fixes, jamais fournis par l'utilisateur).
+NPM_REGISTRY = "https://registry.npmjs.org"
+PYPI_REGISTRY = "https://pypi.org/pypi"
+
+
+async def _fetch_json(url: str, label: str) -> dict:
+    try:
+        async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
+            response = await client.get(url, headers={"User-Agent": "horizon-skill-import"})
+    except httpx.HTTPError as error:
+        raise HTTPException(502, f"Téléchargement impossible : {type(error).__name__}.")
+    if response.status_code >= 400:
+        raise HTTPException(502, f"{label} introuvable (HTTP {response.status_code}).")
+    if len(response.content) > MAX_IMPORT_BYTES:
+        raise HTTPException(413, "Réponse trop volumineuse (1 Mo maximum).")
+    try:
+        data = response.json()
+    except ValueError:
+        raise HTTPException(400, f"Réponse {label} illisible.")
+    return data if isinstance(data, dict) else {}
+
+
+def _package_entry(package: str, description: str, home: str, source: str) -> dict:
+    return {
+        "id": f"{source}-{package}",
+        "name": package,
+        "category": "Intégrations et outils",
+        "subcategory": f"Paquet {source}",
+        "description": description or f"Paquet {source} importé comme outil/compétence.",
+        "level": "standard",
+        "tags": f"{source},package,outil",
+        "origin": source,
+        "source_url": home,
+        "author": "",
+        "license": "",
+    }
+
+
+async def _fetch_package(source: str, package: str) -> tuple[dict, str]:
+    """Récupère les métadonnées d'un paquet npm ou PyPI (aucun code exécuté)."""
+    if source == "npm":
+        url = f"{NPM_REGISTRY}/{package}"
+        data = await _fetch_json(url, "Paquet npm")
+        latest = str((data.get("dist-tags") or {}).get("latest") or "")
+        version = (data.get("versions") or {}).get(latest, {}) or {}
+        description = str(data.get("description") or version.get("description") or "")
+        home = str(data.get("homepage") or version.get("homepage") or f"https://www.npmjs.com/package/{package}")
+        return _package_entry(package, description, home, "npm"), url
+    url = f"{PYPI_REGISTRY}/{package}/json"
+    data = await _fetch_json(url, "Paquet PyPI")
+    info = data.get("info") or {}
+    description = str(info.get("summary") or "")
+    home = str(info.get("home_page") or info.get("project_url") or f"https://pypi.org/project/{package}/")
+    return _package_entry(package, description, home, "pypi"), url
+
 
 @router.get("")
 def list_skills(q: str | None = None, category: str | None = None, status: str | None = None):
@@ -54,8 +109,17 @@ async def import_skills(payload: SkillImportRequest, actor: str = Depends(requir
     """
     items = list(payload.bundle or [])
     source_ref = ""
+    origin = payload.origin
+    source = (payload.source or "").strip().lower()
+    package = (payload.package or "").strip()
 
-    if payload.url:
+    if source in ("npm", "pypi"):
+        if not package:
+            raise HTTPException(400, "Nom de paquet requis pour cette source.")
+        entry, source_ref = await _fetch_package(source, package)
+        items = [entry]
+        origin = source
+    elif payload.url:
         parsed = urlparse(payload.url)
         if parsed.scheme != "https" or parsed.hostname not in ALLOWED_IMPORT_HOSTS:
             raise HTTPException(
@@ -85,7 +149,7 @@ async def import_skills(payload: SkillImportRequest, actor: str = Depends(requir
         raise HTTPException(400, "Aucune compétence à importer.")
 
     with connect() as db:
-        result = skills.import_skills(db, items, origin=payload.origin, source_ref=source_ref)
+        result = skills.import_skills(db, items, origin=origin, source_ref=source_ref)
         operations.log(
             db, actor=actor, action="skill.import", target_type="skill",
             detail=f"Import de compétences : {result['created']} ajoutée(s), {result['skipped']} ignorée(s).",

@@ -187,6 +187,9 @@ class SkillCreate(BaseModel):
     source_url: str = Field(default="", max_length=600)
     author: str = Field(default="", max_length=200)
     license: str = Field(default="", max_length=200)
+    usage: str = Field(default="", max_length=2000)
+    outputs: str = Field(default="", max_length=2000)
+    example: str = Field(default="", max_length=2000)
 
 
 class SkillUpdate(BaseModel):
@@ -201,6 +204,9 @@ class SkillUpdate(BaseModel):
     source_url: str | None = Field(default=None, max_length=600)
     author: str | None = Field(default=None, max_length=200)
     license: str | None = Field(default=None, max_length=200)
+    usage: str | None = Field(default=None, max_length=2000)
+    outputs: str | None = Field(default=None, max_length=2000)
+    example: str | None = Field(default=None, max_length=2000)
 
 
 class SkillAttach(BaseModel):
@@ -208,8 +214,11 @@ class SkillAttach(BaseModel):
 
 
 class SkillImportRequest(BaseModel):
-    """Import sécurisé : bundle JSON direct, ou URL GitHub (hôtes autorisés)."""
+    """Import sécurisé : bundle JSON, URL d'une source autorisée, ou paquet npm/PyPI."""
 
     url: str | None = Field(default=None, max_length=1000)
     bundle: list[dict] = Field(default_factory=list)
     origin: str = Field(default="github", max_length=40)
+    #: Source paquet : "npm" ou "pypi". `package` = nom du paquet.
+    source: str | None = Field(default=None, max_length=20)
+    package: str | None = Field(default=None, max_length=214)

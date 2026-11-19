@@ -104,6 +104,12 @@ export interface SkillSummary {
 
 export interface Skill extends SkillSummary {
   license: string;
+  /** Quand utiliser cette compétence. */
+  usage: string;
+  /** Livrable attendu. */
+  outputs: string;
+  /** Exemple de demande. */
+  example: string;
   created_at: string;
   updated_at: string;
 }

@@ -68,6 +68,12 @@ def test_import_bundle_securise(client):
     assert found[0]["origin"] == "github"
 
 
+def test_import_paquet_sans_nom_refuse(client):
+    response = client.post("/api/v1/skills/import", json={"source": "npm"})
+    assert response.status_code == 400
+    assert "paquet" in response.json()["detail"].lower()
+
+
 def test_import_url_hote_non_autorise_refuse(client):
     response = client.post(
         "/api/v1/skills/import", json={"url": "https://exemple-malveillant.tld/skills.json"}
