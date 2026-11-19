@@ -1,4 +1,0 @@
-[
-  {"id": "skill-redaction-messages", "name": "Rédaction de messages", "category": "Communication", "description": "Rédiger des messages clairs adaptés au destinataire et au canal.", "level": "standard", "tags": "message,redaction,communication", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
-  {"id": "skill-traduction", "name": "Traduction", "category": "Communication", "description": "Traduire un contenu en conservant le sens et le ton.", "level": "standard", "tags": "traduction,langue,communication", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
-]

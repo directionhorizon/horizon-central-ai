@@ -345,6 +345,13 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "ALTER TABLE skills ADD COLUMN license TEXT NOT NULL DEFAULT ''",
         ),
     ),
+    (
+        10,
+        "skills_subcategory",
+        (
+            "ALTER TABLE skills ADD COLUMN subcategory TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.

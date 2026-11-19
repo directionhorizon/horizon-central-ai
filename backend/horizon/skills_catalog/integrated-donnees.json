@@ -1,4 +1,0 @@
-[
-  {"id": "skill-nettoyage-donnees", "name": "Nettoyage de données", "category": "Données", "description": "Corriger, dédupliquer et normaliser un jeu de données.", "level": "avance", "tags": "donnees,nettoyage,qualite", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
-  {"id": "skill-visualisation", "name": "Visualisation", "category": "Données", "description": "Transformer des données en graphiques lisibles et honnêtes.", "level": "standard", "tags": "graphique,visualisation,donnees", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
-]

@@ -68,7 +68,7 @@ def _skills(db: sqlite3.Connection, orchestrator_ids: list[str]) -> dict[str, li
         return {}
     placeholders = ",".join("?" for _ in orchestrator_ids)
     rows = db.execute(
-        f"""SELECT os.orchestrator_id, s.id, s.name, s.category, s.description,
+        f"""SELECT os.orchestrator_id, s.id, s.name, s.category, s.subcategory, s.description,
                    s.level, s.tags, s.status, s.origin, s.source_url, s.author
             FROM orchestrator_skills os
             JOIN skills s ON s.id = os.skill_id

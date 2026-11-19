@@ -12,22 +12,26 @@ from typing import Any
 
 from ..db import now
 
-FIELDS = "id,name,category,description,level,tags,status,origin,source_url,author,license,created_at,updated_at"
+FIELDS = (
+    "id,name,category,subcategory,description,level,tags,status,"
+    "origin,source_url,author,license,created_at,updated_at"
+)
 PREFIXED = ", ".join(f"s.{name}" for name in FIELDS.split(","))
 
 INSERT_COLUMNS = (
-    "id,name,category,description,level,tags,status,"
+    "id,name,category,subcategory,description,level,tags,status,"
     "origin,source_url,author,license,created_at,updated_at"
 )
 
 
 def _insert(db: sqlite3.Connection, data: dict[str, Any], stamp: str) -> None:
     db.execute(
-        f"INSERT INTO skills({INSERT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+        f"INSERT INTO skills({INSERT_COLUMNS}) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
         (
             data["id"],
             str(data["name"]).strip(),
             (str(data.get("category") or "general").strip() or "general"),
+            str(data.get("subcategory") or ""),
             str(data.get("description") or ""),
             str(data.get("level") or "standard"),
             str(data.get("tags") or ""),
@@ -121,7 +125,7 @@ def update_skill(
     if get_skill(db, skill_id) is None:
         return None
     allowed: dict[str, Any] = {}
-    for key in ("name", "category", "description", "level", "tags", "status",
+    for key in ("name", "category", "subcategory", "description", "level", "tags", "status",
                 "origin", "source_url", "author", "license"):
         if changes.get(key) is not None:
             allowed[key] = changes[key]

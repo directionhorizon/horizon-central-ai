@@ -1,4 +1,0 @@
-[
-  {"id": "skill-analyse-donnees", "name": "Analyse de données", "category": "Analyse", "description": "Lire un jeu de données et en extraire des constats vérifiables.", "level": "avance", "tags": "donnees,statistiques,analyse", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
-  {"id": "skill-synthese", "name": "Synthèse", "category": "Analyse", "description": "Condenser plusieurs documents en une note claire et structurée.", "level": "standard", "tags": "synthese,note,resume", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
-]

@@ -88,7 +88,10 @@ export type SkillStatus = 'active' | 'disabled';
 export interface SkillSummary {
   id: string;
   name: string;
+  /** Grand domaine d'application (ex. « Analyse de données et recherche »). */
   category: string;
+  /** Sous-domaine précis (ex. « Veille et synthèse »). */
+  subcategory: string;
   description: string;
   level: string;
   tags: string;

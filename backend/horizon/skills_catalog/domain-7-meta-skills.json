@@ -1,38 +1,28 @@
 [
   {
-    "id": "github-anthropic-academy-guide",
-    "name": "academy-guide",
-    "category": "Organisation",
-    "description": ">",
-    "level": "avance",
-    "tags": "academy,guide",
-    "origin": "github",
-    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/academy-guide/SKILL.md",
-    "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
-  },
-  {
     "id": "github-anthropic-discernment-nudge",
     "name": "discernment-nudge",
-    "category": "Organisation",
+    "category": "Méta-skills (IA)",
     "description": ">",
     "level": "avance",
     "tags": "discernment,nudge",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/discernment-nudge/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Évaluation et contrôle"
   },
   {
     "id": "github-anthropic-skill-creator",
     "name": "skill-creator",
-    "category": "Organisation",
+    "category": "Méta-skills (IA)",
     "description": "Create new skills, modify and improve existing skills, and measure skill performance. Use when users want to create a skill from scratch, edit, or optimize an existing skill, run evals to test a skill, benchmark skill performance with variance analysis, or optimize a skill's description for better triggering accuracy.",
     "level": "avance",
     "tags": "skill,creator",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/skill-creator/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Prompt Engineering"
   }
 ]

@@ -2,49 +2,53 @@
   {
     "id": "github-anthropic-claude-api",
     "name": "claude-api",
-    "category": "Technique",
+    "category": "Développement et informatique",
     "description": "|-",
     "level": "avance",
     "tags": "claude,api",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/claude-api/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Documentation technique"
   },
   {
     "id": "github-anthropic-mcp-builder",
     "name": "mcp-builder",
-    "category": "Technique",
+    "category": "Développement et informatique",
     "description": "Guide for creating high-quality MCP (Model Context Protocol) servers that enable LLMs to interact with external services through well-designed tools. Use when building MCP servers to integrate external APIs or services, whether in Python (FastMCP) or Node/TypeScript (MCP SDK).",
     "level": "avance",
     "tags": "mcp,builder",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/mcp-builder/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Architecture et bases de données"
   },
   {
     "id": "github-anthropic-web-artifacts-builder",
     "name": "web-artifacts-builder",
-    "category": "Technique",
+    "category": "Développement et informatique",
     "description": "Suite of tools for creating elaborate, multi-component claude.ai HTML artifacts using modern frontend web technologies (React, Tailwind CSS, shadcn/ui). Use for complex artifacts requiring state management, routing, or shadcn/ui components - not for simple single-file HTML/JSX artifacts.",
     "level": "avance",
     "tags": "web,artifacts,builder",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/web-artifacts-builder/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Génération et révision de code"
   },
   {
     "id": "github-anthropic-webapp-testing",
     "name": "webapp-testing",
-    "category": "Technique",
+    "category": "Développement et informatique",
     "description": "Toolkit for interacting with and testing local web applications using Playwright. Supports verifying frontend functionality, debugging UI behavior, capturing browser screenshots, and viewing browser logs.",
     "level": "avance",
     "tags": "webapp,testing",
     "origin": "github",
     "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/webapp-testing/SKILL.md",
     "author": "Anthropic",
-    "license": "Voir le dépôt source anthropics/skills"
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Génération et révision de code"
   }
 ]

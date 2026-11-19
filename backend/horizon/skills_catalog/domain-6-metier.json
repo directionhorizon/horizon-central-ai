@@ -1,0 +1,15 @@
+[
+  {
+    "id": "github-anthropic-academy-guide",
+    "name": "academy-guide",
+    "category": "Métier et expertise spécialisée",
+    "description": ">",
+    "level": "avance",
+    "tags": "academy,guide",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/academy-guide/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Éducation et formation"
+  }
+]

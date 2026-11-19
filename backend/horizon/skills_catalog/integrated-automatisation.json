@@ -1,4 +1,0 @@
-[
-  {"id": "skill-planification", "name": "Planification", "category": "Automatisation", "description": "Découper une mission en étapes ordonnées et vérifiables.", "level": "standard", "tags": "plan,taches,organisation", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"},
-  {"id": "skill-automatisation-taches", "name": "Automatisation de tâches", "category": "Automatisation", "description": "Enchaîner des actions répétitives sans intervention manuelle.", "level": "avance", "tags": "automatisation,taches,workflow", "origin": "integrated", "source_url": "", "author": "HORIZON", "license": "Interne"}
-]

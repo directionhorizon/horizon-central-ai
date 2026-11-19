@@ -206,6 +206,11 @@ export const SkillsLibrary = () => {
                     <GitBranch size={10} /> {ORIGIN_LABEL[skill.origin] ?? skill.origin}
                   </span>
                 </div>
+                {skill.subcategory && (
+                  <p className="mb-1.5 text-[10px] uppercase tracking-wide text-violet-300/70">
+                    {skill.subcategory}
+                  </p>
+                )}
                 <p className="flex-1 text-xs leading-relaxed text-slate-400">{skill.description || '—'}</p>
                 {skill.tags && (
                   <p className="mt-3 flex flex-wrap gap-1">

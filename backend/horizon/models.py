@@ -177,7 +177,8 @@ class DocumentUpdate(BaseModel):
 
 class SkillCreate(BaseModel):
     name: str = Field(min_length=1, max_length=160)
-    category: str = Field(default="general", max_length=80)
+    category: str = Field(default="general", max_length=120)
+    subcategory: str = Field(default="", max_length=120)
     description: str = Field(default="", max_length=4000)
     level: str = Field(default="standard", max_length=40)
     tags: str = Field(default="", max_length=400)
@@ -190,7 +191,8 @@ class SkillCreate(BaseModel):
 
 class SkillUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=1, max_length=160)
-    category: str | None = Field(default=None, max_length=80)
+    category: str | None = Field(default=None, max_length=120)
+    subcategory: str | None = Field(default=None, max_length=120)
     description: str | None = Field(default=None, max_length=4000)
     level: str | None = Field(default=None, max_length=40)
     tags: str | None = Field(default=None, max_length=400)

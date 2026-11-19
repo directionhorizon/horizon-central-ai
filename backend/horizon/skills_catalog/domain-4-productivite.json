@@ -1,0 +1,41 @@
+[
+  {
+    "id": "github-anthropic-internal-comms",
+    "name": "internal-comms",
+    "category": "Productivité et gestion de projet",
+    "description": "A set of resources to help me write all kinds of internal communications, using the formats that my company likes to use. Claude should use this skill whenever asked to write some sort of internal communications (status reports, leadership updates, 3P updates, company newsletters, FAQs, incident reports, project updates, etc.).",
+    "level": "avance",
+    "tags": "internal,comms",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/internal-comms/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Communication professionnelle"
+  },
+  {
+    "id": "github-anthropic-docx",
+    "name": "docx",
+    "category": "Productivité et gestion de projet",
+    "description": "Use this skill whenever the user wants to create, read, edit, or manipulate Word documents (.docx files) or Word templates (.dotx files). Triggers include: any mention of 'Word doc', 'word document', '.docx', '.dotx', or requests to produce professional documents with formatting like tables of contents, headings, page numbers, or letterheads. Also use when extracting or reorganizing content from .docx or .dotx files, inserting or replacing images in documents, performing find-and-replace in Word files, working with tracked changes or comments, or converting content into a polished Word document. If the user asks for a 'report', 'memo', 'letter', 'template', or similar deliverable as a Word or .docx file, use this skill. Do NOT use for PDFs, spreadsheets, Google Docs, or general coding tasks unrelated to document generation.",
+    "level": "avance",
+    "tags": "docx",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/docx/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Communication professionnelle"
+  },
+  {
+    "id": "github-anthropic-pptx",
+    "name": "pptx",
+    "category": "Productivité et gestion de projet",
+    "description": "Use this skill any time a .pptx or .potx file is involved in any way — as input, output, or both. This includes: creating slide decks, pitch decks, or presentations; reading, parsing, or extracting text from any .pptx or .potx file (even if the extracted content will be used elsewhere, like in an email or summary); editing, modifying, or updating existing presentations; combining or splitting slide files; working with templates (.potx), layouts, speaker notes, or comments. Trigger whenever the user mentions \\\"deck,\\\" \\\"slides,\\\" \\\"presentation,\\\" or references a .pptx or .potx filename, regardless of what they plan to do with the content afterward. If a .pptx or .potx file needs to be opened, created, or touched, use this skill.",
+    "level": "avance",
+    "tags": "pptx",
+    "origin": "github",
+    "source_url": "https://raw.githubusercontent.com/anthropics/skills/main/skills/pptx/SKILL.md",
+    "author": "Anthropic",
+    "license": "Voir le dépôt source anthropics/skills",
+    "subcategory": "Communication professionnelle"
+  }
+]
