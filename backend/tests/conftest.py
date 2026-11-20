@@ -16,6 +16,7 @@ if str(BACKEND_DIR) not in sys.path:
 
 TEST_DB_DIR = Path(tempfile.mkdtemp(prefix="horizon-tests-"))
 os.environ["HORIZON_DATABASE_PATH"] = str(TEST_DB_DIR / "horizon-test.db")
+os.environ["HORIZON_WORKSPACE_DIR"] = str(TEST_DB_DIR / "workspace")
 for variable in (
     "HORIZON_ADMIN_TOKEN",
     "HORIZON_GOOGLE_CLIENT_ID",

@@ -92,6 +92,13 @@ class AgentUpdate(BaseModel):
     status: Literal["active", "inactive"] | None = None
 
 
+class ToolRun(BaseModel):
+    """Exécution d'une main (outil) avec ses paramètres."""
+
+    params: dict = Field(default_factory=dict)
+    agent_id: str | None = None
+
+
 # --- Missions --------------------------------------------------------------
 
 class MissionCreate(BaseModel):
