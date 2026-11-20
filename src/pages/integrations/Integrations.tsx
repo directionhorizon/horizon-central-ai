@@ -90,6 +90,11 @@ export function Integrations() {
   const [toolPermissions, setToolPermissions] = useState(TOOL_PRESETS[0].permissions);
   const [toolCapabilities, setToolCapabilities] = useState(TOOL_PRESETS[0].capabilities);
   const [localNotice, setLocalNotice] = useState<string | null>(null);
+  const [oauthProviders, setOauthProviders] = useState<
+    Record<string, { label: string; configured: boolean; redirect_uri: string; scope: string }>
+  >({});
+  const [oauthName, setOauthName] = useState('');
+  const [oauthBusy, setOauthBusy] = useState<string | null>(null);
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -111,6 +116,34 @@ export function Integrations() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  useEffect(() => {
+    void (async () => {
+      try {
+        const providers = await integrationsApi.oauthProviders();
+        setOauthProviders(providers.items);
+      } catch {
+        /* registre OAuth indisponible : la section reste vide */
+      }
+    })();
+  }, []);
+
+  const connectOauth = async (provider: string) => {
+    setOauthBusy(provider);
+    setError(null);
+    setNotice(null);
+    try {
+      const started = await integrationsApi.oauthStart(provider, oauthName.trim());
+      window.open(started.authorize_url, '_blank', 'noopener');
+      setNotice(
+        'Autorisez la connexion dans l’onglet ouvert, puis actualisez la liste des connexions.',
+      );
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setOauthBusy(null);
+    }
+  };
 
   const labels = useMemo(() => {
     const categories = new Map((catalog?.categories ?? []).map((item) => [item.id, item.label]));
@@ -277,6 +310,46 @@ export function Integrations() {
           <div className={stats && stats.needs_action > 0 ? 'hz-kpi hz-kpi--accent' : 'hz-kpi'}>
             <p className="hz-kpi__label">À traiter</p>
             <p className="hz-kpi__value">{stats?.needs_action ?? 0}</p>
+          </div>
+        </section>
+
+        <section className="hz-panel p-4">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="hz-eyebrow">Connexion automatique (OAuth)</p>
+              <h2 className="mt-1 text-base font-semibold text-slate-100">Réseaux sociaux</h2>
+              <p className="hz-hint mt-1 max-w-3xl">
+                Aucun jeton à saisir : cliquez « Connecter », puis autorisez dans l’onglet qui s’ouvre.
+                Le jeton est récupéré et stocké localement, jamais affiché ni journalisé.
+              </p>
+            </div>
+            <input
+              className="hz-input max-w-[240px]"
+              placeholder="Nom du compte (facultatif)"
+              value={oauthName}
+              onChange={(event) => setOauthName(event.target.value)}
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap gap-2">
+            {Object.entries(oauthProviders).map(([key, provider]) => (
+              <div key={key} className="hz-card flex flex-wrap items-center gap-2 p-3">
+                <span className="text-sm font-semibold text-slate-100">{provider.label}</span>
+                <span className={provider.configured ? 'hz-badge hz-badge--ok' : 'hz-badge hz-badge--warn'}>
+                  {provider.configured ? 'application configurée' : 'application à créer'}
+                </span>
+                <button
+                  type="button"
+                  className="hz-btn hz-btn--primary"
+                  disabled={!provider.configured || oauthBusy === key}
+                  onClick={() => void connectOauth(key)}
+                >
+                  {oauthBusy === key ? <Loader2 size={12} className="animate-spin" /> : null} Connecter
+                </button>
+              </div>
+            ))}
+            {Object.keys(oauthProviders).length === 0 && (
+              <p className="hz-hint">Aucun fournisseur OAuth disponible pour le moment.</p>
+            )}
           </div>
         </section>
 

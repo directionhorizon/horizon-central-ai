@@ -20,7 +20,26 @@ export interface CreateIntegrationInput {
   config?: Record<string, unknown>;
 }
 
+export interface OauthProvider {
+  label: string;
+  configured: boolean;
+  redirect_uri: string;
+  scope: string;
+}
+
+export interface OauthStartResult {
+  provider: string;
+  authorize_url: string;
+  state: string;
+}
+
 export const integrationsApi = {
+  oauthProviders: (): Promise<{ items: Record<string, OauthProvider> }> =>
+    http.requestWithRetry<{ items: Record<string, OauthProvider> }>(
+      API_ROUTES.integrationsOauthProviders,
+    ),
+  oauthStart: (provider: string, name = ''): Promise<OauthStartResult> =>
+    http.request<OauthStartResult>(API_ROUTES.integrationOauthStart(provider, name)),
   catalog: (): Promise<IntegrationCatalogResponse> =>
     http.requestWithRetry<IntegrationCatalogResponse>(API_ROUTES.integrationsCatalog),
   list: (params: { category?: string; includeArchived?: boolean } = {}): Promise<IntegrationListResponse> => {

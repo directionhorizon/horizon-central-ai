@@ -95,6 +95,9 @@ export const API_ROUTES = {
   integrationsCatalog: '/api/v1/integrations/catalog',
   integration: (id: string) => `/api/v1/integrations/${encodeURIComponent(id)}`,
   integrationTest: (id: string) => `/api/v1/integrations/${encodeURIComponent(id)}/test`,
+  integrationsOauthProviders: '/api/v1/integrations/oauth/providers',
+  integrationOauthStart: (provider: string, name = '') =>
+    `/api/v1/integrations/oauth/${encodeURIComponent(provider)}/start${name ? `?name=${encodeURIComponent(name)}` : ''}`,
 
   skills: '/api/v1/skills',
   skillsCategories: '/api/v1/skills/categories',
