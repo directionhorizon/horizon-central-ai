@@ -277,6 +277,35 @@ async def _data_extract(db, params: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+# --- Famille 3 : documents (lecture PDF) ------------------------------------
+
+@handler("tool-pdf-read")
+async def _pdf_read(_db, params: dict[str, Any]) -> dict[str, Any]:
+    target = _safe_path(params.get("path", ""))
+    if not target.is_file():
+        raise ToolError("Fichier introuvable.")
+    try:
+        from pypdf import PdfReader
+    except ImportError as error:
+        raise ToolError("Lecture PDF indisponible : bibliothèque pypdf absente.") from error
+    try:
+        reader = PdfReader(str(target))
+        all_pages = list(reader.pages)
+    except Exception as error:  # pypdf lève des erreurs variées selon le fichier
+        raise ToolError("PDF illisible ou corrompu.") from error
+    texts: list[str] = []
+    for page in all_pages[:50]:
+        try:
+            texts.append((page.extract_text() or "").strip())
+        except Exception:  # une page illisible ne doit pas faire échouer tout le document
+            texts.append("")
+    return {
+        "path": _rel(target),
+        "pages": len(all_pages),
+        "text": _clip("\n".join(texts)),
+    }
+
+
 # --- Famille 5 : méta (mémoire, compétences) --------------------------------
 
 @handler("tool-skills")
