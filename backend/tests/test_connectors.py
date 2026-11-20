@@ -11,7 +11,6 @@ import pytest
 from horizon import tool_runtime
 
 UNCONFIG = [
-    ("tool-web-search", {"query": "test"}),
     ("tool-email-send", {"to": "a@b.c", "subject": "s", "body": "b"}),
     ("tool-telegram-bot", {"chat_id": "1", "text": "salut"}),
     ("tool-image-generate", {"prompt": "un chat"}),
@@ -89,6 +88,26 @@ def test_recherche_searxng(client, monkeypatch):
     body = response.json()["result"]
     assert body["provider"] == "searxng"
     assert body["items"][0]["title"] == "Titre"
+
+
+def test_recherche_repli_duckduckgo_sans_cle(client, monkeypatch):
+    monkeypatch.delenv("HORIZON_SEARCH_URL", raising=False)
+    monkeypatch.delenv("HORIZON_BRAVE_SEARCH_KEY", raising=False)
+    monkeypatch.setattr(
+        tool_runtime,
+        "_duckduckgo_search",
+        lambda query, limit: {
+            "provider": "duckduckgo",
+            "query": query,
+            "count": 1,
+            "items": [{"title": "T", "url": "http://x", "snippet": "s"}],
+        },
+    )
+    response = client.post(
+        "/api/v1/tools/tool-web-search/run", json={"params": {"query": "horizon"}}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["provider"] == "duckduckgo"
 
 
 def test_telegram_envoi(client, monkeypatch):

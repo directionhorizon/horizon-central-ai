@@ -516,6 +516,26 @@ def _credential(db, account: Any, default_env: str, label: str) -> str:
     return value
 
 
+def _duckduckgo_search(query: str, limit: int) -> dict[str, Any]:
+    """Recherche sans clé ni serveur (DuckDuckGo). Repli par défaut."""
+    try:
+        from ddgs import DDGS
+    except ImportError as error:
+        raise ToolError(
+            "Recherche indisponible : configurez HORIZON_SEARCH_URL (SearXNG) ou "
+            "installez le repli DuckDuckGo (ddgs)."
+        ) from error
+    try:
+        results = DDGS().text(query, max_results=limit)
+    except Exception as error:  # ddgs lève des erreurs variées (réseau, format)
+        raise ToolError(f"Recherche DuckDuckGo indisponible ({type(error).__name__}).") from error
+    items = [
+        {"title": r.get("title"), "url": r.get("href"), "snippet": r.get("body")}
+        for r in (results or [])
+    ]
+    return {"provider": "duckduckgo", "query": query, "count": len(items), "items": items}
+
+
 @handler("tool-web-search")
 async def _web_search(_db, params: dict[str, Any]) -> dict[str, Any]:
     query = str(params.get("query") or params.get("q") or "").strip()
@@ -552,10 +572,8 @@ async def _web_search(_db, params: dict[str, Any]) -> dict[str, Any]:
                 for r in results[:limit]
             ]
             return {"provider": "brave", "query": query, "count": len(items), "items": items}
-    raise ToolError(
-        "Aucun moteur de recherche configuré : renseignez HORIZON_SEARCH_URL "
-        "(SearXNG, gratuit) ou HORIZON_BRAVE_SEARCH_KEY."
-    )
+    # Aucun moteur configuré : repli sans clé (DuckDuckGo).
+    return await asyncio.to_thread(_duckduckgo_search, query, limit)
 
 
 @handler("tool-email-send")
