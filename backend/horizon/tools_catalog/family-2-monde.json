@@ -7,5 +7,9 @@
   {"id": "tool-social-post", "family": "monde", "name": "Réseaux sociaux", "description": "Publier sur un réseau social connecté.", "risk": "medium", "channel": "connector", "status": "planned"},
   {"id": "tool-notifications", "family": "monde", "name": "Notifications", "description": "Envoyer une notification à l'utilisateur.", "risk": "low", "channel": "native", "status": "planned"},
   {"id": "tool-rss", "family": "monde", "name": "Flux RSS", "description": "Lire des flux d'actualités.", "risk": "low", "channel": "native", "status": "planned"},
-  {"id": "tool-phone-call", "family": "monde", "name": "Appels", "description": "Passer un appel téléphonique via un service connecté.", "risk": "high", "channel": "connector", "status": "planned"}
+  {"id": "tool-phone-call", "family": "monde", "name": "Appels", "description": "Passer un appel téléphonique via un service connecté.", "risk": "high", "channel": "connector", "status": "planned"},
+  {"id": "tool-telegram-bot", "family": "monde", "name": "Bot Telegram", "description": "Envoyer et recevoir des messages via un bot Telegram.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-facebook", "family": "monde", "name": "Facebook", "description": "Publier et interagir sur Facebook via l'API Graph.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-instagram", "family": "monde", "name": "Instagram", "description": "Publier et interagir sur Instagram via l'API Graph.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-tiktok", "family": "monde", "name": "TikTok", "description": "Publier et interagir sur TikTok via l'API Content Posting.", "risk": "medium", "channel": "connector", "status": "planned"}
 ]

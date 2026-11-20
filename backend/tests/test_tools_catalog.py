@@ -24,6 +24,15 @@ def test_motion_design_declare(client):
     assert item["channel"] == "connector"
 
 
+def test_connecteurs_reseaux_sociaux_declares(client):
+    body = client.get("/api/v1/tools").json()
+    by_id = {item["id"]: item for item in body["items"]}
+    for tool_id in ("tool-telegram-bot", "tool-facebook", "tool-instagram", "tool-tiktok"):
+        assert tool_id in by_id
+        assert by_id[tool_id]["channel"] == "connector"
+        assert by_id[tool_id]["status"] == "planned"
+
+
 def test_outil_declare_honnetement(client):
     item = client.get("/api/v1/tools/tool-web-search").json()
     assert item["status"] == "planned"
