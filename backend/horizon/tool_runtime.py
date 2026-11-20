@@ -470,6 +470,195 @@ async def _permissions(db, params: dict[str, Any]) -> dict[str, Any]:
     return {"count": len(rows), "items": [dict(row) for row in rows]}
 
 
+# --- Connecteurs et services externes ----------------------------------------
+# Les identifiants sont lus UNIQUEMENT dans l'environnement : jamais en base,
+# jamais dans l'interface, jamais dans les journaux. Sans configuration, la main
+# refuse honnêtement : aucun résultat n'est fabriqué.
+
+def _env(name: str) -> str:
+    return (os.getenv(name) or "").strip()
+
+
+@handler("tool-web-search")
+async def _web_search(_db, params: dict[str, Any]) -> dict[str, Any]:
+    query = str(params.get("query") or params.get("q") or "").strip()
+    if not query:
+        raise ToolError("Requête de recherche manquante.")
+    limit = max(1, min(int(params.get("limit") or 8), 20))
+    searx = _env("HORIZON_SEARCH_URL")
+    brave = _env("HORIZON_BRAVE_SEARCH_KEY")
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT, follow_redirects=True) as client:
+        if searx:
+            response = await client.get(
+                f"{searx.rstrip('/')}/search", params={"q": query, "format": "json"}
+            )
+            if response.status_code >= 400:
+                raise ToolError(f"Recherche indisponible (HTTP {response.status_code}).")
+            payload = response.json()
+            items = [
+                {"title": r.get("title"), "url": r.get("url"), "snippet": r.get("content")}
+                for r in (payload.get("results") or [])[:limit]
+            ]
+            return {"provider": "searxng", "query": query, "count": len(items), "items": items}
+        if brave:
+            response = await client.get(
+                "https://api.search.brave.com/res/v1/web/search",
+                params={"q": query, "count": limit},
+                headers={"X-Subscription-Token": brave, "Accept": "application/json"},
+            )
+            if response.status_code >= 400:
+                raise ToolError(f"Recherche indisponible (HTTP {response.status_code}).")
+            payload = response.json()
+            results = (payload.get("web") or {}).get("results") or []
+            items = [
+                {"title": r.get("title"), "url": r.get("url"), "snippet": r.get("description")}
+                for r in results[:limit]
+            ]
+            return {"provider": "brave", "query": query, "count": len(items), "items": items}
+    raise ToolError(
+        "Aucun moteur de recherche configuré : renseignez HORIZON_SEARCH_URL "
+        "(SearXNG, gratuit) ou HORIZON_BRAVE_SEARCH_KEY."
+    )
+
+
+@handler("tool-email-send")
+async def _email_send(_db, params: dict[str, Any]) -> dict[str, Any]:
+    import smtplib
+    from email.message import EmailMessage
+
+    host = _env("HORIZON_SMTP_HOST")
+    sender = _env("HORIZON_SMTP_FROM") or _env("HORIZON_SMTP_USER")
+    if not host or not sender:
+        raise ToolError(
+            "Aucun compte d'envoi configuré (HORIZON_SMTP_HOST et HORIZON_SMTP_FROM)."
+        )
+    to = str(params.get("to") or "").strip()
+    if not to:
+        raise ToolError("Destinataire requis.")
+    subject = str(params.get("subject") or "").strip()
+    body = str(params.get("body") or params.get("text") or "")
+    port = int(_env("HORIZON_SMTP_PORT") or "587")
+    security = (_env("HORIZON_SMTP_SECURITY") or "starttls").lower()
+    user = _env("HORIZON_SMTP_USER")
+    password = os.getenv("HORIZON_SMTP_PASSWORD") or ""
+
+    message = EmailMessage()
+    message["From"] = sender
+    message["To"] = to
+    message["Subject"] = subject
+    message.set_content(body)
+
+    def _send() -> None:
+        server = (
+            smtplib.SMTP_SSL(host, port, timeout=DEFAULT_TIMEOUT)
+            if security == "ssl"
+            else smtplib.SMTP(host, port, timeout=DEFAULT_TIMEOUT)
+        )
+        with server:
+            if security == "starttls":
+                server.starttls()
+            if user:
+                server.login(user, password)
+            server.send_message(message)
+
+    try:
+        await asyncio.to_thread(_send)
+    except Exception as error:  # smtplib lève des erreurs variées
+        raise ToolError(f"Envoi de l'e-mail échoué ({type(error).__name__}).") from error
+    return {"sent": True, "to": to, "subject": subject}
+
+
+@handler("tool-telegram-bot")
+async def _telegram_bot(_db, params: dict[str, Any]) -> dict[str, Any]:
+    token = _env("HORIZON_TELEGRAM_BOT_TOKEN")
+    if not token:
+        raise ToolError("Aucun bot Telegram configuré (HORIZON_TELEGRAM_BOT_TOKEN).")
+    chat_id = str(params.get("chat_id") or _env("HORIZON_TELEGRAM_CHAT_ID") or "").strip()
+    text = str(params.get("text") or params.get("message") or "").strip()
+    if not chat_id:
+        raise ToolError("Destinataire requis (chat_id).")
+    if not text:
+        raise ToolError("Message requis.")
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        response = await client.post(
+            f"https://api.telegram.org/bot{token}/sendMessage",
+            json={"chat_id": chat_id, "text": text},
+        )
+    if response.status_code >= 400:
+        raise ToolError(f"Telegram a refusé l'envoi (HTTP {response.status_code}).")
+    return {"sent": True, "chat_id": chat_id}
+
+
+@handler("tool-image-generate")
+async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
+    base = _env("HORIZON_IMAGE_BASE_URL")
+    if not base:
+        raise ToolError(
+            "Aucun fournisseur d'images configuré (HORIZON_IMAGE_BASE_URL : "
+            "Replicate, fal.ai, OpenAI ou tout service compatible /images/generations)."
+        )
+    prompt = str(params.get("prompt") or "").strip()
+    if not prompt:
+        raise ToolError("Description (prompt) requise.")
+    model = _env("HORIZON_IMAGE_MODEL") or "flux"
+    api_key = os.getenv("HORIZON_IMAGE_API_KEY")
+    headers = {"Content-Type": "application/json"}
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+    body = {"model": model, "prompt": prompt, "size": params.get("size") or "1024x1024"}
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        response = await client.post(
+            f"{base.rstrip('/')}/images/generations", headers=headers, json=body
+        )
+    if response.status_code >= 400:
+        raise ToolError(f"Génération d'image refusée (HTTP {response.status_code}).")
+    payload = response.json()
+    images = []
+    for item in (payload.get("data") or [])[:4]:
+        images.append(item.get("url") or (item.get("b64_json") or "")[:120])
+    return {"provider": "image", "model": model, "prompt": prompt, "images": images}
+
+
+@handler("tool-payment")
+async def _payment(_db, params: dict[str, Any]) -> dict[str, Any]:
+    key = os.getenv("HORIZON_STRIPE_SECRET_KEY")
+    if not key:
+        raise ToolError("Aucun compte Stripe configuré (HORIZON_STRIPE_SECRET_KEY).")
+    amount = params.get("amount")
+    if amount is None:
+        raise ToolError("Montant requis (en plus petite unité, ex. centimes).")
+    currency = str(params.get("currency") or "eur").lower()
+    if params.get("confirm") is not True:
+        # Décision validée v1.1 : le paiement est la SEULE opération exigeant une
+        # validation humaine explicite avant exécution.
+        return {
+            "status": "requires_human_validation",
+            "amount": amount,
+            "currency": currency,
+            "detail": "Le paiement exige une validation humaine explicite : "
+            "renvoyez confirm=true après accord.",
+        }
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        response = await client.post(
+            "https://api.stripe.com/v1/payment_intents",
+            auth=(key, ""),
+            data={
+                "amount": int(amount),
+                "currency": currency,
+                "automatic_payment_methods[enabled]": "true",
+            },
+        )
+    if response.status_code >= 400:
+        raise ToolError(f"Stripe a refusé la demande (HTTP {response.status_code}).")
+    payload = response.json()
+    return {
+        "status": payload.get("status"),
+        "id": payload.get("id"),
+        "amount": payload.get("amount"),
+        "currency": payload.get("currency"),
+    }
+
+
 async def run_tool(db, tool: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:
     """Exécute une main branchée. Lève `ToolError` si elle ne l'est pas."""
     tool_id = str(tool.get("id") or "")
