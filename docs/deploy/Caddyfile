@@ -1,8 +1,10 @@
 # Reverse proxy TLS pour HORIZON CORE sur VPS.
 # Caddy obtient et renouvelle automatiquement le certificat Let's Encrypt.
-# Prérequis : DNS A/AAAA de mayela-crm.com -> IP du VPS, ports 80 et 443 ouverts.
+# Prérequis : DNS A/AAAA de horizon.mayela-crm.com -> IP du VPS, ports 80 et 443 ouverts.
+# ATTENTION : mayela-crm.com est déjà utilisé par le CRM (Vercel). HORIZON utilise
+# donc un SOUS-DOMAINE dédié (à adapter à votre domaine).
 
-mayela-crm.com {
+horizon.mayela-crm.com {
 	encode zstd gzip
 
 	# Le backend n'écoute que sur la boucle locale : jamais exposé directement.
@@ -18,6 +20,6 @@ mayela-crm.com {
 }
 
 # Variante www : redirection permanente vers l'apex (optionnel).
-www.mayela-crm.com {
-	redir https://mayela-crm.com{uri} permanent
+www.horizon.mayela-crm.com {
+	redir https://horizon.mayela-crm.com{uri} permanent
 }

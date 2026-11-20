@@ -59,7 +59,8 @@ systemctl status horizon --no-pager
 ## 6. TLS (Caddy)
 ```bash
 cp /opt/horizon/docs/deploy/Caddyfile /etc/caddy/Caddyfile
-# y remplacer mayela-crm.com par horizon.example.com, puis :
+# y remplacer horizon.mayela-crm.com par votre sous-domaine HORIZON, puis :
+# (NE PAS utiliser mayela-crm.com : c'est le CRM, heberge sur Vercel)
 systemctl reload caddy
 ```
 
