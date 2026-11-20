@@ -5,5 +5,6 @@
   {"id": "tool-video-edit", "family": "creation", "name": "Modifier une vidéo", "description": "Monter ou éditer une vidéo.", "risk": "medium", "channel": "connector", "status": "planned"},
   {"id": "tool-audio-generate", "family": "creation", "name": "Générer un audio", "description": "Créer une voix ou une musique.", "risk": "low", "channel": "connector", "status": "planned"},
   {"id": "tool-model-3d", "family": "creation", "name": "Modèle 3D", "description": "Générer ou manipuler un modèle 3D.", "risk": "medium", "channel": "connector", "status": "planned"},
-  {"id": "tool-design", "family": "creation", "name": "Design", "description": "Produire un visuel ou une mise en page.", "risk": "low", "channel": "connector", "status": "planned"}
+  {"id": "tool-design", "family": "creation", "name": "Design", "description": "Produire un visuel ou une mise en page.", "risk": "low", "channel": "connector", "status": "planned"},
+  {"id": "tool-motion-design", "family": "creation", "name": "Motion design", "description": "Créer ou animer un visuel ou une vidéo : animation, transitions, habillage.", "risk": "medium", "channel": "connector", "status": "planned"}
 ]

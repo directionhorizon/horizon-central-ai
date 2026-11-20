@@ -17,6 +17,13 @@ def test_catalogue_couvre_les_sept_familles(client):
     assert len(body["items"]) >= 40
 
 
+def test_motion_design_declare(client):
+    item = client.get("/api/v1/tools/tool-motion-design").json()
+    assert item["family"] == "creation"
+    assert item["status"] == "planned"
+    assert item["channel"] == "connector"
+
+
 def test_outil_declare_honnetement(client):
     item = client.get("/api/v1/tools/tool-web-search").json()
     assert item["status"] == "planned"
