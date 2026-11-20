@@ -56,7 +56,7 @@ def test_providers_listes(client, monkeypatch):
     for name in APP_VARS:
         monkeypatch.delenv(name, raising=False)
     body = client.get("/api/v1/integrations/oauth/providers").json()
-    assert set(body["items"]) == {"meta", "tiktok"}
+    assert set(body["items"]) == {"meta", "tiktok", "google"}
     assert body["items"]["meta"]["configured"] is False
 
 
@@ -126,6 +126,75 @@ def test_callback_enregistre_la_connexion(client, monkeypatch):
     )
     assert published.status_code == 200, published.text
     assert _PostClient.last["data"]["access_token"] == "OAUTH-TOKEN"
+
+
+def _configure_google(monkeypatch):
+    monkeypatch.setenv("HORIZON_GOOGLE_CLIENT_ID", "gid")
+    monkeypatch.setenv("HORIZON_GOOGLE_CLIENT_SECRET", "gsecret")
+    monkeypatch.setenv(
+        "HORIZON_GOOGLE_REDIRECT_URI",
+        "http://127.0.0.1:8000/api/v1/integrations/oauth/google/callback",
+    )
+
+
+def test_google_provider_liste(client, monkeypatch):
+    _configure_google(monkeypatch)
+    body = client.get("/api/v1/integrations/oauth/providers").json()
+    assert body["items"]["google"]["configured"] is True
+
+
+def test_email_via_gmail_oauth(client, monkeypatch):
+    _configure_google(monkeypatch)
+    start = client.get(
+        "/api/v1/integrations/oauth/google/start", params={"name": "Mon Gmail"}
+    ).json()
+    assert "accounts.google.com" in start["authorize_url"]
+    monkeypatch.setattr(oauth.httpx, "AsyncClient", _TokenClient)
+    callback = client.get(
+        "/api/v1/integrations/oauth/google/callback",
+        params={"code": "c", "state": start["state"]},
+    )
+    assert callback.status_code == 200, callback.text
+    integration_id = callback.json()["integration_id"]
+
+    class _SendResponse:
+        status_code = 200
+
+        def json(self):
+            return {"id": "msg-1"}
+
+    class _SendClient:
+        last: dict = {}
+
+        def __init__(self, *args, **kwargs):
+            pass
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *args):
+            return False
+
+        async def post(self, url, **kwargs):
+            _SendClient.last = {"url": url, **kwargs}
+            return _SendResponse()
+
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _SendClient)
+    response = client.post(
+        "/api/v1/tools/tool-email-send/run",
+        json={
+            "params": {
+                "account": integration_id,
+                "to": "dest@example.com",
+                "subject": "s",
+                "body": "b",
+            }
+        },
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["provider"] == "gmail"
+    assert "gmail.googleapis.com" in _SendClient.last["url"]
+    assert _SendClient.last["headers"]["Authorization"] == "Bearer OAUTH-TOKEN"
 
 
 def test_callback_refuse_state_inconnu(client, monkeypatch):

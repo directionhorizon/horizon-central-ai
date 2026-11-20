@@ -45,6 +45,15 @@ PROVIDERS: dict[str, dict[str, Any]] = {
         "redirect_env": "HORIZON_TIKTOK_REDIRECT_URI",
         "scope": "user.info.basic,video.publish",
     },
+    "google": {
+        "label": "Gmail (Google)",
+        "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth",
+        "client_id_env": "HORIZON_GOOGLE_CLIENT_ID",
+        "client_secret_env": "HORIZON_GOOGLE_CLIENT_SECRET",
+        "redirect_env": "HORIZON_GOOGLE_REDIRECT_URI",
+        "scope": "https://www.googleapis.com/auth/gmail.send",
+        "extra": {"access_type": "offline", "prompt": "consent"},
+    },
 }
 
 
@@ -126,6 +135,7 @@ def build_authorize_url(provider: str, state: str) -> str:
         "scope": cfg["scope"],
         "response_type": "code",
     }
+    params.update(cfg.get("extra") or {})
     return f"{cfg['authorize_url']}?{urlencode(params)}"
 
 
@@ -150,6 +160,17 @@ async def exchange_code(provider: str, code: str) -> dict[str, Any]:
                     "client_secret": client_secret,
                     "redirect_uri": redirect,
                     "code": code,
+                },
+            )
+        elif provider == "google":
+            response = await client.post(
+                "https://oauth2.googleapis.com/token",
+                data={
+                    "code": code,
+                    "client_id": client_id,
+                    "client_secret": client_secret,
+                    "redirect_uri": redirect,
+                    "grant_type": "authorization_code",
                 },
             )
         else:

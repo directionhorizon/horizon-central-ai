@@ -317,7 +317,7 @@ export function Integrations() {
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="hz-eyebrow">Connexion automatique (OAuth)</p>
-              <h2 className="mt-1 text-base font-semibold text-slate-100">Réseaux sociaux</h2>
+              <h2 className="mt-1 text-base font-semibold text-slate-100">Comptes (Gmail, réseaux sociaux)</h2>
               <p className="hz-hint mt-1 max-w-3xl">
                 Aucun jeton à saisir : cliquez « Connecter », puis autorisez dans l’onglet qui s’ouvre.
                 Le jeton est récupéré et stocké localement, jamais affiché ni journalisé.

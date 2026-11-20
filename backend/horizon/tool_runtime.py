@@ -576,10 +576,55 @@ async def _web_search(_db, params: dict[str, Any]) -> dict[str, Any]:
     return await asyncio.to_thread(_duckduckgo_search, query, limit)
 
 
+async def _gmail_send(token: str, to: str, subject: str, body: str) -> dict[str, Any]:
+    """Envoi via l'API Gmail (jeton OAuth Google) : aucun mot de passe, aucun SMTP."""
+    import base64
+    from email.message import EmailMessage
+
+    message = EmailMessage()
+    message["To"] = to
+    message["Subject"] = subject
+    message.set_content(body)
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        response = await client.post(
+            "https://gmail.googleapis.com/gmail/v1/users/me/messages/send",
+            headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
+            json={"raw": raw},
+        )
+    if response.status_code >= 400:
+        raise ToolError(f"Gmail a refusé l'envoi (HTTP {response.status_code}).")
+    return {"sent": True, "to": to, "provider": "gmail"}
+
+
 @handler("tool-email-send")
-async def _email_send(_db, params: dict[str, Any]) -> dict[str, Any]:
+async def _email_send(db, params: dict[str, Any]) -> dict[str, Any]:
     import smtplib
     from email.message import EmailMessage
+
+    to = str(params.get("to") or "").strip()
+    if not to:
+        raise ToolError("Destinataire requis.")
+    subject = str(params.get("subject") or "").strip()
+    body = str(params.get("body") or params.get("text") or "")
+
+    # Connexion automatique (OAuth) : ex. Gmail. Aucun mot de passe saisi.
+    account = str(params.get("account") or "").strip()
+    if account:
+        row = db.execute(
+            "SELECT id, method FROM integrations WHERE archived=0 AND (id=? OR name=?) LIMIT 1",
+            (account, account),
+        ).fetchone()
+        if row is not None and (row["method"] or "") == "oauth2":
+            from . import oauth_connectors
+
+            secret = oauth_connectors.load_secret(row["id"]) or {}
+            token = str(secret.get("access_token") or "").strip()
+            if not token:
+                raise ToolError(f"Connexion « {account} » non autorisée : reconnectez via OAuth.")
+            if secret.get("provider") == "google":
+                return await _gmail_send(token, to, subject, body)
+            raise ToolError("Ce fournisseur OAuth ne gère pas l'envoi d'e-mail.")
 
     host = _env("HORIZON_SMTP_HOST")
     sender = _env("HORIZON_SMTP_FROM") or _env("HORIZON_SMTP_USER")
@@ -587,11 +632,6 @@ async def _email_send(_db, params: dict[str, Any]) -> dict[str, Any]:
         raise ToolError(
             "Aucun compte d'envoi configuré (HORIZON_SMTP_HOST et HORIZON_SMTP_FROM)."
         )
-    to = str(params.get("to") or "").strip()
-    if not to:
-        raise ToolError("Destinataire requis.")
-    subject = str(params.get("subject") or "").strip()
-    body = str(params.get("body") or params.get("text") or "")
     port = int(_env("HORIZON_SMTP_PORT") or "587")
     security = (_env("HORIZON_SMTP_SECURITY") or "starttls").lower()
     user = _env("HORIZON_SMTP_USER")
