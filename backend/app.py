@@ -23,7 +23,7 @@ from horizon.repositories import llm as llm_repo
 from horizon.repositories import operations as operations_repo
 from horizon.routers import core as core_router
 from horizon.routers import (
-    auth as auth_router, diagnostics, documents, integrations, llm_models, missions,
+    agents, auth as auth_router, diagnostics, documents, integrations, llm_models, missions,
     operations, orchestrators, projects, skills, sync, system,
 )
 from horizon.schema import run_migrations
@@ -164,6 +164,7 @@ for module in (
     auth_router,
     projects,
     orchestrators,
+    agents,
     missions,
     documents,
     llm_models,

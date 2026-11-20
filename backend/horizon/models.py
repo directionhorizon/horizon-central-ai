@@ -71,6 +71,27 @@ class OrchestratorModelSelection(BaseModel):
     model: str = Field(min_length=1, max_length=200)
 
 
+# --- Agents (concept générique, tous les systèmes d'orchestration) -----------
+
+AgentRole = Literal["orchestrator", "specialist"]
+
+
+class AgentCreate(BaseModel):
+    orchestrator_id: str = Field(min_length=1)
+    name: str = Field(min_length=1, max_length=160)
+    role: AgentRole = "specialist"
+    description: str = Field(default="", max_length=4000)
+    spec: str = Field(default="", max_length=8000)
+
+
+class AgentUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1, max_length=160)
+    role: AgentRole | None = None
+    description: str | None = Field(default=None, max_length=4000)
+    spec: str | None = Field(default=None, max_length=8000)
+    status: Literal["active", "inactive"] | None = None
+
+
 # --- Missions --------------------------------------------------------------
 
 class MissionCreate(BaseModel):

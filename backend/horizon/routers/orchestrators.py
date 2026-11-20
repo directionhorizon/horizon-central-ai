@@ -174,16 +174,6 @@ async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_
         if item is None:
             raise HTTPException(404, "Orchestrateur introuvable.")
 
-    endpoint = (item.get("endpoint") or "").strip()
-    if not endpoint:
-        with connect() as db:
-            orchestrators.set_health(db, orchestrator_id, "unverified")
-        return {
-            "id": orchestrator_id,
-            "health_status": "unverified",
-            "detail": "Aucun endpoint déclaré : vérification impossible.",
-        }
-
     adapter = get_adapter(str(item.get("kind") or ""))
     if adapter is not None:
         try:
@@ -209,6 +199,16 @@ async def check_orchestrator(orchestrator_id: str, actor: str = Depends(require_
             "detail": detail,
             "target": target,
             "version": version,
+        }
+
+    endpoint = (item.get("endpoint") or "").strip()
+    if not endpoint:
+        with connect() as db:
+            orchestrators.set_health(db, orchestrator_id, "unverified")
+        return {
+            "id": orchestrator_id,
+            "health_status": "unverified",
+            "detail": "Aucun endpoint déclaré : vérification impossible.",
         }
 
     base = endpoint.rstrip("/")

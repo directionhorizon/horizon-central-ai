@@ -2,7 +2,8 @@
 
 Objectif : garantir que l'exécution n'est plus codée en dur sur Hermes.
 HORIZON choisit un système par son `kind` ; un type inconnu est refusé
-proprement, et un branchement non activé ne fabrique aucune disponibilité.
+proprement. L'exécution native (kind `horizon`) est couverte par
+`test_native_engine.py`.
 """
 from __future__ import annotations
 
@@ -47,21 +48,4 @@ def test_dispatch_refuse_un_kind_inconnu(client):
     assert "non pris en charge" in response.json()["detail"]
 
 
-def test_dispatch_vers_natif_horizon_reste_honnete(client):
-    project = client.post("/api/v1/projects", json={"name": "Projet natif"}).json()
-    system = client.post(
-        "/api/v1/orchestrators",
-        json={"name": "Systeme interne", "kind": "horizon"},
-    ).json()
-    mission = client.post(
-        "/api/v1/missions",
-        json={
-            "project_id": project["id"],
-            "title": "Mission native",
-            "orchestrator_id": system["id"],
-        },
-    ).json()
-
-    response = client.post(f"/api/v1/missions/{mission['id']}/dispatch", json={})
-    assert response.status_code == 502
-    assert "interne" in response.json()["detail"]
+# La couverture de l'exécution native est dans test_native_engine.py.

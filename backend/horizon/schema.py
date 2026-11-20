@@ -361,6 +361,28 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "ALTER TABLE skills ADD COLUMN example TEXT NOT NULL DEFAULT ''",
         ),
     ),
+    (
+        12,
+        "agents_registry",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS agents (
+                id TEXT PRIMARY KEY,
+                orchestrator_id TEXT NOT NULL REFERENCES orchestrators(id) ON DELETE CASCADE,
+                name TEXT NOT NULL,
+                role TEXT NOT NULL DEFAULT 'specialist'
+                    CHECK(role IN ('orchestrator','specialist')),
+                description TEXT NOT NULL DEFAULT '',
+                spec TEXT NOT NULL DEFAULT '',
+                status TEXT NOT NULL DEFAULT 'active'
+                    CHECK(status IN ('active','inactive')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_agents_orchestrator ON agents(orchestrator_id)",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
@@ -378,6 +400,71 @@ HERMES_SEED = {
 #: Hermes est le premier branchement de l'UOIM, pas une dépendance obligatoire :
 #: une mission peut désigner un autre système via son champ `orchestrator_id`.
 DEFAULT_ORCHESTRATOR_ID = HERMES_SEED["id"]
+
+#: Système d'orchestration natif créé dans HORIZON (moteur d'exécution interne).
+#: Le concept d'agent est générique : chaque système possède son propre agent
+#: orchestrateur (le coordinateur) ; HORIZON CORE supervise l'ensemble des
+#: systèmes sans remplacer leurs agents coordinateurs.
+FAS_SEED = {
+    "id": "system-first-agentic",
+    "name": "FIRST AGENTIC SYSTEM",
+    "kind": "horizon",
+    "description": (
+        "Premier système d'orchestration natif : agents coordonnés par un agent "
+        "orchestrateur interne à HORIZON, sans dépendance à un logiciel externe."
+    ),
+    "config_json": "{}",
+}
+
+#: Agents du système FIRST AGENTIC SYSTEM : un seul rôle `orchestrator`
+#: (le coordinateur du système), les autres sont des agents `specialist`.
+FAS_AGENTS = (
+    {
+        "id": "agent-first-agentic-orchestrateur",
+        "name": "Orchestrateur",
+        "role": "orchestrator",
+        "description": (
+            "Agent coordinateur du système : décompose la mission, choisit les "
+            "agents compétents, coordonne et vérifie le résultat."
+        ),
+        "spec": (
+            "Tu es l'agent orchestrateur du système FIRST AGENTIC SYSTEM. Analyse "
+            "l'objectif, décompose la mission, identifie les agents compétents, "
+            "coordonne l'exécution et vérifie le résultat avant de livrer une "
+            "réponse claire, structurée et vérifiable."
+        ),
+    },
+    {
+        "id": "agent-first-agentic-academia",
+        "name": "Academia Agent",
+        "role": "specialist",
+        "description": "Agent spécialisé en recherche académique, analyse documentaire et rédaction.",
+        "spec": (
+            "Tu es l'agent Academia : recherche académique, analyse documentaire, "
+            "méthodologie et rédaction. Ne jamais inventer de source, citation ou donnée."
+        ),
+    },
+    {
+        "id": "agent-first-agentic-fullstack",
+        "name": "Fullstack Dev",
+        "role": "specialist",
+        "description": "Agent spécialisé en développement logiciel full stack.",
+        "spec": (
+            "Tu es l'agent Fullstack Dev : conception, développement, tests et "
+            "corrections d'applications. Livre un travail vérifiable."
+        ),
+    },
+    {
+        "id": "agent-first-agentic-test",
+        "name": "Test Agent",
+        "role": "specialist",
+        "description": "Agent spécialisé en audit et tests non destructifs de cibles autorisées.",
+        "spec": (
+            "Tu es l'agent Test : audit non destructif de cibles autorisées, "
+            "détection et qualification des problèmes avec preuves reproductibles."
+        ),
+    },
+)
 
 #: Répertoire des fichiers sources du catalogue de skills, classés par catégorie.
 #: Chaque fichier JSON décrit une série de compétences (métadonnées uniquement,
@@ -473,6 +560,56 @@ def _ensure_hermes_orchestrator(db: sqlite3.Connection) -> None:
     )
 
 
+def _ensure_first_agentic_system(db: sqlite3.Connection) -> None:
+    """Enregistre le système natif FIRST AGENTIC SYSTEM et ses agents.
+
+    Idempotent : une édition locale d'un système ou d'un agent n'est jamais
+    écrasée. Le système est de `kind` « horizon » : il est exécuté par le moteur
+    interne de HORIZON, sans dépendance à un logiciel externe.
+    """
+    stamp = now()
+    exists = db.execute("SELECT id FROM orchestrators WHERE id=?", (FAS_SEED["id"],)).fetchone()
+    if not exists:
+        db.execute(
+            """INSERT INTO orchestrators
+               (id,name,kind,description,endpoint,version,status,health_status,config_json,created_at,updated_at)
+               VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                FAS_SEED["id"],
+                FAS_SEED["name"],
+                FAS_SEED["kind"],
+                FAS_SEED["description"],
+                "",
+                "",
+                "active",
+                "unverified",
+                FAS_SEED["config_json"],
+                stamp,
+                stamp,
+            ),
+        )
+    for agent in FAS_AGENTS:
+        present = db.execute("SELECT id FROM agents WHERE id=?", (agent["id"],)).fetchone()
+        if present:
+            continue
+        db.execute(
+            """INSERT INTO agents
+               (id,orchestrator_id,name,role,description,spec,status,created_at,updated_at)
+               VALUES(?,?,?,?,?,?,?,?,?)""",
+            (
+                agent["id"],
+                FAS_SEED["id"],
+                agent["name"],
+                agent["role"],
+                agent["description"],
+                agent["spec"],
+                "active",
+                stamp,
+                stamp,
+            ),
+        )
+
+
 def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
     """Installe le catalogue de skills depuis les fichiers classés du dépôt.
 
@@ -541,6 +678,7 @@ def run_migrations() -> list[str]:
             applied.append(f"{version}:{name}")
         _ensure_default_project(db)
         _ensure_hermes_orchestrator(db)
+        _ensure_first_agentic_system(db)
         _ensure_skills_catalog(db)
         db.commit()
     return applied

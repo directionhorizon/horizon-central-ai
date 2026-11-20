@@ -301,15 +301,24 @@ async def dispatch_mission(
                 "started_at": now(),
             },
         )
-        missions.update_mission(db, mission_id, {"status": "running"})
+        terminal = result.status not in NON_TERMINAL
+        mission_status = result.status if terminal else "running"
+        if mission_status not in ("completed", "failed", "cancelled"):
+            mission_status = "running"
+        step_status = {"completed": "completed", "failed": "failed", "cancelled": "skipped"}.get(
+            mission_status, "running"
+        )
+        missions.update_mission(db, mission_id, {"status": mission_status})
         if step:
-            missions.update_step(db, mission_id, step["id"], {"status": "running"})
+            missions.update_step(db, mission_id, step["id"], {"status": step_status})
         operations.log(
             db, actor=actor, action="mission.dispatch", target_type="mission",
-            target_id=mission_id, detail=f"Dispatch {result.run_id[:40]}{' (rejoué)' if result.replayed else ''}",
+            target_id=mission_id,
+            detail=f"Dispatch {result.run_id[:40]}{' (rejoué)' if result.replayed else ''} → {mission_status}",
         )
-        sync.enqueue(db, "missions", mission_id, "update", {"status": "running"})
-    return {"run": updated, "replayed": bool(result["replayed"]), "detail": "Exécution lancée."}
+        sync.enqueue(db, "missions", mission_id, "update", {"status": mission_status})
+    detail = "Exécution terminée." if terminal else "Exécution lancée."
+    return {"run": updated, "replayed": bool(result.replayed), "detail": detail}
 
 
 @router.get("/{mission_id}/runs")
