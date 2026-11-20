@@ -490,12 +490,20 @@ def _credential(db, account: Any, default_env: str, label: str) -> str:
     account = str(account or "").strip()
     if account:
         row = db.execute(
-            "SELECT api_key_env FROM integrations WHERE archived=0 AND (id=? OR name=?) LIMIT 1",
+            "SELECT id, api_key_env, method FROM integrations WHERE archived=0 AND (id=? OR name=?) LIMIT 1",
             (account, account),
         ).fetchone()
         if row is None:
             raise ToolError(f"Connexion « {account} » introuvable dans le registre.")
         env_name = (row["api_key_env"] or "").strip()
+        if (row["method"] or "") == "oauth2" or env_name.startswith("secret:"):
+            from . import oauth_connectors
+
+            secret = oauth_connectors.load_secret(row["id"])
+            token = str((secret or {}).get("access_token") or "").strip()
+            if not token:
+                raise ToolError(f"Connexion « {account} » non autorisée : reconnectez via OAuth.")
+            return token
         if not env_name:
             raise ToolError(f"La connexion « {account} » ne référence aucune variable de clé.")
         value = (os.getenv(env_name) or "").strip()
