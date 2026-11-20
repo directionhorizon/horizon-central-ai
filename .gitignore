@@ -33,6 +33,9 @@ __pycache__/
 *.db
 .env
 .env.*
+# Les gabarits .env.example ne contiennent aucun secret : ils doivent rester
+# versionnes (seul le vrai .env est ignore).
+!.env.example
 
 # Artefacts de correction jetables et sauvegardes locales
 _patch_auth.py
