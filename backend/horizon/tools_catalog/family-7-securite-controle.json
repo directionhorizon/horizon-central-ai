@@ -1,0 +1,6 @@
+[
+  {"id": "tool-permissions", "family": "securite", "name": "Permissions", "description": "Définir les droits de chaque agent sur les outils.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-sandbox", "family": "securite", "name": "Bac à sable", "description": "Exécuter une action en environnement isolé.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-audit-log", "family": "securite", "name": "Journalisation", "description": "Tracer chaque action (qui, quoi, quand).", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-monitoring", "family": "securite", "name": "Supervision", "description": "Surveiller l'état et l'activité du système.", "risk": "low", "channel": "native", "status": "planned"}
+]

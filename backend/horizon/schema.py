@@ -383,6 +383,37 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_agents_orchestrator ON agents(orchestrator_id)",
         ),
     ),
+    (
+        13,
+        "tools_catalog",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS tools (
+                id TEXT PRIMARY KEY,
+                family TEXT NOT NULL DEFAULT '',
+                name TEXT NOT NULL,
+                description TEXT NOT NULL DEFAULT '',
+                risk TEXT NOT NULL DEFAULT 'low'
+                    CHECK(risk IN ('low','medium','high')),
+                channel TEXT NOT NULL DEFAULT 'native'
+                    CHECK(channel IN ('native','connector','mcp')),
+                status TEXT NOT NULL DEFAULT 'planned'
+                    CHECK(status IN ('planned','ready','disabled')),
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_tools_family ON tools(family)",
+            """
+            CREATE TABLE IF NOT EXISTS agent_tools (
+                agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+                tool_id TEXT NOT NULL REFERENCES tools(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (agent_id, tool_id)
+            )
+            """,
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
@@ -471,6 +502,11 @@ FAS_AGENTS = (
 #: jamais de code exécutable). C'est la source de vérité, versionnée dans le dépôt.
 SKILLS_CATALOG_DIR = Path(__file__).resolve().parent / "skills_catalog"
 
+#: Répertoire des fiches de « mains » (outils) des agents, classées par famille.
+#: Chaque fichier JSON décrit les outils d'une famille. Source de vérité
+#: versionnée : les mains se déclarent ici, jamais codées en dur.
+TOOLS_CATALOG_DIR = Path(__file__).resolve().parent / "tools_catalog"
+
 
 def load_catalog_entries() -> list[dict]:
     """Lit tous les fichiers du catalogue classé et renvoie leurs compétences."""
@@ -484,6 +520,21 @@ def load_catalog_entries() -> list[dict]:
             continue
         if isinstance(data, list):
             entries.extend(item for item in data if isinstance(item, dict) and item.get("name"))
+    return entries
+
+
+def load_tools_catalog() -> list[dict]:
+    """Lit tous les fichiers du catalogue de mains et renvoie leurs fiches."""
+    entries: list[dict] = []
+    if not TOOLS_CATALOG_DIR.is_dir():
+        return entries
+    for path in sorted(TOOLS_CATALOG_DIR.glob("*.json")):
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+        except (OSError, ValueError):
+            continue
+        if isinstance(data, list):
+            entries.extend(item for item in data if isinstance(item, dict) and item.get("id"))
     return entries
 
 DEFAULT_PROJECT_ID = "project-default"
@@ -610,6 +661,39 @@ def _ensure_first_agentic_system(db: sqlite3.Connection) -> None:
         )
 
 
+def _ensure_tools_catalog(db: sqlite3.Connection) -> None:
+    """Installe le catalogue des mains (outils) depuis les fichiers classés.
+
+    Idempotent : une fiche déjà présente n'est jamais écrasée, afin de préserver
+    les modifications locales. Les mains sont déclarées honnêtement : leur état
+    passe de « planned » à « ready » seulement quand elles sont réellement
+    branchées.
+    """
+    stamp = now()
+    for item in load_tools_catalog():
+        tool_id = str(item.get("id") or "").strip()
+        if not tool_id:
+            continue
+        exists = db.execute("SELECT id FROM tools WHERE id=?", (tool_id,)).fetchone()
+        if exists:
+            continue
+        db.execute(
+            """INSERT INTO tools(id,family,name,description,risk,channel,status,created_at,updated_at)
+               VALUES(?,?,?,?,?,?,?,?,?)""",
+            (
+                tool_id,
+                str(item.get("family") or ""),
+                str(item.get("name") or tool_id),
+                str(item.get("description") or ""),
+                str(item.get("risk") or "low"),
+                str(item.get("channel") or "native"),
+                str(item.get("status") or "planned"),
+                stamp,
+                stamp,
+            ),
+        )
+
+
 def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
     """Installe le catalogue de skills depuis les fichiers classés du dépôt.
 
@@ -680,5 +764,6 @@ def run_migrations() -> list[str]:
         _ensure_hermes_orchestrator(db)
         _ensure_first_agentic_system(db)
         _ensure_skills_catalog(db)
+        _ensure_tools_catalog(db)
         db.commit()
     return applied

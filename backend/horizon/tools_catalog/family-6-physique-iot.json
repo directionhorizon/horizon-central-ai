@@ -1,0 +1,7 @@
+[
+  {"id": "tool-iot-device", "family": "physique", "name": "Objets connectés", "description": "Piloter un objet connecté (domotique).", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-sensor-read", "family": "physique", "name": "Capteurs", "description": "Lire des données de capteurs.", "risk": "low", "channel": "connector", "status": "planned"},
+  {"id": "tool-actuator", "family": "physique", "name": "Actionneurs", "description": "Actionner un mécanisme physique.", "risk": "high", "channel": "connector", "status": "planned"},
+  {"id": "tool-robot", "family": "physique", "name": "Robot", "description": "Commander un robot.", "risk": "high", "channel": "connector", "status": "planned"},
+  {"id": "tool-printer-3d", "family": "physique", "name": "Impression 3D", "description": "Lancer une impression 3D.", "risk": "medium", "channel": "connector", "status": "planned"}
+]

@@ -1,0 +1,9 @@
+[
+  {"id": "tool-delegate", "family": "meta", "name": "Déléguer", "description": "Confier une sous-tâche à un autre agent.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-plan", "family": "meta", "name": "Planifier", "description": "Décomposer une mission en étapes.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-memory", "family": "meta", "name": "Mémoire", "description": "Consulter ou enrichir la mémoire.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-skills", "family": "meta", "name": "Compétences", "description": "Mobiliser une compétence du catalogue.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-schedule", "family": "meta", "name": "Planification temporelle", "description": "Programmer une tâche à une date et une heure.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-mcp", "family": "meta", "name": "Connecteur MCP", "description": "Utiliser un outil exposé par un serveur MCP.", "risk": "medium", "channel": "mcp", "status": "planned"},
+  {"id": "tool-payment", "family": "meta", "name": "Paiement", "description": "Effectuer un paiement (validation humaine obligatoire).", "risk": "high", "channel": "connector", "status": "planned"}
+]

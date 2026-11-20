@@ -1,0 +1,14 @@
+[
+  {"id": "tool-file-read", "family": "machine", "name": "Lire un fichier", "description": "Lire le contenu d'un fichier dans l'espace de travail autorisé.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-file-list", "family": "machine", "name": "Lister un dossier", "description": "Lister les fichiers d'un dossier autorisé.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-file-write", "family": "machine", "name": "Écrire un fichier", "description": "Créer ou remplacer un fichier dans l'espace de travail autorisé.", "risk": "medium", "channel": "native", "status": "planned"},
+  {"id": "tool-file-patch", "family": "machine", "name": "Modifier un fichier", "description": "Appliquer une modification ciblée à un fichier existant.", "risk": "medium", "channel": "native", "status": "planned"},
+  {"id": "tool-terminal", "family": "machine", "name": "Terminal", "description": "Exécuter une commande système dans un espace restreint.", "risk": "high", "channel": "native", "status": "planned"},
+  {"id": "tool-code-python", "family": "machine", "name": "Exécuter du code", "description": "Exécuter un script Python en bac à sable et capturer le résultat.", "risk": "medium", "channel": "native", "status": "planned"},
+  {"id": "tool-browser", "family": "machine", "name": "Navigateur", "description": "Piloter un navigateur (ouvrir, cliquer, extraire).", "risk": "high", "channel": "native", "status": "planned"},
+  {"id": "tool-vision", "family": "machine", "name": "Vision", "description": "Analyser une image ou une capture d'écran.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-audio-tts", "family": "machine", "name": "Synthèse vocale", "description": "Générer une voix à partir d'un texte.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-audio-stt", "family": "machine", "name": "Transcription", "description": "Transcrire un audio en texte.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-clipboard", "family": "machine", "name": "Presse-papiers", "description": "Lire ou écrire dans le presse-papiers.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-screen-control", "family": "machine", "name": "Contrôle d'écran", "description": "Agir sur l'écran (souris, clavier).", "risk": "high", "channel": "native", "status": "planned"}
+]

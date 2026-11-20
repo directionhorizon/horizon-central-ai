@@ -11,7 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from ..auth import require_admin
 from ..db import connect
 from ..models import AgentCreate, AgentUpdate
-from ..repositories import agents, operations, orchestrators
+from ..repositories import agents, operations, orchestrators, tools
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -56,5 +56,46 @@ def update_agent(agent_id: str, payload: AgentUpdate, actor: str = Depends(requi
         operations.log(
             db, actor=actor, action="agent.update", target_type="agent",
             target_id=agent_id, detail="Agent modifié.",
+        )
+    return item
+
+
+# --- Mains (outils) attribuées à l'agent ------------------------------------
+
+@router.get("/{agent_id}/tools")
+def list_agent_tools(agent_id: str):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        items = tools.list_for_agent(db, agent_id)
+    return {"items": items}
+
+
+@router.post("/{agent_id}/tools/{tool_id}")
+def attach_agent_tool(agent_id: str, tool_id: str, actor: str = Depends(require_admin)):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        if tools.get_tool(db, tool_id) is None:
+            raise HTTPException(404, "Outil introuvable.")
+        tools.attach(db, agent_id, tool_id)
+        item = agents.get_agent(db, agent_id)
+        operations.log(
+            db, actor=actor, action="agent.tool.attach", target_type="agent",
+            target_id=agent_id, detail=f"Outil attribué : {tool_id}",
+        )
+    return item
+
+
+@router.delete("/{agent_id}/tools/{tool_id}")
+def detach_agent_tool(agent_id: str, tool_id: str, actor: str = Depends(require_admin)):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        tools.detach(db, agent_id, tool_id)
+        item = agents.get_agent(db, agent_id)
+        operations.log(
+            db, actor=actor, action="agent.tool.detach", target_type="agent",
+            target_id=agent_id, detail=f"Outil retiré : {tool_id}",
         )
     return item

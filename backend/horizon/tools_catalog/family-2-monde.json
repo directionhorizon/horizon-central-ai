@@ -1,0 +1,11 @@
+[
+  {"id": "tool-web-search", "family": "monde", "name": "Recherche web", "description": "Chercher des informations sur le web.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-web-extract", "family": "monde", "name": "Lire une page web", "description": "Extraire le contenu exploitable d'une page.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-email-send", "family": "monde", "name": "Envoyer un email", "description": "Envoyer un email via un compte connecté.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-email-read", "family": "monde", "name": "Lire les emails", "description": "Consulter la boîte de réception d'un compte connecté.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-messaging", "family": "monde", "name": "Messagerie", "description": "Envoyer et recevoir des messages (SMS, WhatsApp, Telegram).", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-social-post", "family": "monde", "name": "Réseaux sociaux", "description": "Publier sur un réseau social connecté.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-notifications", "family": "monde", "name": "Notifications", "description": "Envoyer une notification à l'utilisateur.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-rss", "family": "monde", "name": "Flux RSS", "description": "Lire des flux d'actualités.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-phone-call", "family": "monde", "name": "Appels", "description": "Passer un appel téléphonique via un service connecté.", "risk": "high", "channel": "connector", "status": "planned"}
+]

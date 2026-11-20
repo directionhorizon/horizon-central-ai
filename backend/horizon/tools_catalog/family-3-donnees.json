@@ -1,0 +1,9 @@
+[
+  {"id": "tool-db-query", "family": "donnees", "name": "Base de données", "description": "Interroger une base de données autorisée.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-api-call", "family": "donnees", "name": "Appel API", "description": "Appeler une API HTTP autorisée.", "risk": "medium", "channel": "native", "status": "planned"},
+  {"id": "tool-pdf-read", "family": "donnees", "name": "Lire un PDF", "description": "Extraire le texte d'un PDF.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-office-docs", "family": "donnees", "name": "Documents bureautiques", "description": "Lire et écrire des fichiers Excel et Word.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-ocr", "family": "donnees", "name": "OCR", "description": "Lire le texte d'une image ou d'un scan.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-spreadsheet", "family": "donnees", "name": "Tableur", "description": "Manipuler des données tabulaires.", "risk": "low", "channel": "native", "status": "planned"},
+  {"id": "tool-data-extract", "family": "donnees", "name": "Extraction structurée", "description": "Extraire des données structurées d'un texte ou document.", "risk": "low", "channel": "native", "status": "planned"}
+]

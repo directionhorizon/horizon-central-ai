@@ -1,0 +1,9 @@
+[
+  {"id": "tool-image-generate", "family": "creation", "name": "Générer une image", "description": "Créer une image à partir d'une description.", "risk": "low", "channel": "connector", "status": "planned"},
+  {"id": "tool-image-edit", "family": "creation", "name": "Modifier une image", "description": "Éditer ou retoucher une image.", "risk": "low", "channel": "connector", "status": "planned"},
+  {"id": "tool-video-generate", "family": "creation", "name": "Générer une vidéo", "description": "Créer une vidéo à partir d'un texte ou d'images.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-video-edit", "family": "creation", "name": "Modifier une vidéo", "description": "Monter ou éditer une vidéo.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-audio-generate", "family": "creation", "name": "Générer un audio", "description": "Créer une voix ou une musique.", "risk": "low", "channel": "connector", "status": "planned"},
+  {"id": "tool-model-3d", "family": "creation", "name": "Modèle 3D", "description": "Générer ou manipuler un modèle 3D.", "risk": "medium", "channel": "connector", "status": "planned"},
+  {"id": "tool-design", "family": "creation", "name": "Design", "description": "Produire un visuel ou une mise en page.", "risk": "low", "channel": "connector", "status": "planned"}
+]
