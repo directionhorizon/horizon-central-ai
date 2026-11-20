@@ -32,10 +32,20 @@ TABLES = [
     "orchestrator_capabilities",
     "orchestrator_projects",
     "orchestrator_model_selection",
+    "agents",
+    "agent_tools",
+    "tools",
+    "mcp_servers",
+    "scheduled_tasks",
+    "skills",
+    "orchestrator_skills",
+    "orchestrator_runs",
     "missions",
     "mission_steps",
     "mission_checkpoints",
     "documents",
+    "integrations",
+    "authorship",
     "llm_providers",
     "sessions",
     "messages",
@@ -67,7 +77,7 @@ def redact(row: dict[str, Any]) -> dict[str, Any]:
     return result
 
 
-def export(database: Path, output: Path) -> tuple[Path, dict[str, int]]:
+def export(database: Path, output: Path, name: str | None = None) -> tuple[Path, dict[str, int]]:
     if not database.exists():
         raise SystemExit(f"Base introuvable : {database}")
 
@@ -98,7 +108,8 @@ def export(database: Path, output: Path) -> tuple[Path, dict[str, int]]:
 
     output.mkdir(parents=True, exist_ok=True)
     stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
-    target = output / f"horizon-snapshot-{stamp}.json"
+    filename = name or f"horizon-snapshot-{stamp}.json"
+    target = output / filename
     target.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
     return target, counts
 
@@ -107,9 +118,10 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Export non destructif (lecture seule).")
     parser.add_argument("--database", type=Path, default=DEFAULT_DATABASE)
     parser.add_argument("--out", type=Path, default=DEFAULT_OUTPUT)
+    parser.add_argument("--name", type=str, default=None, help="Nom de fichier fixe (sinon horodaté).")
     args = parser.parse_args(argv)
 
-    target, counts = export(args.database, args.out)
+    target, counts = export(args.database, args.out, args.name)
     total = sum(counts.values())
     print(f"Instantané écrit : {target}")
     print(f"Lignes exportées : {total}")
