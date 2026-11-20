@@ -120,3 +120,31 @@ def test_main_deleguer(client, monkeypatch):
     assert response.status_code == 200, response.text
     assert response.json()["result"]["output"] == "Travail délégué terminé."
     assert response.json()["result"]["agent"]
+
+
+def test_main_extraction_structuree(client, monkeypatch):
+    from horizon import llm
+
+    _configure_provider(client)
+    monkeypatch.setattr(llm, "chat", _fake_chat('{"nom":"Dupont","ville":"Paris"}'))
+    response = client.post(
+        "/api/v1/tools/tool-data-extract/run",
+        json={"params": {"text": "Jean Dupont habite à Paris.", "fields": ["nom", "ville"]}},
+    )
+    assert response.status_code == 200, response.text
+    assert '"ville":"Paris"' in response.json()["result"]["extracted"]
+
+
+def test_main_extraction_refus_sans_fournisseur(client, monkeypatch):
+    from horizon import native_engine
+
+    def _no_provider(_db):
+        raise native_engine.NativeEngineError("Aucun fournisseur LLM configuré.")
+
+    monkeypatch.setattr(native_engine, "choose_provider", _no_provider)
+    response = client.post(
+        "/api/v1/tools/tool-data-extract/run",
+        json={"params": {"text": "Jean Dupont habite à Paris."}},
+    )
+    assert response.status_code == 400
+    assert "fournisseur" in response.json()["detail"]

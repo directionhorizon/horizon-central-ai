@@ -227,6 +227,56 @@ async def _notifications(_db, params: dict[str, Any]) -> dict[str, Any]:
     return {"notified": True, "message": message}
 
 
+# --- Famille 3 : données (extraction structurée) ----------------------------
+
+EXTRACT_PROMPT = (
+    "Tu es l'extracteur de HORIZON CENTRAL AI. À partir du texte fourni, "
+    "renvoie UNIQUEMENT un objet JSON valide, sans commentaire ni texte autour. "
+    "N'invente aucune valeur : si une information est absente, mets null."
+)
+
+
+@handler("tool-data-extract")
+async def _data_extract(db, params: dict[str, Any]) -> dict[str, Any]:
+    from . import llm, native_engine
+
+    text = str(params.get("text") or "").strip()
+    if not text:
+        raise ToolError("Texte à analyser manquant.")
+    fields = params.get("fields")
+    if isinstance(fields, list):
+        fields_hint = ", ".join(str(item).strip() for item in fields if str(item).strip())
+    else:
+        fields_hint = str(fields or "").strip()
+    instruction = str(params.get("instruction") or "").strip()
+
+    directives = [EXTRACT_PROMPT]
+    if fields_hint:
+        directives.append(f"Champs à extraire : {fields_hint}.")
+    if instruction:
+        directives.append(instruction)
+    try:
+        provider = native_engine.choose_provider(db)
+    except native_engine.NativeEngineError as error:
+        raise ToolError(str(error)) from error
+    try:
+        result = await llm.chat(
+            provider,
+            [
+                {"role": "system", "content": " ".join(directives)},
+                {"role": "user", "content": _clip(text)},
+            ],
+            temperature=0.0,
+        )
+    except llm.LLMError as error:
+        raise ToolError(str(error)) from error
+    return {
+        "extracted": result.get("content", ""),
+        "fields": fields_hint or None,
+        "model": result.get("model"),
+    }
+
+
 # --- Famille 5 : méta (mémoire, compétences) --------------------------------
 
 @handler("tool-skills")
