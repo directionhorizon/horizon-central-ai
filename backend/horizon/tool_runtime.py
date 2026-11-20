@@ -479,6 +479,35 @@ def _env(name: str) -> str:
     return (os.getenv(name) or "").strip()
 
 
+def _credential(db, account: Any, default_env: str, label: str) -> str:
+    """Résout un secret SANS jamais le journaliser (plusieurs comptes possibles).
+
+    - si `account` est fourni : la fiche d'intégration correspondante (par `id`
+      ou `name`) donne le NOM de la variable (`api_key_env`) ; la valeur est lue
+      dans l'environnement ;
+    - sinon : variable d'environnement par défaut (`default_env`).
+    """
+    account = str(account or "").strip()
+    if account:
+        row = db.execute(
+            "SELECT api_key_env FROM integrations WHERE archived=0 AND (id=? OR name=?) LIMIT 1",
+            (account, account),
+        ).fetchone()
+        if row is None:
+            raise ToolError(f"Connexion « {account} » introuvable dans le registre.")
+        env_name = (row["api_key_env"] or "").strip()
+        if not env_name:
+            raise ToolError(f"La connexion « {account} » ne référence aucune variable de clé.")
+        value = (os.getenv(env_name) or "").strip()
+        if not value:
+            raise ToolError(f"Variable {env_name} absente pour la connexion « {account} ».")
+        return value
+    value = (os.getenv(default_env) or "").strip()
+    if not value:
+        raise ToolError(f"Aucun {label} configuré ({default_env}).")
+    return value
+
+
 @handler("tool-web-search")
 async def _web_search(_db, params: dict[str, Any]) -> dict[str, Any]:
     query = str(params.get("query") or params.get("q") or "").strip()
@@ -569,10 +598,8 @@ async def _email_send(_db, params: dict[str, Any]) -> dict[str, Any]:
 
 
 @handler("tool-telegram-bot")
-async def _telegram_bot(_db, params: dict[str, Any]) -> dict[str, Any]:
-    token = _env("HORIZON_TELEGRAM_BOT_TOKEN")
-    if not token:
-        raise ToolError("Aucun bot Telegram configuré (HORIZON_TELEGRAM_BOT_TOKEN).")
+async def _telegram_bot(db, params: dict[str, Any]) -> dict[str, Any]:
+    token = _credential(db, params.get("account"), "HORIZON_TELEGRAM_BOT_TOKEN", "bot Telegram")
     chat_id = str(params.get("chat_id") or _env("HORIZON_TELEGRAM_CHAT_ID") or "").strip()
     text = str(params.get("text") or params.get("message") or "").strip()
     if not chat_id:
@@ -620,10 +647,8 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
 
 
 @handler("tool-payment")
-async def _payment(_db, params: dict[str, Any]) -> dict[str, Any]:
-    key = os.getenv("HORIZON_STRIPE_SECRET_KEY")
-    if not key:
-        raise ToolError("Aucun compte Stripe configuré (HORIZON_STRIPE_SECRET_KEY).")
+async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
+    key = _credential(db, params.get("account"), "HORIZON_STRIPE_SECRET_KEY", "compte Stripe")
     amount = params.get("amount")
     if amount is None:
         raise ToolError("Montant requis (en plus petite unité, ex. centimes).")
@@ -657,6 +682,83 @@ async def _payment(_db, params: dict[str, Any]) -> dict[str, Any]:
         "amount": payload.get("amount"),
         "currency": payload.get("currency"),
     }
+
+
+@handler("tool-facebook")
+async def _facebook(db, params: dict[str, Any]) -> dict[str, Any]:
+    token = _credential(db, params.get("account"), "HORIZON_META_ACCESS_TOKEN", "jeton Meta")
+    page_id = str(params.get("page_id") or _env("HORIZON_META_PAGE_ID") or "").strip()
+    message = str(params.get("message") or "").strip()
+    if not page_id:
+        raise ToolError("Page Facebook requise (page_id ou HORIZON_META_PAGE_ID).")
+    if not message:
+        raise ToolError("Message requis.")
+    body = {"message": message, "access_token": token}
+    if params.get("link"):
+        body["link"] = str(params["link"])
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        response = await client.post(
+            f"https://graph.facebook.com/v21.0/{page_id}/feed", data=body
+        )
+    if response.status_code >= 400:
+        raise ToolError(f"Facebook a refusé la publication (HTTP {response.status_code}).")
+    return {"published": True, "id": response.json().get("id")}
+
+
+@handler("tool-instagram")
+async def _instagram(db, params: dict[str, Any]) -> dict[str, Any]:
+    token = _credential(db, params.get("account"), "HORIZON_META_ACCESS_TOKEN", "jeton Meta")
+    ig_user_id = str(params.get("ig_user_id") or _env("HORIZON_META_IG_USER_ID") or "").strip()
+    image_url = _require_url(params.get("image_url"))
+    caption = str(params.get("caption") or "")
+    if not ig_user_id:
+        raise ToolError("Compte Instagram Business requis (ig_user_id ou HORIZON_META_IG_USER_ID).")
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        created = await client.post(
+            f"https://graph.facebook.com/v21.0/{ig_user_id}/media",
+            data={"image_url": image_url, "caption": caption, "access_token": token},
+        )
+        if created.status_code >= 400:
+            raise ToolError(f"Instagram a refusé le média (HTTP {created.status_code}).")
+        container = created.json().get("id")
+        published = await client.post(
+            f"https://graph.facebook.com/v21.0/{ig_user_id}/media_publish",
+            data={"creation_id": container, "access_token": token},
+        )
+    if published.status_code >= 400:
+        raise ToolError(f"Instagram a refusé la publication (HTTP {published.status_code}).")
+    return {"published": True, "id": published.json().get("id")}
+
+
+@handler("tool-tiktok")
+async def _tiktok(db, params: dict[str, Any]) -> dict[str, Any]:
+    token = _credential(db, params.get("account"), "HORIZON_TIKTOK_ACCESS_TOKEN", "jeton TikTok")
+    action = str(params.get("action") or "creator_info").strip().lower()
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json; charset=UTF-8",
+    }
+    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
+        if action == "creator_info":
+            response = await client.get(
+                "https://open.tiktokapis.com/v2/post/publish/creator_info/query/",
+                headers=headers,
+            )
+        elif action == "publish":
+            video_url = _require_url(params.get("video_url"))
+            response = await client.post(
+                "https://open.tiktokapis.com/v2/post/publish/video/init/",
+                headers=headers,
+                json={
+                    "post_info": {"title": str(params.get("title") or "")},
+                    "source_info": {"source": "PULL_FROM_URL", "video_url": video_url},
+                },
+            )
+        else:
+            raise ToolError("Action TikTok inconnue (creator_info ou publish).")
+    if response.status_code >= 400:
+        raise ToolError(f"TikTok a refusé la demande (HTTP {response.status_code}).")
+    return {"action": action, "result": response.json()}
 
 
 async def run_tool(db, tool: dict[str, Any], params: dict[str, Any]) -> dict[str, Any]:

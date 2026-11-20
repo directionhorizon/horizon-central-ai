@@ -16,6 +16,9 @@ UNCONFIG = [
     ("tool-telegram-bot", {"chat_id": "1", "text": "salut"}),
     ("tool-image-generate", {"prompt": "un chat"}),
     ("tool-payment", {"amount": 100}),
+    ("tool-facebook", {"message": "bonjour"}),
+    ("tool-instagram", {"image_url": "http://example.com/a.png"}),
+    ("tool-tiktok", {}),
 ]
 
 ENV_VARS = (
@@ -27,6 +30,8 @@ ENV_VARS = (
     "HORIZON_TELEGRAM_BOT_TOKEN",
     "HORIZON_IMAGE_BASE_URL",
     "HORIZON_STRIPE_SECRET_KEY",
+    "HORIZON_META_ACCESS_TOKEN",
+    "HORIZON_TIKTOK_ACCESS_TOKEN",
 )
 
 
@@ -157,3 +162,70 @@ def test_email_envoi(client, monkeypatch):
     assert response.status_code == 200, response.text
     assert sent.get("to") == "x@y.z"
     assert sent.get("tls") is True
+
+
+def _create_integration(client, name, env_var):
+    response = client.post(
+        "/api/v1/integrations",
+        json={
+            "name": name,
+            "category": "communication",
+            "method": "bearer",
+            "api_key_env": env_var,
+        },
+    )
+    assert response.status_code == 201, response.text
+    return response.json()["id"]
+
+
+def test_facebook_publication(client, monkeypatch):
+    monkeypatch.setenv("HORIZON_META_ACCESS_TOKEN", "EAAG-token")
+    _FakeAsyncClient.response = {"id": "123_456"}
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/tools/tool-facebook/run",
+        json={"params": {"page_id": "P1", "message": "bonjour"}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["id"] == "123_456"
+    assert "graph.facebook.com" in _FakeAsyncClient.last["url"]
+
+
+def test_instagram_publication(client, monkeypatch):
+    monkeypatch.setenv("HORIZON_META_ACCESS_TOKEN", "t")
+    monkeypatch.setenv("HORIZON_META_IG_USER_ID", "IG1")
+    _FakeAsyncClient.response = {"id": "IG-1"}
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/tools/tool-instagram/run",
+        json={"params": {"image_url": "http://example.com/i.png", "caption": "c"}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["id"] == "IG-1"
+
+
+def test_tiktok_creator_info(client, monkeypatch):
+    monkeypatch.setenv("HORIZON_TIKTOK_ACCESS_TOKEN", "tt")
+    _FakeAsyncClient.response = {"data": {"creator_username": "me"}}
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/tools/tool-tiktok/run", json={"params": {"action": "creator_info"}}
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["action"] == "creator_info"
+
+
+def test_multi_comptes_via_registre(client, monkeypatch):
+    """Plusieurs clés : une fiche par compte ; le paramètre `account` choisit la bonne."""
+    _create_integration(client, "Page A", "HORIZON_META_TOKEN_A")
+    _create_integration(client, "Page B", "HORIZON_META_TOKEN_B")
+    monkeypatch.setenv("HORIZON_META_TOKEN_A", "TOKEN-A")
+    monkeypatch.setenv("HORIZON_META_TOKEN_B", "TOKEN-B")
+    _FakeAsyncClient.response = {"id": "x"}
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/tools/tool-facebook/run",
+        json={"params": {"account": "Page B", "page_id": "P2", "message": "hi"}},
+    )
+    assert response.status_code == 200, response.text
+    assert _FakeAsyncClient.last["data"]["access_token"] == "TOKEN-B"
