@@ -69,9 +69,15 @@ async def run_mission(
     orchestrator: dict[str, Any],
     mission: dict[str, Any],
     step: dict[str, Any] | None = None,
+    agent_id: str | None = None,
 ) -> dict[str, Any]:
-    """Exécute une mission via l'agent coordinateur du système et renvoie le résultat."""
-    agent = pick_agent(db, orchestrator["id"])
+    """Exécute une mission via l'agent coordinateur (ou un agent désigné)."""
+    if agent_id:
+        agent = agents_repo.get_agent(db, agent_id)
+        if agent is None:
+            raise NativeEngineError("Agent introuvable pour cette délégation.")
+    else:
+        agent = pick_agent(db, orchestrator["id"])
     provider = choose_provider(db)
     system_prompt = agent.get("spec") or (
         "Tu es un agent de HORIZON CENTRAL AI. Livre un résultat clair et vérifiable."

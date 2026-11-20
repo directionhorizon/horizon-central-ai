@@ -16,6 +16,7 @@ import os
 import re
 import subprocess
 import sys
+import uuid
 import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
@@ -244,6 +245,113 @@ async def _memory(db, params: dict[str, Any]) -> dict[str, Any]:
         "SELECT id,title,project_id,created_at FROM documents ORDER BY created_at DESC LIMIT 50"
     ).fetchall()
     return {"count": len(rows), "items": [dict(row) for row in rows]}
+
+
+PLAN_PROMPT = (
+    "Tu es le planificateur de HORIZON CENTRAL AI. Réponds UNIQUEMENT par un "
+    "objet JSON : {\"title\": \"...\", \"steps\": [{\"title\": \"...\"}]} "
+    "(2 à 12 étapes, aucune étape ne prétend être exécutée)."
+)
+
+
+@handler("tool-plan")
+async def _plan(db, params: dict[str, Any]) -> dict[str, Any]:
+    from . import llm, native_engine
+
+    request = str(params.get("request") or params.get("goal") or "").strip()
+    if not request:
+        raise ToolError("Objectif manquant.")
+    try:
+        provider = native_engine.choose_provider(db)
+    except native_engine.NativeEngineError as error:
+        raise ToolError(str(error)) from error
+    try:
+        result = await llm.chat(
+            provider,
+            [
+                {"role": "system", "content": PLAN_PROMPT},
+                {"role": "user", "content": request},
+            ],
+            temperature=0.1,
+        )
+    except llm.LLMError as error:
+        raise ToolError(str(error)) from error
+    return {"plan": result.get("content", ""), "model": result.get("model")}
+
+
+@handler("tool-delegate")
+async def _delegate(db, params: dict[str, Any]) -> dict[str, Any]:
+    from . import native_engine
+    from .repositories import orchestrators
+
+    system_id = str(params.get("system_id") or "").strip()
+    task = str(params.get("task") or "").strip()
+    if not system_id:
+        raise ToolError("Système cible requis.")
+    if not task:
+        raise ToolError("Tâche requise.")
+    system = orchestrators.get_orchestrator(db, system_id)
+    if system is None:
+        raise ToolError("Système d'orchestration introuvable.")
+    mission = {
+        "title": str(params.get("title") or "Tâche déléguée"),
+        "description": task,
+        "priority": "normal",
+    }
+    target_agent = str(params.get("agent_id") or "").strip() or None
+    try:
+        result = await native_engine.run_mission(db, system, mission, agent_id=target_agent)
+    except native_engine.NativeEngineError as error:
+        raise ToolError(str(error)) from error
+    return {"agent": result["agent_name"], "output": result["output"], "run_id": result["run_id"]}
+
+
+@handler("tool-mcp")
+async def _mcp(db, params: dict[str, Any]) -> dict[str, Any]:
+    from .mcp_client import MCPClient, MCPError
+
+    server_id = str(params.get("server_id") or "").strip()
+    tool_name = str(params.get("tool") or "").strip()
+    if not server_id or not tool_name:
+        raise ToolError("Serveur MCP et nom d'outil requis.")
+    row = db.execute("SELECT * FROM mcp_servers WHERE id=?", (server_id,)).fetchone()
+    if row is None:
+        raise ToolError("Serveur MCP introuvable.")
+    if not row["enabled"]:
+        raise ToolError("Ce serveur MCP est désactivé.")
+    args = json.loads(row["args_json"] or "[]")
+
+    def _call():
+        with MCPClient(row["command"], args) as client:
+            return client.call_tool(tool_name, params.get("arguments") or {})
+
+    try:
+        result = await asyncio.to_thread(_call)
+    except MCPError as error:
+        raise ToolError(str(error)) from error
+    return {"server_id": server_id, "tool": tool_name, "result": result}
+
+
+@handler("tool-schedule")
+async def _schedule(db, params: dict[str, Any]) -> dict[str, Any]:
+    run_at = str(params.get("run_at") or "").strip()
+    tool_id = str(params.get("tool_id") or "").strip()
+    if not run_at or not tool_id:
+        raise ToolError("Date d'exécution et outil requis.")
+    if tool_id not in _HANDLERS:
+        raise ToolError("La main à planifier n'est pas branchée.")
+    task_params = params.get("params") or {}
+    if run_at <= _stamp():
+        result = await run_tool(db, {"id": tool_id}, task_params)
+        return {"executed": True, "run_at": run_at, "result": result}
+    tid = str(uuid.uuid4())
+    db.execute(
+        """INSERT INTO scheduled_tasks(id,run_at,tool_id,params_json,status,created_at)
+           VALUES(?,?,?,?,'pending',?)""",
+        (tid, run_at, tool_id, json.dumps(task_params, ensure_ascii=False), _stamp()),
+    )
+    db.commit()
+    return {"scheduled": True, "id": tid, "run_at": run_at, "tool_id": tool_id}
 
 
 # --- Famille 7 : sécurité et contrôle ---------------------------------------

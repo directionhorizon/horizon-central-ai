@@ -414,6 +414,37 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             """,
         ),
     ),
+    (
+        14,
+        "mcp_and_schedule",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS mcp_servers (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                command TEXT NOT NULL,
+                args_json TEXT NOT NULL DEFAULT '[]',
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL,
+                updated_at TEXT NOT NULL
+            )
+            """,
+            """
+            CREATE TABLE IF NOT EXISTS scheduled_tasks (
+                id TEXT PRIMARY KEY,
+                run_at TEXT NOT NULL,
+                tool_id TEXT NOT NULL DEFAULT '',
+                params_json TEXT NOT NULL DEFAULT '{}',
+                status TEXT NOT NULL DEFAULT 'pending'
+                    CHECK(status IN ('pending','done','failed','cancelled')),
+                created_at TEXT NOT NULL,
+                executed_at TEXT,
+                result TEXT NOT NULL DEFAULT ''
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_scheduled_status ON scheduled_tasks(status, run_at)",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.

@@ -99,6 +99,15 @@ class ToolRun(BaseModel):
     agent_id: str | None = None
 
 
+class MCPServerCreate(BaseModel):
+    """Enregistrement d'un serveur MCP (transport stdio)."""
+
+    name: str = Field(min_length=1, max_length=120)
+    command: str = Field(min_length=1, max_length=500)
+    args: list[str] = Field(default_factory=list)
+    enabled: bool = True
+
+
 # --- Missions --------------------------------------------------------------
 
 class MissionCreate(BaseModel):

@@ -17,14 +17,15 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from horizon import llm as llm_adapter
+from horizon import scheduler
 from horizon import sync_worker
 from horizon.auth import auth_enabled
 from horizon.repositories import llm as llm_repo
 from horizon.repositories import operations as operations_repo
 from horizon.routers import core as core_router
 from horizon.routers import (
-    agents, auth as auth_router, diagnostics, documents, integrations, llm_models, missions,
-    operations, orchestrators, projects, skills, sync, system, tools,
+    agents, auth as auth_router, diagnostics, documents, integrations, llm_models, mcp as mcp_router,
+    missions, operations, orchestrators, projects, skills, sync, system, tools,
 )
 from horizon.schema import run_migrations
 
@@ -67,14 +68,17 @@ async def lifespan(_: FastAPI):
     # Synchronisation automatique : inactif par défaut (HORIZON_SYNC_AUTO=1
     # pour l'activer). Le démarrage n'est jamais bloqué par le réseau.
     worker = asyncio.create_task(sync_worker.run_loop())
+    planner = asyncio.create_task(scheduler.run_loop())
     try:
         yield
     finally:
-        worker.cancel()
-        try:
-            await worker
-        except asyncio.CancelledError:
-            pass
+        for task in (worker, planner):
+            task.cancel()
+        for task in (worker, planner):
+            try:
+                await task
+            except asyncio.CancelledError:
+                pass
 
 
 app = FastAPI(title="HORIZON CENTRAL AI — Core API", version="0.4.0", lifespan=lifespan)
@@ -166,6 +170,7 @@ for module in (
     orchestrators,
     agents,
     tools,
+    mcp_router,
     missions,
     documents,
     llm_models,

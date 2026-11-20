@@ -72,3 +72,51 @@ def test_liste_indique_executable(client):
     by_id = {item["id"]: item for item in body["items"]}
     assert by_id["tool-file-read"]["executable"] is True
     assert by_id["tool-phone-call"]["executable"] is False
+
+
+def _configure_provider(client):
+    created = client.post(
+        "/api/v1/models",
+        json={"name": "Fournisseur test", "base_url": "http://127.0.0.1:9/v1", "default_model": "m"},
+    )
+    assert created.status_code == 201, created.text
+
+
+def _fake_chat(text):
+    async def _chat(row, messages, *, model=None, temperature=0.2, timeout_s=60.0):
+        return {
+            "content": text,
+            "model": model or "m",
+            "provider_id": row.get("id"),
+            "provider_name": row.get("name"),
+            "usage": {},
+        }
+
+    return _chat
+
+
+def test_main_planifier(client, monkeypatch):
+    from horizon import llm
+
+    _configure_provider(client)
+    monkeypatch.setattr(llm, "chat", _fake_chat('{"title":"Plan","steps":[{"title":"Étape"}]}'))
+    response = client.post(
+        "/api/v1/tools/tool-plan/run", json={"params": {"request": "Construire une page"}}
+    )
+    assert response.status_code == 200, response.text
+    assert "Plan" in response.json()["result"]["plan"]
+
+
+def test_main_deleguer(client, monkeypatch):
+    from horizon import llm
+    from horizon.schema import FAS_SEED
+
+    _configure_provider(client)
+    monkeypatch.setattr(llm, "chat", _fake_chat("Travail délégué terminé."))
+    response = client.post(
+        "/api/v1/tools/tool-delegate/run",
+        json={"params": {"system_id": FAS_SEED["id"], "task": "Rédiger un résumé"}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["output"] == "Travail délégué terminé."
+    assert response.json()["result"]["agent"]
