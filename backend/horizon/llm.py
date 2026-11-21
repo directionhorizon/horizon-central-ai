@@ -229,6 +229,12 @@ async def chat(
                     detail = error_obj[:300]
         except ValueError:
             detail = ""
+        if not detail:
+            # Corps non JSON : on remonte un extrait brut pour diagnostiquer
+            # (aucune clé n'y figure, seulement le message d'erreur du service).
+            raw = (response.text or "").strip().replace("\n", " ")
+            if raw:
+                detail = raw[:300]
         raise LLMError(
             f"HTTP {response.status_code} du fournisseur" + (f" : {detail}" if detail else "."),
             status_code=response.status_code,
