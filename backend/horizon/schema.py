@@ -459,9 +459,9 @@ HERMES_SEED = {
 }
 
 #: Système d'orchestration de repli quand une mission n'en désigne aucun.
-#: Hermes est le premier branchement de l'UOIM, pas une dépendance obligatoire :
-#: une mission peut désigner un autre système via son champ `orchestrator_id`.
-DEFAULT_ORCHESTRATOR_ID = HERMES_SEED["id"]
+#: Le moteur natif HORIZON est le repli : aucune dépendance à un logiciel
+#: externe (Hermes reste optionnel et se choisit via `orchestrator_id`).
+DEFAULT_ORCHESTRATOR_ID = "system-first-agentic"
 
 #: Système d'orchestration natif créé dans HORIZON (moteur d'exécution interne).
 #: Le concept d'agent est générique : chaque système possède son propre agent
