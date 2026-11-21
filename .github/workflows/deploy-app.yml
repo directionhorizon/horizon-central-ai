@@ -46,9 +46,10 @@ jobs:
         # Une variable laissee vide n'est PAS ecrite : le .env existant est preserve.
         env:
           HORIZON_ADMIN_TOKEN: ${{ secrets.HORIZON_ADMIN_TOKEN }}
+          # Un secret par fournisseur (nommage : HORIZON_<FOURNISSEUR>_API_KEY).
+          # Chaque fiche fournisseur declare le nom de variable qu'elle utilise.
+          HORIZON_GEMINI_API_KEY: ${{ secrets.HORIZON_GEMINI_API_KEY }}
           HORIZON_LLM_API_KEY: ${{ secrets.HORIZON_LLM_API_KEY }}
-          # Alias : certaines fiches fournisseur utilisent ce nom de variable.
-          HORIZON_GEMINI_API_KEY: ${{ secrets.HORIZON_LLM_API_KEY }}
           HORIZON_OWNER_EMAIL: ${{ secrets.HORIZON_OWNER_EMAIL }}
           HORIZON_CORS_ORIGINS: ${{ secrets.HORIZON_CORS_ORIGINS }}
           HORIZON_GOOGLE_CLIENT_ID: ${{ secrets.HORIZON_GOOGLE_CLIENT_ID }}

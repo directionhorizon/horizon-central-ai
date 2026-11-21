@@ -47,10 +47,11 @@ def _normalize_base_url(value: str) -> str:
     return value.strip().rstrip("/")
 
 
-#: Variables consultées en repli quand la variable déclarée par la fiche est vide.
-#: Cela évite les blocages lorsque le nom de variable diffère de celui injecté
-#: par le déploiement (ex. fiche créée avant l'ajout de l'alias).
-KEY_FALLBACK_ENVS = ("HORIZON_LLM_API_KEY", "HORIZON_GEMINI_API_KEY")
+#: Variable générique consultée en repli quand la fiche ne déclare aucune variable.
+#: Volontairement limité à UN nom générique : avec plusieurs fournisseurs, chaque
+#: fiche doit déclarer SA variable (HORIZON_<FOURNISSEUR>_API_KEY) pour éviter
+#: qu'une clé d'un fournisseur soit utilisée pour un autre.
+KEY_FALLBACK_ENVS = ("HORIZON_LLM_API_KEY",)
 
 
 def resolve_api_key(key_env: str) -> str | None:
