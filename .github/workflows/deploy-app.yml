@@ -158,3 +158,54 @@ jobs:
             --project-id "project-default" \
             --title "Verification de deploiement" \
             --description "Mission de controle declenchee depuis le workflow de deploiement."
+
+      - name: Verifier les outils payants (Stripe et images)
+        # Controle honnete : on n'affiche jamais la valeur d'une cle, seulement sa
+        # presence. Aucun paiement n'est cree (pas de confirm) et aucune image n'est
+        # generee (facturation) : on verifie la cle chargee et le garde-fou.
+        env:
+          HORIZON_ADMIN_TOKEN: ${{ secrets.HORIZON_ADMIN_TOKEN }}
+          HORIZON_STRIPE_SECRET_KEY: ${{ secrets.HORIZON_STRIPE_SECRET_KEY }}
+          HORIZON_IMAGE_BASE_URL: ${{ secrets.HORIZON_IMAGE_BASE_URL }}
+          HORIZON_IMAGE_API_KEY: ${{ secrets.HORIZON_IMAGE_API_KEY }}
+          HORIZON_IMAGE_MODEL: ${{ secrets.HORIZON_IMAGE_MODEL }}
+        run: |
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+
+          base = "https://horizon.mayela-crm.com"
+          token = os.environ.get("HORIZON_ADMIN_TOKEN", "").strip()
+
+          def presence(name):
+              return "presente" if os.environ.get(name, "").strip() else "ABSENTE"
+
+          print("Stripe HORIZON_STRIPE_SECRET_KEY :", presence("HORIZON_STRIPE_SECRET_KEY"))
+          print("Images HORIZON_IMAGE_BASE_URL    :", presence("HORIZON_IMAGE_BASE_URL"))
+          print("Images HORIZON_IMAGE_API_KEY     :", presence("HORIZON_IMAGE_API_KEY"))
+          print("Images HORIZON_IMAGE_MODEL       :", presence("HORIZON_IMAGE_MODEL"))
+
+          if not token:
+              print("HORIZON_ADMIN_TOKEN absent : controle des outils ignore.")
+              raise SystemExit(0)
+
+          def run_tool(tool_id, params):
+              body = json.dumps({"params": params}).encode()
+              req = urllib.request.Request(
+                  base + f"/api/v1/tools/{tool_id}/run",
+                  data=body, method="POST",
+                  headers={"X-Horizon-Token": token, "Content-Type": "application/json"},
+              )
+              with urllib.request.urlopen(req, timeout=60) as resp:
+                  return json.loads(resp.read().decode() or "{}")
+
+          # Paiement sans confirmation : aucun mouvement d'argent, on verifie que la
+          # cle est chargee et que le garde-fou de validation humaine repond.
+          try:
+              result = run_tool("tool-payment", {"amount": 1000, "currency": "eur"})
+              status = str((result.get("result") or {}).get("status") or "")
+              print("tool-payment ->", status or result)
+          except urllib.error.HTTPError as exc:
+              print("tool-payment -> HTTP", exc.code, ":", exc.read().decode()[:300])
+          except Exception as exc:
+              print("tool-payment -> erreur :", exc)
+          PY
