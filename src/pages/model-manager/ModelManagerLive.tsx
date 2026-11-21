@@ -1,5 +1,18 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import { AlertTriangle, CheckCircle2, Cpu, KeyRound, Loader2, Plus, RefreshCw, Server, Trash2 } from 'lucide-react';
+import {
+  AlertTriangle,
+  Check,
+  CheckCircle2,
+  Cpu,
+  KeyRound,
+  Loader2,
+  Pencil,
+  Plus,
+  RefreshCw,
+  Server,
+  Trash2,
+  X,
+} from 'lucide-react';
 import { modelsApi } from '../../api/models';
 import { describeApiError } from '../../api/errors';
 import type { LlmProvider, ModelSelection } from '../../api/entities';
@@ -19,8 +32,8 @@ const LLM_PRESETS: LlmPreset[] = [
   { id: 'ollama', name: 'Ollama', baseUrl: 'http://127.0.0.1:11434/v1', keyEnv: '', model: '' },
   { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', keyEnv: 'OPENAI_API_KEY', model: 'gpt-4o-mini' },
   { id: 'openrouter', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', keyEnv: 'OPENROUTER_API_KEY', model: '' },
-  { id: 'gemini', name: 'Gemini (Google)', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', keyEnv: 'HORIZON_LLM_API_KEY', model: 'gemini-2.5-flash' },
-  { id: 'groq', name: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', keyEnv: 'HORIZON_LLM_API_KEY', model: 'llama-3.3-70b-versatile' },
+  { id: 'gemini', name: 'Gemini (Google)', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', keyEnv: 'HORIZON_GEMINI_API_KEY', model: 'gemini-flash-latest' },
+  { id: 'groq', name: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', keyEnv: 'HORIZON_GROQ_API_KEY', model: 'llama-3.3-70b-versatile' },
   { id: 'custom', name: 'Personnalisé', baseUrl: '', keyEnv: '', model: '' },
 ];
 
@@ -57,6 +70,11 @@ export const ModelManagerLive = () => {
   const [baseUrl, setBaseUrl] = useState('');
   const [keyEnv, setKeyEnv] = useState('');
   const [defaultModel, setDefaultModel] = useState('');
+
+  /** Édition en ligne d'un fournisseur existant (modèle, URL de base). */
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editModel, setEditModel] = useState('');
+  const [editBaseUrl, setEditBaseUrl] = useState('');
 
   const { llmConnections, addLlmConnection, updateLlmConnection, removeLlmConnection } = useConnections();
   const [localPreset, setLocalPreset] = useState(LLM_PRESETS[0].id);
@@ -117,6 +135,26 @@ export const ModelManagerLive = () => {
         setDefaultModel('');
       },
       'Fournisseur enregistré. Lancez un test de connexion pour le vérifier.',
+    );
+  };
+
+  const startEditing = (provider: LlmProvider) => {
+    setEditingId(provider.id);
+    setEditModel(provider.default_model ?? '');
+    setEditBaseUrl(provider.base_url ?? '');
+  };
+
+  const handleUpdate = (provider: LlmProvider) => {
+    const model = editModel.trim();
+    const url = editBaseUrl.trim();
+    if (!model || !url) return;
+    void run(
+      provider.id,
+      async () => {
+        await modelsApi.update(provider.id, { default_model: model, base_url: url });
+        setEditingId(null);
+      },
+      'Fournisseur mis à jour. Relancez un test pour vérifier.',
     );
   };
 
@@ -255,14 +293,38 @@ export const ModelManagerLive = () => {
               {providers.map((provider) => (
                 <article key={provider.id} className="rounded-lg border border-white/[0.07] bg-black/20 p-4">
                   <div className="flex flex-wrap items-start justify-between gap-2">
-                    <div className="min-w-0">
+                    <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">{provider.name}</p>
-                      <p className="mt-1 text-[11px] text-slate-400">
-                        {provider.default_model || 'modèle non défini'}
-                      </p>
-                      <p className="mt-1 text-[10px] text-slate-500">
-                        {provider.api_key_configured ? 'Clé configurée' : 'Clé manquante'}
-                      </p>
+                      {editingId === provider.id ? (
+                        <div className="mt-2 space-y-2">
+                          <label className="block text-[10px] text-slate-500">
+                            Modèle
+                            <input
+                              value={editModel}
+                              onChange={(event) => setEditModel(event.target.value)}
+                              placeholder="gemini-flash-latest"
+                              className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-2 py-1 font-mono text-[11px] text-slate-200 outline-none focus:border-cyan-400/40"
+                            />
+                          </label>
+                          <label className="block text-[10px] text-slate-500">
+                            URL de base
+                            <input
+                              value={editBaseUrl}
+                              onChange={(event) => setEditBaseUrl(event.target.value)}
+                              className="mt-1 w-full rounded-md border border-white/10 bg-black/40 px-2 py-1 font-mono text-[11px] text-slate-200 outline-none focus:border-cyan-400/40"
+                            />
+                          </label>
+                        </div>
+                      ) : (
+                        <>
+                          <p className="mt-1 text-[11px] text-slate-400">
+                            {provider.default_model || 'modèle non défini'}
+                          </p>
+                          <p className="mt-1 text-[10px] text-slate-500">
+                            {provider.api_key_configured ? 'Clé configurée' : 'Clé manquante'}
+                          </p>
+                        </>
+                      )}
                     </div>
                     <div className="flex flex-col items-end gap-1">
                       <span className={badge(provider.status)}>
@@ -271,6 +333,35 @@ export const ModelManagerLive = () => {
                     </div>
                   </div>
                   <div className="mt-3 flex flex-wrap gap-2">
+                    {editingId === provider.id ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={busy === provider.id}
+                          onClick={() => handleUpdate(provider)}
+                          className="flex items-center gap-2 rounded-md border border-emerald-400/30 bg-emerald-400/10 px-3 py-1.5 text-[11px] text-emerald-200 hover:bg-emerald-400/20 disabled:opacity-40"
+                        >
+                          <Check size={13} /> Enregistrer
+                        </button>
+                        <button
+                          type="button"
+                          disabled={busy === provider.id}
+                          onClick={() => setEditingId(null)}
+                          className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-1.5 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
+                        >
+                          <X size={13} /> Annuler
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={busy === provider.id}
+                        onClick={() => startEditing(provider)}
+                        className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-1.5 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
+                      >
+                        <Pencil size={13} /> Modifier
+                      </button>
+                    )}
                     <button
                       type="button"
                       disabled={busy === provider.id}
