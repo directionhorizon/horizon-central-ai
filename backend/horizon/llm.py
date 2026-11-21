@@ -18,7 +18,9 @@ from typing import Any
 
 import httpx
 
-DEFAULT_TIMEOUT_S = 60.0
+#: Certains modèles « raisonnants » (Gemini flash latest) dépassent 60 s sur le
+#: premier appel. On laisse une marge confortable sans bloquer indéfiniment.
+DEFAULT_TIMEOUT_S = 120.0
 PROBE_TIMEOUT_S = 10.0
 
 

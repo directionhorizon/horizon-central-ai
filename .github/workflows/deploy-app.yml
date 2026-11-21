@@ -131,7 +131,7 @@ jobs:
               headers={"X-Horizon-Token": token, "Content-Type": "application/json"},
           )
           try:
-              with urllib.request.urlopen(request, timeout=60) as resp:
+              with urllib.request.urlopen(request, timeout=120) as resp:
                   answer = json.loads(resp.read().decode() or "{}")
               content = str(answer.get("content") or "").strip().replace("\n", " ")
               print(f"chat-test ({provider.get('name')}) -> OK : {content[:400]}")
