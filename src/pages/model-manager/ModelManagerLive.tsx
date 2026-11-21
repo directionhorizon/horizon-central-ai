@@ -10,6 +10,7 @@ import {
   Plus,
   RefreshCw,
   Server,
+  Sparkles,
   Trash2,
   X,
 } from 'lucide-react';
@@ -75,6 +76,8 @@ export const ModelManagerLive = () => {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editModel, setEditModel] = useState('');
   const [editBaseUrl, setEditBaseUrl] = useState('');
+  /** Réponse réelle du modèle, pour vérifier que le fournisseur répond. */
+  const [chatReply, setChatReply] = useState<{ id: string; text: string } | null>(null);
 
   const { llmConnections, addLlmConnection, updateLlmConnection, removeLlmConnection } = useConnections();
   const [localPreset, setLocalPreset] = useState(LLM_PRESETS[0].id);
@@ -166,6 +169,21 @@ export const ModelManagerLive = () => {
         setNotice(`Test ${provider.name} : ${result.status} — ${result.detail}`);
       },
       'Test de connexion terminé.',
+    );
+
+  /** Vérifie que le modèle répond vraiment (une phrase réelle, pas un ping). */
+  const handleChatTest = (provider: LlmProvider) =>
+    void run(
+      provider.id,
+      async () => {
+        setChatReply(null);
+        const result = await modelsApi.chatTest(
+          provider.id,
+          'Réponds en une phrase courte : es-tu opérationnel ?',
+        );
+        setChatReply({ id: provider.id, text: result.content });
+      },
+      'Test de réponse terminé.',
     );
 
   /**
@@ -373,6 +391,14 @@ export const ModelManagerLive = () => {
                     </button>
                     <button
                       type="button"
+                      disabled={busy === provider.id || provider.status !== 'available'}
+                      onClick={() => handleChatTest(provider)}
+                      className="flex items-center gap-2 rounded-md border border-white/10 px-3 py-1.5 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
+                    >
+                      <Sparkles size={13} /> Tester une réponse
+                    </button>
+                    <button
+                      type="button"
                       disabled={busy === provider.id}
                       onClick={() =>
                         void run(
@@ -388,6 +414,11 @@ export const ModelManagerLive = () => {
                       <Trash2 size={13} /> Supprimer
                     </button>
                   </div>
+                  {chatReply?.id === provider.id && (
+                    <p className="mt-3 rounded-md border border-emerald-400/20 bg-emerald-400/5 px-3 py-2 text-[11px] text-emerald-200">
+                      Réponse du modèle : {chatReply.text}
+                    </p>
+                  )}
                   <details className="mt-3 text-[10px] text-slate-500">
                     <summary className="cursor-pointer select-none text-slate-500 hover:text-slate-300">
                       Détails techniques
