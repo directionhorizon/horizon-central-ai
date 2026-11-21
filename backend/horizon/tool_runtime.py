@@ -728,13 +728,28 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
     headers = {"Content-Type": "application/json"}
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
-    body = {"model": model, "prompt": prompt, "size": params.get("size") or "1024x1024"}
+    size = str(params.get("size") or "1024x1024")
+    body: dict[str, Any] = {"model": model, "prompt": prompt}
+    if "together" in base.lower():
+        # Together AI attend width/height ; le format « 1024x1024 » est conservé
+        # côté appelant pour rester compatible avec les autres fournisseurs.
+        try:
+            width, height = (int(part) for part in size.lower().split("x", 1))
+        except (TypeError, ValueError):
+            width, height = 1024, 1024
+        body["width"] = width
+        body["height"] = height
+    else:
+        body["size"] = size
     async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         response = await client.post(
             f"{base.rstrip('/')}/images/generations", headers=headers, json=body
         )
     if response.status_code >= 400:
-        raise ToolError(f"Génération d'image refusée (HTTP {response.status_code}).")
+        detail = " ".join(response.text.split())[:300]
+        raise ToolError(
+            f"Génération d'image refusée (HTTP {response.status_code}) : {detail}"
+        )
     payload = response.json()
     images = []
     for item in (payload.get("data") or [])[:4]:

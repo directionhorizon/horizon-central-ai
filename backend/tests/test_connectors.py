@@ -134,6 +134,24 @@ def test_image_generation(client, monkeypatch):
     assert response.json()["result"]["images"] == ["http://img/1.png"]
 
 
+def test_image_generation_together_utilise_width_height(client, monkeypatch):
+    """Together AI attend width/height : le format « 1024x1024 » y est converti."""
+    monkeypatch.setenv("HORIZON_IMAGE_BASE_URL", "https://api.together.xyz/v1")
+    monkeypatch.setenv("HORIZON_IMAGE_MODEL", "black-forest-labs/FLUX.1-schnell")
+    _FakeAsyncClient.response = {"data": [{"url": "http://img/2.png"}]}
+    monkeypatch.setattr(tool_runtime.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/tools/tool-image-generate/run",
+        json={"params": {"prompt": "un phare", "size": "768x512"}},
+    )
+    assert response.status_code == 200, response.text
+    assert response.json()["result"]["images"] == ["http://img/2.png"]
+    sent = _FakeAsyncClient.last["json"]
+    assert sent["width"] == 768 and sent["height"] == 512
+    assert "size" not in sent
+    assert _FakeAsyncClient.last["url"].endswith("/images/generations")
+
+
 def test_paiement_exige_validation_humaine(client, monkeypatch):
     monkeypatch.setenv("HORIZON_STRIPE_SECRET_KEY", "sk_test_x")
     response = client.post(
