@@ -79,11 +79,16 @@ async def test_model(provider_id: str, actor: str = Depends(require_admin)):
             raise HTTPException(404, "Fournisseur introuvable.")
 
     result = await test_connection(row)
+    # Diagnostic utile : les identifiants de modèles exposés (noms publics, pas de secret).
+    models = result.get("models") or []
+    detail = result["detail"]
+    if models:
+        detail = f"{detail} Modèles : {', '.join(models[:15])}"
     with connect() as db:
-        llm_repo.set_health(db, provider_id, result["status"], result["detail"])
+        llm_repo.set_health(db, provider_id, result["status"], detail)
         operations.log(
             db, actor=actor, action="model.test", target_type="llm_provider",
-            target_id=provider_id, result=result["status"], detail=result["detail"],
+            target_id=provider_id, result=result["status"], detail=detail,
         )
     return {"id": provider_id, **result}
 
