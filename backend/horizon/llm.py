@@ -12,6 +12,7 @@ Principes :
 """
 from __future__ import annotations
 
+import asyncio
 import os
 from dataclasses import dataclass
 from typing import Any
@@ -203,11 +204,17 @@ async def chat(
                     "temperature": temperature,
                     "stream": False,
                 }
-                response = await client.post(
-                    f"{config.base_url}/chat/completions",
-                    headers=_headers(config),
-                    json=body,
-                )
+                # 429/503 = surcharge passagère du fournisseur : on réessaie.
+                for attempt in range(3):
+                    response = await client.post(
+                        f"{config.base_url}/chat/completions",
+                        headers=_headers(config),
+                        json=body,
+                    )
+                    if response.status_code not in (429, 503):
+                        break
+                    if attempt < 2:
+                        await asyncio.sleep(2 * (attempt + 1))
                 if response.status_code != 404:
                     chosen_model = candidate
                     break

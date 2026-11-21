@@ -92,6 +92,28 @@ def test_chat_reessaie_avec_prefixe_models(monkeypatch):
     assert seen == ["gemini-2.5-flash", "models/gemini-2.5-flash"]
 
 
+def test_chat_reessaie_apres_surcharge(monkeypatch):
+    """503 (forte demande) puis 200 : le chat réessaie sans échouer."""
+    calls: list[int] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        calls.append(1)
+        if len(calls) < 3:
+            return httpx.Response(503, json={"error": {"message": "high demand"}})
+        return httpx.Response(
+            200, json={"choices": [{"message": {"content": "ok"}}], "usage": {}}
+        )
+
+    async def _no_sleep(_seconds):
+        return None
+
+    _patch_transport(monkeypatch, handler)
+    monkeypatch.setattr(llm.asyncio, "sleep", _no_sleep)
+    result = asyncio.run(llm.chat(ROW, [{"role": "user", "content": "salut"}]))
+    assert result["content"] == "ok"
+    assert len(calls) == 3
+
+
 def test_repli_sur_variable_generique(monkeypatch):
     """La fiche peut déclarer une variable vide : la clé générique est utilisée."""
     monkeypatch.delenv("HORIZON_TEST_LLM_KEY", raising=False)
