@@ -41,7 +41,18 @@ jobs:
       - name: Déployer l'interface (dist)
         run: rsync -az --delete dist/ "root@vps126758.serveur-vps.net:/opt/horizon/dist/"
 
-      - name: Mettre à jour le code et redémarrer
+      - name: Mettre à jour le code, les variables et redémarrer
+        # Les cles viennent des secrets GitHub (Settings > Secrets and variables > Actions).
+        # Une variable laissee vide n'est PAS ecrite : le .env existant est preserve.
+        env:
+          HORIZON_GOOGLE_CLIENT_ID: ${{ secrets.HORIZON_GOOGLE_CLIENT_ID }}
+          HORIZON_GOOGLE_CLIENT_SECRET: ${{ secrets.HORIZON_GOOGLE_CLIENT_SECRET }}
+          HORIZON_GOOGLE_REDIRECT_URI: ${{ secrets.HORIZON_GOOGLE_REDIRECT_URI }}
+          HORIZON_META_APP_ID: ${{ secrets.HORIZON_META_APP_ID }}
+          HORIZON_META_APP_SECRET: ${{ secrets.HORIZON_META_APP_SECRET }}
+          HORIZON_TIKTOK_CLIENT_KEY: ${{ secrets.HORIZON_TIKTOK_CLIENT_KEY }}
+          HORIZON_TIKTOK_CLIENT_SECRET: ${{ secrets.HORIZON_TIKTOK_CLIENT_SECRET }}
         run: |
+          PAYLOAD=$(python3 -c "import base64,json,os;keys=['HORIZON_GOOGLE_CLIENT_ID','HORIZON_GOOGLE_CLIENT_SECRET','HORIZON_GOOGLE_REDIRECT_URI','HORIZON_META_APP_ID','HORIZON_META_APP_SECRET','HORIZON_TIKTOK_CLIENT_KEY','HORIZON_TIKTOK_CLIENT_SECRET'];print(base64.b64encode(json.dumps({k:os.environ.get(k,'') for k in keys}).encode()).decode())")
           ssh "root@vps126758.serveur-vps.net" \
-            "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && /opt/horizon/.venv/bin/pip install -q -r backend/requirements.txt && systemctl restart horizon"
+            "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && /opt/horizon/.venv/bin/pip install -q -r backend/requirements.txt && /opt/horizon/.venv/bin/python scripts/set_env.py backend/.env '$PAYLOAD' && systemctl restart horizon"
