@@ -70,6 +70,28 @@ def test_echec_honnete(monkeypatch):
     assert "cle-de-test" not in result["detail"]
 
 
+def test_chat_reessaie_avec_prefixe_models(monkeypatch):
+    """Si le fournisseur attend « models/<id> », le chat réessaie automatiquement."""
+    seen: list[str] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        import json as _json
+
+        model = _json.loads(request.content).get("model")
+        seen.append(model)
+        if model == "gemini-2.5-flash":
+            return httpx.Response(404, json={"error": {"message": "model not found"}})
+        return httpx.Response(
+            200,
+            json={"choices": [{"message": {"content": "bonjour"}}], "usage": {}},
+        )
+
+    _patch_transport(monkeypatch, handler)
+    result = asyncio.run(llm.chat(ROW, [{"role": "user", "content": "salut"}]))
+    assert result["content"] == "bonjour"
+    assert seen == ["gemini-2.5-flash", "models/gemini-2.5-flash"]
+
+
 def test_repli_sur_variable_generique(monkeypatch):
     """La fiche peut déclarer une variable vide : la clé générique est utilisée."""
     monkeypatch.delenv("HORIZON_TEST_LLM_KEY", raising=False)

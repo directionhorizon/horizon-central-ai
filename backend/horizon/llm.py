@@ -117,15 +117,24 @@ async def test_connection(row: dict[str, Any]) -> dict[str, Any]:
                     "models": models[:200],
                 }
             # Repli : la liste des modèles n'est pas exposée (ex. Gemini).
-            probe = await client.post(
-                f"{config.base_url}/chat/completions",
-                headers=_headers(config),
-                json={
-                    "model": config.model,
-                    "messages": [{"role": "user", "content": "ping"}],
-                    "max_tokens": 1,
-                },
-            )
+            # On essaie les deux écritures du nom de modèle (« id » et « models/id »).
+            candidates = [config.model]
+            if config.model.startswith("models/"):
+                candidates.append(config.model[len("models/"):])
+            else:
+                candidates.append(f"models/{config.model}")
+            for candidate in candidates:
+                probe = await client.post(
+                    f"{config.base_url}/chat/completions",
+                    headers=_headers(config),
+                    json={
+                        "model": candidate,
+                        "messages": [{"role": "user", "content": "ping"}],
+                        "max_tokens": 1,
+                    },
+                )
+                if probe.status_code != 404:
+                    break
         if probe.status_code >= 400:
             detail = ""
             try:
@@ -174,23 +183,39 @@ async def chat(
     if not chosen_model:
         raise LLMError("Aucun modèle sélectionné pour ce fournisseur.")
 
-    body = {
-        "model": chosen_model,
-        "messages": messages,
-        "temperature": temperature,
-        "stream": False,
-    }
+    # Certains services (Gemini) exposent les modèles sous « models/<id> » tout en
+    # attendant « <id> » à l'appel (ou l'inverse). On essaie les deux écritures.
+    candidates = [chosen_model]
+    if chosen_model.startswith("models/"):
+        candidates.append(chosen_model[len("models/"):])
+    else:
+        candidates.append(f"models/{chosen_model}")
+
+    response = None
     try:
         async with httpx.AsyncClient(timeout=timeout_s) as client:
-            response = await client.post(
-                f"{config.base_url}/chat/completions",
-                headers=_headers(config),
-                json=body,
-            )
+            for candidate in candidates:
+                body = {
+                    "model": candidate,
+                    "messages": messages,
+                    "temperature": temperature,
+                    "stream": False,
+                }
+                response = await client.post(
+                    f"{config.base_url}/chat/completions",
+                    headers=_headers(config),
+                    json=body,
+                )
+                if response.status_code != 404:
+                    chosen_model = candidate
+                    break
     except httpx.TimeoutException as error:
         raise LLMError(f"Délai dépassé après {timeout_s:.0f} s.") from error
     except httpx.HTTPError as error:
         raise LLMError(f"Échec réseau : {type(error).__name__}.") from error
+
+    if response is None:
+        raise LLMError("Aucune réponse du fournisseur.")
 
     if response.status_code >= 400:
         detail = ""
