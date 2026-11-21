@@ -47,10 +47,28 @@ def _normalize_base_url(value: str) -> str:
     return value.strip().rstrip("/")
 
 
+#: Variables consultées en repli quand la variable déclarée par la fiche est vide.
+#: Cela évite les blocages lorsque le nom de variable diffère de celui injecté
+#: par le déploiement (ex. fiche créée avant l'ajout de l'alias).
+KEY_FALLBACK_ENVS = ("HORIZON_LLM_API_KEY", "HORIZON_GEMINI_API_KEY")
+
+
+def resolve_api_key(key_env: str) -> str | None:
+    """Retourne la clé du fournisseur : variable déclarée, puis replis connus."""
+    for name in (key_env, *KEY_FALLBACK_ENVS):
+        name = (name or "").strip()
+        if not name:
+            continue
+        value = (os.getenv(name) or "").strip()
+        if value:
+            return value
+    return None
+
+
 def build_config(row: dict[str, Any]) -> ProviderConfig:
     """Construit la configuration d'appel à partir d'une ligne `llm_providers`."""
     key_env = (row.get("api_key_env") or "").strip()
-    api_key = os.getenv(key_env).strip() if key_env and os.getenv(key_env) else None
+    api_key = resolve_api_key(key_env)
     return ProviderConfig(
         id=row.get("id", ""),
         name=row.get("name", ""),

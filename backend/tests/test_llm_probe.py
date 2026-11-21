@@ -70,6 +70,15 @@ def test_echec_honnete(monkeypatch):
     assert "cle-de-test" not in result["detail"]
 
 
+def test_repli_sur_variable_generique(monkeypatch):
+    """La fiche peut déclarer une variable vide : la clé générique est utilisée."""
+    monkeypatch.delenv("HORIZON_TEST_LLM_KEY", raising=False)
+    monkeypatch.setenv("HORIZON_LLM_API_KEY", "cle-generique")
+    assert llm.resolve_api_key("HORIZON_TEST_LLM_KEY") == "cle-generique"
+    config = llm.build_config(ROW)
+    assert config.api_key == "cle-generique"
+
+
 def test_non_configure(monkeypatch):
     monkeypatch.delenv("HORIZON_TEST_LLM_KEY", raising=False)
     result = asyncio.run(llm.test_connection({**ROW, "default_model": ""}))

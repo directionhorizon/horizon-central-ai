@@ -5,13 +5,11 @@ variable d'environnement (`api_key_env`) et un indicateur de présence.
 """
 from __future__ import annotations
 
-import os
-
 from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_admin
 from ..db import connect
-from ..llm import LLMError, chat, test_connection
+from ..llm import LLMError, chat, resolve_api_key, test_connection
 from ..models import ModelSelectionUpdate, ProviderCreate, ProviderUpdate
 from ..repositories import llm as llm_repo
 from ..repositories import operations
@@ -21,7 +19,7 @@ router = APIRouter(prefix="/api/v1", tags=["models"])
 
 def _decorate(row: dict) -> dict:
     key_env = (row.get("api_key_env") or "").strip()
-    row["api_key_configured"] = bool(key_env and os.getenv(key_env))
+    row["api_key_configured"] = resolve_api_key(key_env) is not None
     row["api_key_env"] = key_env
     return row
 
