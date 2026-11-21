@@ -60,3 +60,54 @@ jobs:
           PAYLOAD=$(python3 -c "import base64,json,os;keys=['HORIZON_ADMIN_TOKEN','HORIZON_LLM_API_KEY','HORIZON_OWNER_EMAIL','HORIZON_CORS_ORIGINS','HORIZON_GOOGLE_CLIENT_ID','HORIZON_GOOGLE_CLIENT_SECRET','HORIZON_GOOGLE_REDIRECT_URI','HORIZON_META_APP_ID','HORIZON_META_APP_SECRET','HORIZON_TIKTOK_CLIENT_KEY','HORIZON_TIKTOK_CLIENT_SECRET'];print(base64.b64encode(json.dumps({k:os.environ.get(k,'') for k in keys}).encode()).decode())")
           ssh "root@vps126758.serveur-vps.net" \
             "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && /opt/horizon/.venv/bin/pip install -q -r backend/requirements.txt && /opt/horizon/.venv/bin/python scripts/set_env.py backend/.env '$PAYLOAD' && systemctl restart horizon"
+
+      - name: Verifier le service et tester les fournisseurs LLM
+        # Verifie la sante du service puis teste chaque fournisseur LLM configure
+        # (cle lue uniquement cote serveur : aucun secret n'est affiche ici).
+        env:
+          HORIZON_ADMIN_TOKEN: ${{ secrets.HORIZON_ADMIN_TOKEN }}
+        run: |
+          BASE="https://horizon.mayela-crm.com"
+          for i in $(seq 1 20); do
+            if curl -fsS "$BASE/api/v1/health" >/dev/null 2>&1; then break; fi
+            sleep 3
+          done
+          echo "--- sante ---"
+          curl -fsS "$BASE/api/v1/health" || echo "health indisponible"
+          echo
+          python3 - <<'PY'
+          import json, os, urllib.request, urllib.error
+
+          base = "https://horizon.mayela-crm.com"
+          token = os.environ.get("HORIZON_ADMIN_TOKEN", "").strip()
+          if not token:
+              print("HORIZON_ADMIN_TOKEN absent : test des fournisseurs ignore.")
+              raise SystemExit(0)
+
+          def call(path, method="GET"):
+              req = urllib.request.Request(
+                  base + path, method=method, headers={"X-Horizon-Token": token}
+              )
+              with urllib.request.urlopen(req, timeout=45) as resp:
+                  return json.loads(resp.read().decode() or "{}")
+
+          try:
+              providers = call("/api/v1/models").get("items", [])
+          except Exception as exc:
+              print("Lecture des fournisseurs impossible :", exc)
+              raise SystemExit(0)
+
+          if not providers:
+              print("Aucun fournisseur LLM enregistre.")
+              raise SystemExit(0)
+
+          for provider in providers:
+              name = provider.get("name") or provider.get("id")
+              try:
+                  result = call(f"/api/v1/models/{provider['id']}/test", method="POST")
+                  print(f"{name} -> {result.get('status')} ({result.get('last_error') or 'ok'})")
+              except urllib.error.HTTPError as exc:
+                  print(f"{name} -> HTTP {exc.code} : {exc.read().decode()[:200]}")
+              except Exception as exc:
+                  print(f"{name} -> erreur : {exc}")
+          PY
