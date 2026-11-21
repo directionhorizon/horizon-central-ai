@@ -419,29 +419,9 @@ export const ModelManagerLive = () => {
                       Réponse du modèle : {chatReply.text}
                     </p>
                   )}
-                  <details className="mt-3 text-[10px] text-slate-500">
-                    <summary className="cursor-pointer select-none text-slate-500 hover:text-slate-300">
-                      Détails techniques
-                    </summary>
-                    <dl className="mt-2 space-y-1 border-t border-white/[0.06] pt-2">
-                      <div className="flex gap-2">
-                        <dt className="w-24 shrink-0 text-slate-600">URL de base</dt>
-                        <dd className="min-w-0 break-all font-mono text-slate-400">{provider.base_url}</dd>
-                      </div>
-                      <div className="flex gap-2">
-                        <dt className="w-24 shrink-0 text-slate-600">Type</dt>
-                        <dd className="font-mono text-slate-400">{provider.kind}</dd>
-                      </div>
-                      {provider.last_checked_at && (
-                        <div className="flex gap-2">
-                          <dt className="w-24 shrink-0 text-slate-600">Dernier test</dt>
-                          <dd className="text-slate-400">
-                            {provider.last_checked_at} · {provider.last_error || 'aucune erreur'}
-                          </dd>
-                        </div>
-                      )}
-                    </dl>
-                  </details>
+                  {provider.last_error && provider.status !== 'available' && (
+                    <p className="mt-2 text-[10px] text-rose-300/80">{provider.last_error}</p>
+                  )}
                 </article>
               ))}
               {providers.length === 0 && !loading && (
