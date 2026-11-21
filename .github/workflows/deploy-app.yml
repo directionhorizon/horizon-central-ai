@@ -200,12 +200,66 @@ jobs:
 
           # Paiement sans confirmation : aucun mouvement d'argent, on verifie que la
           # cle est chargee et que le garde-fou de validation humaine repond.
-          try:
-              result = run_tool("tool-payment", {"amount": 1000, "currency": "eur"})
-              status = str((result.get("result") or {}).get("status") or "")
-              print("tool-payment ->", status or result)
-          except urllib.error.HTTPError as exc:
-              print("tool-payment -> HTTP", exc.code, ":", exc.read().decode()[:300])
-          except Exception as exc:
-              print("tool-payment -> erreur :", exc)
+          # Un outil casse fait echouer le deploiement (voyant rouge explicite).
+          echecs = []
+
+          if presence("HORIZON_STRIPE_SECRET_KEY") == "ABSENTE":
+              print("tool-payment -> ignore (cle Stripe absente)")
+          else:
+              try:
+                  result = run_tool("tool-payment", {"amount": 1000, "currency": "eur"})
+                  status = str((result.get("result") or {}).get("status") or "")
+                  if status == "requires_human_validation":
+                      print("tool-payment -> OK (garde-fou de validation humaine actif)")
+                  else:
+                      print("tool-payment -> INATTENDU :", status or result)
+                      echecs.append("tool-payment")
+              except urllib.error.HTTPError as exc:
+                  print("tool-payment -> HTTP", exc.code, ":", exc.read().decode()[:300])
+                  echecs.append("tool-payment")
+              except Exception as exc:
+                  print("tool-payment -> erreur :", exc)
+                  echecs.append("tool-payment")
+
+          # Images : generation reelle seulement si le fournisseur est gratuit
+          # (Pollinations). Un fournisseur payant n'est pas appele (facturation).
+          base_image = os.environ.get("HORIZON_IMAGE_BASE_URL", "").strip().lower()
+          if not base_image:
+              print("tool-image-generate -> ignore (aucun fournisseur d'images)")
+          elif "pollinations" not in base_image:
+              print("tool-image-generate -> non appele (fournisseur payant, pas de frais en CI)")
+          else:
+              try:
+                  result = run_tool(
+                      "tool-image-generate",
+                      {"prompt": "un phare au coucher du soleil", "size": "512x512"},
+                  )
+                  images = (result.get("result") or {}).get("images") or []
+                  if images:
+                      print("tool-image-generate -> OK :", str(images[0])[:120])
+                      # Verification reelle : l'URL doit servir une image.
+                      try:
+                          with urllib.request.urlopen(images[0], timeout=120) as resp:
+                              kind = resp.headers.get("Content-Type", "")
+                              taille = len(resp.read())
+                          print(f"image servie -> HTTP 200, {kind}, {taille} octets")
+                          if taille < 1000:
+                              echecs.append("tool-image-generate (image vide)")
+                      except Exception as exc:
+                          print("image servie -> erreur :", exc)
+                          echecs.append("tool-image-generate (URL injoignable)")
+                  else:
+                      print("tool-image-generate -> INATTENDU :", result)
+                      echecs.append("tool-image-generate")
+              except urllib.error.HTTPError as exc:
+                  print("tool-image-generate -> HTTP", exc.code, ":", exc.read().decode()[:300])
+                  echecs.append("tool-image-generate")
+              except Exception as exc:
+                  print("tool-image-generate -> erreur :", exc)
+                  echecs.append("tool-image-generate")
+
+          if echecs:
+              print("ECHEC des outils :", ", ".join(echecs))
+              raise SystemExit(1)
+          print("Outils payants : verification terminee.")
           PY
