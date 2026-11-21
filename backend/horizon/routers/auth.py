@@ -16,10 +16,10 @@ from __future__ import annotations
 
 from typing import Any
 
-from fastapi import APIRouter, Header, HTTPException, status
+from fastapi import APIRouter, Depends, Header, HTTPException, status
 from pydantic import BaseModel, Field
 
-from ..auth import _extract
+from ..auth import _extract, require_admin
 from ..auth_google import (
     AuthError,
     auth_status,
@@ -131,14 +131,19 @@ def auth_logout(
 
 
 @router.get("/devices")
-def auth_devices(
-    _: dict[str, Any] = Header(default=None, include_in_schema=False),
-) -> dict[str, Any]:
+def auth_devices(actor: str = Depends(require_admin)) -> dict[str, Any]:
+    """Liste des appareils connectés.
+
+    La liste contient des identifiants de session : elle exige donc le rôle
+    administrateur, comme toute autre opération sensible.
+    """
     return {"items": list_devices()}
 
 
 @router.post("/devices/{session_id}/revoke")
-def auth_revoke_device(session_id: str) -> dict[str, Any]:
+def auth_revoke_device(
+    session_id: str, actor: str = Depends(require_admin)
+) -> dict[str, Any]:
     if not revoke_device(session_id):
         raise HTTPException(404, "Session introuvable ou déjà révoquée.")
     return {"revoked": True, "session_id": session_id}
