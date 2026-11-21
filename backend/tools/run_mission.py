@@ -55,6 +55,26 @@ def _fail(message: str) -> None:
     raise SystemExit(1)
 
 
+def _pick_orchestrator(base: str, token: str) -> str:
+    """Choisit un système d'orchestration actif : le natif HORIZON en priorité.
+
+    Le système par défaut du serveur peut être un orchestrateur externe (Hermes)
+    qui n'est pas joignable depuis le serveur : on préfère donc explicitement le
+    moteur natif lorsqu'il est disponible.
+    """
+    try:
+        items = _request("GET", base + "/api/v1/orchestrators", token).get("items", [])
+    except Exception:  # noqa: BLE001 - le serveur décidera par défaut
+        return ""
+    for row in items:
+        if str(row.get("kind") or "").lower() == "horizon" and str(row.get("status")) == "active":
+            return str(row.get("id") or "")
+    for row in items:
+        if str(row.get("status")) == "active":
+            return str(row.get("id") or "")
+    return ""
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--base-url", default=os.getenv("HORIZON_BASE_URL", "https://horizon.mayela-crm.com"))
@@ -72,6 +92,9 @@ def main(argv: list[str] | None = None) -> int:
     if not token:
         _fail("aucun jeton fourni (HORIZON_ADMIN_TOKEN ou --token).")
 
+    orchestrator_id = args.orchestrator_id or _pick_orchestrator(base, token)
+    print("orchestrateur : " + (orchestrator_id or "(valeur par défaut du serveur)"))
+
     mission: dict[str, Any] | None = None
     try:
         mission = _request(
@@ -82,7 +105,7 @@ def main(argv: list[str] | None = None) -> int:
                 "project_id": args.project_id,
                 "title": args.title,
                 "description": args.description,
-                "orchestrator_id": args.orchestrator_id or None,
+                "orchestrator_id": orchestrator_id or None,
             },
         )
         mission_id = mission.get("id") or mission.get("mission_id")
@@ -102,7 +125,7 @@ def main(argv: list[str] | None = None) -> int:
             "POST",
             base + "/api/v1/missions/" + mission_id + "/dispatch",
             token,
-            {"orchestrator_id": args.orchestrator_id or None},
+            {"orchestrator_id": orchestrator_id or None},
         )
         run = dispatch.get("run") or {}
         run_id = run.get("id")
