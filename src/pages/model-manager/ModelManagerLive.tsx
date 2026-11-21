@@ -19,6 +19,8 @@ const LLM_PRESETS: LlmPreset[] = [
   { id: 'ollama', name: 'Ollama', baseUrl: 'http://127.0.0.1:11434/v1', keyEnv: '', model: '' },
   { id: 'openai', name: 'OpenAI', baseUrl: 'https://api.openai.com/v1', keyEnv: 'OPENAI_API_KEY', model: 'gpt-4o-mini' },
   { id: 'openrouter', name: 'OpenRouter', baseUrl: 'https://openrouter.ai/api/v1', keyEnv: 'OPENROUTER_API_KEY', model: '' },
+  { id: 'gemini', name: 'Gemini (Google)', baseUrl: 'https://generativelanguage.googleapis.com/v1beta/openai', keyEnv: 'HORIZON_LLM_API_KEY', model: 'gemini-2.5-flash' },
+  { id: 'groq', name: 'Groq', baseUrl: 'https://api.groq.com/openai/v1', keyEnv: 'HORIZON_LLM_API_KEY', model: 'llama-3.3-70b-versatile' },
   { id: 'custom', name: 'Personnalisé', baseUrl: '', keyEnv: '', model: '' },
 ];
 
@@ -27,6 +29,14 @@ const statusStyle: Record<string, string> = {
   unverified: 'bg-amber-400/10 text-amber-300',
   unavailable: 'bg-rose-400/10 text-rose-300',
   unconfigured: 'bg-slate-500/10 text-slate-300',
+};
+
+const statusLabel: Record<string, string> = {
+  available: 'Disponible',
+  unverified: 'À tester',
+  unavailable: 'Indisponible',
+  unconfigured: 'À configurer',
+  error: 'Erreur',
 };
 
 const badge = (value: string) =>
@@ -247,15 +257,16 @@ export const ModelManagerLive = () => {
                   <div className="flex flex-wrap items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-semibold text-white">{provider.name}</p>
-                      <p className="mt-1 truncate text-[11px] text-slate-500">{provider.base_url}</p>
-                      <p className="mt-1 text-[10px] text-slate-600">
-                        Modèle : {provider.default_model || 'non défini'} · Type : {provider.kind}
+                      <p className="mt-1 text-[11px] text-slate-400">
+                        {provider.default_model || 'modèle non défini'}
+                      </p>
+                      <p className="mt-1 text-[10px] text-slate-500">
+                        {provider.api_key_configured ? 'Clé configurée' : 'Clé manquante'}
                       </p>
                     </div>
                     <div className="flex flex-col items-end gap-1">
-                      <span className={badge(provider.status)}>{provider.status}</span>
-                      <span className="text-[10px] text-slate-600">
-                        {provider.api_key_configured ? 'clé détectée côté serveur' : 'clé absente'}
+                      <span className={badge(provider.status)}>
+                        {statusLabel[provider.status] ?? provider.status}
                       </span>
                     </div>
                   </div>
@@ -286,11 +297,29 @@ export const ModelManagerLive = () => {
                       <Trash2 size={13} /> Supprimer
                     </button>
                   </div>
-                  {provider.last_checked_at && (
-                    <p className="mt-2 text-[10px] text-slate-600">
-                      Dernier test : {provider.last_checked_at} · {provider.last_error || 'aucune erreur'}
-                    </p>
-                  )}
+                  <details className="mt-3 text-[10px] text-slate-500">
+                    <summary className="cursor-pointer select-none text-slate-500 hover:text-slate-300">
+                      Détails techniques
+                    </summary>
+                    <dl className="mt-2 space-y-1 border-t border-white/[0.06] pt-2">
+                      <div className="flex gap-2">
+                        <dt className="w-24 shrink-0 text-slate-600">URL de base</dt>
+                        <dd className="min-w-0 break-all font-mono text-slate-400">{provider.base_url}</dd>
+                      </div>
+                      <div className="flex gap-2">
+                        <dt className="w-24 shrink-0 text-slate-600">Type</dt>
+                        <dd className="font-mono text-slate-400">{provider.kind}</dd>
+                      </div>
+                      {provider.last_checked_at && (
+                        <div className="flex gap-2">
+                          <dt className="w-24 shrink-0 text-slate-600">Dernier test</dt>
+                          <dd className="text-slate-400">
+                            {provider.last_checked_at} · {provider.last_error || 'aucune erreur'}
+                          </dd>
+                        </div>
+                      )}
+                    </dl>
+                  </details>
                 </article>
               ))}
               {providers.length === 0 && !loading && (
