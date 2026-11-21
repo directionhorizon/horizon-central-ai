@@ -113,4 +113,30 @@ jobs:
                   print(f"{name} -> HTTP {exc.code} : {exc.read().decode()[:200]}")
               except Exception as exc:
                   print(f"{name} -> erreur : {exc}")
+
+          # Test de bout en bout : un vrai appel au modele via l'API.
+          available = [p for p in providers if p.get("status") == "available"]
+          if not available:
+              print("Aucun fournisseur disponible : test de chat ignore.")
+              raise SystemExit(0)
+
+          provider = available[0]
+          body = json.dumps(
+              {"provider_id": provider["id"], "message": "Reponds en une phrase : HORIZON est-il operationnel ?"}
+          ).encode()
+          request = urllib.request.Request(
+              base + "/api/v1/models/chat-test",
+              data=body,
+              method="POST",
+              headers={"X-Horizon-Token": token, "Content-Type": "application/json"},
+          )
+          try:
+              with urllib.request.urlopen(request, timeout=60) as resp:
+                  answer = json.loads(resp.read().decode() or "{}")
+              content = str(answer.get("content") or "").strip().replace("\n", " ")
+              print(f"chat-test ({provider.get('name')}) -> OK : {content[:400]}")
+          except urllib.error.HTTPError as exc:
+              print(f"chat-test -> HTTP {exc.code} : {exc.read().decode()[:300]}")
+          except Exception as exc:
+              print("chat-test -> erreur :", exc)
           PY
