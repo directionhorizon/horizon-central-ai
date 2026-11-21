@@ -55,11 +55,44 @@ cd backend
 pytest -q
 ```
 
-Attendu : 12 tests verts (santé, en-têtes, garde-fou réseau, parcours projet,
-service de l'interface compilée).
+Attendu : 82 tests verts (santé, en-têtes, garde-fou réseau, parcours projet,
+service de l'interface compilée, mains et fournisseurs IA).
 
 ```powershell
 npm run build
 ```
 
 Attendu : compilation TypeScript et build Vite sans erreur.
+
+## 6. Fournisseurs IA (LLM) : clés et modèles
+
+Un seul adaptateur, compatible OpenAI : chaque fournisseur déclare une **URL de
+base** et un **modèle** (`/api/v1/models`). Le test de connexion interroge
+d'abord `/models`, puis retombe sur `/chat/completions` si la route n'existe
+pas (cas de Gemini).
+
+### Nommage des clés — une variable par fournisseur
+
+| Variable | Fournisseur |
+| --- | --- |
+| `HORIZON_GEMINI_API_KEY` | Google Gemini |
+| `HORIZON_OPENAI_API_KEY` | OpenAI |
+| `HORIZON_LLM_API_KEY` | variable générique de repli |
+
+La base ne stocke **jamais** la clé : uniquement le **nom** de la variable
+(`api_key_env`). Le déploiement injecte ces valeurs depuis les secrets GitHub
+(`Settings → Secrets and variables → Actions`), jamais depuis le dépôt.
+
+### Modèles à éviter
+
+Les modèles retirés pour les nouveaux comptes renvoient `404` (ex.
+`gemini-2.5-flash`). Les modèles saturés renvoient `503` : l'adaptateur réessaie
+automatiquement, puis échoue proprement. Préférer les alias stables :
+`gemini-flash-lite-latest`, `gemini-2.5-flash-lite`, `gemini-3-flash-preview`.
+
+### Changer le modèle sans redéploiement
+
+Dans **Model Manager**, bouton **Modifier** sur la fiche : le modèle et l'URL de
+base sont modifiables en ligne. Le bouton **Tester une réponse** envoie un vrai
+appel au modèle et affiche la réponse (aucune réponse n'est simulée en cas
+d'échec).
