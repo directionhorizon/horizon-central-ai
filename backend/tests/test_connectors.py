@@ -134,6 +134,22 @@ def test_image_generation(client, monkeypatch):
     assert response.json()["result"]["images"] == ["http://img/1.png"]
 
 
+def test_image_generation_pollinations_sans_cle(client, monkeypatch):
+    """Pollinations : gratuit, sans clé. La main renvoie une URL d'image."""
+    monkeypatch.setenv("HORIZON_IMAGE_BASE_URL", "https://image.pollinations.ai")
+    monkeypatch.delenv("HORIZON_IMAGE_API_KEY", raising=False)
+    response = client.post(
+        "/api/v1/tools/tool-image-generate/run",
+        json={"params": {"prompt": "un phare", "size": "512x384", "seed": 7}},
+    )
+    assert response.status_code == 200, response.text
+    result = response.json()["result"]
+    assert result["provider"] == "pollinations"
+    url = result["images"][0]
+    assert url.startswith("https://image.pollinations.ai/prompt/un%20phare")
+    assert "width=512" in url and "height=384" in url and "seed=7" in url
+
+
 def test_image_generation_together_utilise_width_height(client, monkeypatch):
     """Together AI attend width/height : le format « 1024x1024 » y est converti."""
     monkeypatch.setenv("HORIZON_IMAGE_BASE_URL", "https://api.together.xyz/v1")

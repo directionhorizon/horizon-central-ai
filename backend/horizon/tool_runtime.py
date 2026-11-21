@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Awaitable, Callable
+from urllib.parse import quote
 
 import httpx
 
@@ -718,7 +719,8 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
     if not base:
         raise ToolError(
             "Aucun fournisseur d'images configuré (HORIZON_IMAGE_BASE_URL : "
-            "Replicate, fal.ai, OpenAI ou tout service compatible /images/generations)."
+            "Pollinations gratuit sans clé, Together AI, OpenAI, ou tout service "
+            "compatible /images/generations)."
         )
     prompt = str(params.get("prompt") or "").strip()
     if not prompt:
@@ -729,6 +731,28 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     size = str(params.get("size") or "1024x1024")
+
+    if "pollinations" in base.lower():
+        # Pollinations : service d'images gratuit, sans clé ni compte. La main
+        # renvoie une URL d'image réellement servie (aucun faux résultat).
+        try:
+            width, height = (int(part) for part in size.lower().split("x", 1))
+        except (TypeError, ValueError):
+            width, height = 1024, 1024
+        seed = params.get("seed") or (uuid.uuid4().int % 1_000_000)
+        url = (
+            f"{base.rstrip('/')}/prompt/{quote(prompt, safe='')}"
+            f"?width={width}&height={height}&nologo=true&seed={seed}"
+        )
+        return {
+            "provider": "pollinations",
+            "model": model,
+            "prompt": prompt,
+            "size": f"{width}x{height}",
+            "images": [url],
+            "detail": "Service gratuit, sans clé API.",
+        }
+
     body: dict[str, Any] = {"model": model, "prompt": prompt}
     if "together" in base.lower():
         # Together AI attend width/height ; le format « 1024x1024 » est conservé
