@@ -39,6 +39,9 @@ def read_tool(tool_id: str):
         item = tools.get_tool(db, tool_id)
         if item is None:
             raise HTTPException(404, "Outil introuvable.")
+    # Même information que la liste : une fiche seule doit aussi dire si la main
+    # est réellement branchée, sans quoi l'interface afficherait un état ambigu.
+    item["executable"] = tool_runtime.is_executable(item["id"])
     return item
 
 

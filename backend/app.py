@@ -19,6 +19,7 @@ from pydantic import BaseModel, Field
 from horizon import llm as llm_adapter
 from horizon import scheduler
 from horizon import sync_worker
+from horizon import tool_runtime
 from horizon.auth import auth_enabled
 from horizon.repositories import llm as llm_repo
 from horizon.repositories import operations as operations_repo
@@ -65,6 +66,10 @@ def init_db() -> None:
 async def lifespan(_: FastAPI):
     init_db()
     run_migrations()
+    # Alignement du catalogue sur la réalité : une main branchée (gestionnaire
+    # présent) n'est plus affichée « planned » mais « ready ». Idempotent.
+    with connect() as db:
+        tool_runtime.sync_catalog_status(db)
     # Synchronisation automatique : inactif par défaut (HORIZON_SYNC_AUTO=1
     # pour l'activer). Le démarrage n'est jamais bloqué par le réseau.
     worker = asyncio.create_task(sync_worker.run_loop())

@@ -1,8 +1,9 @@
 """Tests du catalogue des mains (outils) des agents.
 
 Objectif : les 6 familles (+ le contrôle) sont déclarées, une main est annoncée
-honnêtement (état « planned » tant qu'elle n'est pas branchée), et une main peut
-être attribuée à un agent puis retirée.
+honnêtement (état « planned » tant qu'elle n'est pas branchée, « ready » dès
+qu'un gestionnaire existe), et une main peut être attribuée à un agent puis
+retirée.
 """
 from __future__ import annotations
 
@@ -30,14 +31,36 @@ def test_connecteurs_reseaux_sociaux_declares(client):
     for tool_id in ("tool-telegram-bot", "tool-facebook", "tool-instagram", "tool-tiktok"):
         assert tool_id in by_id
         assert by_id[tool_id]["channel"] == "connector"
-        assert by_id[tool_id]["status"] == "planned"
+        # Ces quatre mains disposent d'un gestionnaire : l'état affiché doit
+        # dire la vérité (« ready »), plus « planned ».
+        assert by_id[tool_id]["status"] == "ready"
+        assert by_id[tool_id]["executable"] is True
 
 
 def test_outil_declare_honnetement(client):
     item = client.get("/api/v1/tools/tool-web-search").json()
-    assert item["status"] == "planned"
+    assert item["status"] == "ready"
+    assert item["executable"] is True
     assert item["risk"] == "low"
     assert item["channel"] == "native"
+
+
+def test_main_non_branchee_reste_planned(client):
+    """Une main sans gestionnaire reste « planned » : aucun faux état."""
+    item = client.get("/api/v1/tools/tool-motion-design").json()
+    assert item["executable"] is False
+    assert item["status"] == "planned"
+
+
+def test_etat_desactive_non_reactive_automatiquement(client):
+    """Un outil désactivé le reste : la synchronisation ne réactive rien."""
+    response = client.post("/api/v1/tools/tool-plan/status", params={"status": "disabled"})
+    assert response.status_code == 200, response.text
+    try:
+        item = client.get("/api/v1/tools/tool-plan").json()
+        assert item["status"] == "disabled"
+    finally:
+        client.post("/api/v1/tools/tool-plan/status", params={"status": "ready"})
 
 
 def test_attribution_outil_a_un_agent(client):

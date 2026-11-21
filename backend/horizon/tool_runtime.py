@@ -24,6 +24,8 @@ from typing import Any, Awaitable, Callable
 
 import httpx
 
+from .db import now
+
 DEFAULT_TIMEOUT = 20.0
 MAX_OUTPUT = 20000
 
@@ -54,6 +56,34 @@ def is_executable(tool_id: str) -> bool:
 
 def executable_tools() -> list[str]:
     return sorted(_HANDLERS)
+
+
+def sync_catalog_status(db: Any) -> list[str]:
+    """Aligne l'état affiché du catalogue sur la réalité de l'exécution.
+
+    Une main réellement branchée (un gestionnaire existe) passe de « planned » à
+    « ready » : l'interface ne doit jamais annoncer « prévu » ce qui fonctionne.
+    Une main désactivée (`disabled`) n'est jamais réactivée automatiquement, et
+    une main sans gestionnaire reste « planned » (aucun faux état).
+    """
+    if not _HANDLERS:
+        return []
+    tool_ids = sorted(_HANDLERS)
+    placeholders = ",".join("?" for _ in tool_ids)
+    rows = db.execute(
+        f"SELECT id, status FROM tools WHERE id IN ({placeholders})", tool_ids
+    ).fetchall()
+    updated: list[str] = []
+    stamp = now()
+    for row in rows:
+        if str(row["status"] or "") != "planned":
+            continue
+        db.execute(
+            "UPDATE tools SET status='ready', updated_at=? WHERE id=?",
+            (stamp, row["id"]),
+        )
+        updated.append(str(row["id"]))
+    return updated
 
 
 def _clip(text: str) -> str:
