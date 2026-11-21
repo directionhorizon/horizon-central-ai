@@ -68,7 +68,12 @@ def _headers(config: ProviderConfig) -> dict[str, str]:
 
 
 async def test_connection(row: dict[str, Any]) -> dict[str, Any]:
-    """Teste réellement le fournisseur via `GET {base_url}/models`.
+    """Teste réellement le fournisseur.
+
+    Essaie d'abord `GET {base_url}/models` (liste des modèles). Certains services
+    compatibles OpenAI (Gemini, par exemple) n'exposent pas cette route : on
+    retombe alors sur un appel réel `POST {base_url}/chat/completions` avec le
+    modèle par défaut, ce qui vérifie la capacité réellement utilisée.
 
     Renvoie un dictionnaire honnête : `status` vaut `available`, `unavailable`
     ou `unconfigured`. Le message d'erreur ne contient jamais la clé.
@@ -79,23 +84,49 @@ async def test_connection(row: dict[str, Any]) -> dict[str, Any]:
     try:
         async with httpx.AsyncClient(timeout=PROBE_TIMEOUT_S) as client:
             response = await client.get(f"{config.base_url}/models", headers=_headers(config))
-        if response.status_code >= 400:
+            if response.status_code < 400:
+                payload = response.json()
+                items = payload.get("data") if isinstance(payload, dict) else None
+                models = (
+                    [item.get("id") for item in items if isinstance(item, dict) and item.get("id")]
+                    if isinstance(items, list)
+                    else []
+                )
+                return {
+                    "status": "available",
+                    "detail": f"{len(models)} modèle(s) exposé(s).",
+                    "models": models[:200],
+                }
+            # Repli : la liste des modèles n'est pas exposée (ex. Gemini).
+            probe = await client.post(
+                f"{config.base_url}/chat/completions",
+                headers=_headers(config),
+                json={
+                    "model": config.model,
+                    "messages": [{"role": "user", "content": "ping"}],
+                    "max_tokens": 1,
+                },
+            )
+        if probe.status_code >= 400:
+            detail = ""
+            try:
+                payload = probe.json()
+                error = payload.get("error") if isinstance(payload, dict) else None
+                if isinstance(error, dict) and error.get("message"):
+                    detail = f" : {error['message']}"
+                elif isinstance(error, str):
+                    detail = f" : {error}"
+            except ValueError:
+                detail = ""
             return {
                 "status": "unavailable",
-                "detail": f"HTTP {response.status_code} sur /models.",
+                "detail": f"HTTP {probe.status_code} sur /chat/completions{detail}.",
                 "models": [],
             }
-        payload = response.json()
-        items = payload.get("data") if isinstance(payload, dict) else None
-        models = (
-            [item.get("id") for item in items if isinstance(item, dict) and item.get("id")]
-            if isinstance(items, list)
-            else []
-        )
         return {
             "status": "available",
-            "detail": f"{len(models)} modèle(s) exposé(s).",
-            "models": models[:200],
+            "detail": "Réponse du modèle reçue.",
+            "models": [config.model],
         }
     except httpx.HTTPError as error:
         return {

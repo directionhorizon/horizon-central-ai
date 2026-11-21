@@ -47,6 +47,8 @@ jobs:
         env:
           HORIZON_ADMIN_TOKEN: ${{ secrets.HORIZON_ADMIN_TOKEN }}
           HORIZON_LLM_API_KEY: ${{ secrets.HORIZON_LLM_API_KEY }}
+          # Alias : certaines fiches fournisseur utilisent ce nom de variable.
+          HORIZON_GEMINI_API_KEY: ${{ secrets.HORIZON_LLM_API_KEY }}
           HORIZON_OWNER_EMAIL: ${{ secrets.HORIZON_OWNER_EMAIL }}
           HORIZON_CORS_ORIGINS: ${{ secrets.HORIZON_CORS_ORIGINS }}
           HORIZON_GOOGLE_CLIENT_ID: ${{ secrets.HORIZON_GOOGLE_CLIENT_ID }}
@@ -57,7 +59,7 @@ jobs:
           HORIZON_TIKTOK_CLIENT_KEY: ${{ secrets.HORIZON_TIKTOK_CLIENT_KEY }}
           HORIZON_TIKTOK_CLIENT_SECRET: ${{ secrets.HORIZON_TIKTOK_CLIENT_SECRET }}
         run: |
-          PAYLOAD=$(python3 -c "import base64,json,os;keys=['HORIZON_ADMIN_TOKEN','HORIZON_LLM_API_KEY','HORIZON_OWNER_EMAIL','HORIZON_CORS_ORIGINS','HORIZON_GOOGLE_CLIENT_ID','HORIZON_GOOGLE_CLIENT_SECRET','HORIZON_GOOGLE_REDIRECT_URI','HORIZON_META_APP_ID','HORIZON_META_APP_SECRET','HORIZON_TIKTOK_CLIENT_KEY','HORIZON_TIKTOK_CLIENT_SECRET'];print(base64.b64encode(json.dumps({k:os.environ.get(k,'') for k in keys}).encode()).decode())")
+          PAYLOAD=$(python3 -c "import base64,json,os;keys=['HORIZON_ADMIN_TOKEN','HORIZON_LLM_API_KEY','HORIZON_GEMINI_API_KEY','HORIZON_OWNER_EMAIL','HORIZON_CORS_ORIGINS','HORIZON_GOOGLE_CLIENT_ID','HORIZON_GOOGLE_CLIENT_SECRET','HORIZON_GOOGLE_REDIRECT_URI','HORIZON_META_APP_ID','HORIZON_META_APP_SECRET','HORIZON_TIKTOK_CLIENT_KEY','HORIZON_TIKTOK_CLIENT_SECRET'];print(base64.b64encode(json.dumps({k:os.environ.get(k,'') for k in keys}).encode()).decode())")
           ssh "root@vps126758.serveur-vps.net" \
             "cd /opt/horizon && git fetch origin main && git reset --hard origin/main && /opt/horizon/.venv/bin/pip install -q -r backend/requirements.txt && /opt/horizon/.venv/bin/python scripts/set_env.py backend/.env '$PAYLOAD' && systemctl restart horizon"
 
