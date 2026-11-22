@@ -89,6 +89,16 @@ def test_sources_externes_proposees(client):
     assert {"github", "gitlab", "bitbucket", "huggingface", "npm", "pypi"} <= ids
 
 
+def test_reclassement_des_competences_existantes(client):
+    """Les compétences « métier » sont déplacées vers les nouvelles catégories."""
+    finance = client.get("/api/v1/skills", params={"category": "Finance et comptabilité"}).json()
+    assert finance["count"] >= 1
+    juridique = client.get("/api/v1/skills", params={"category": "Juridique et conformité"}).json()
+    assert juridique["count"] >= 1
+    rh = client.get("/api/v1/skills", params={"category": "Ressources humaines"}).json()
+    assert rh["count"] >= 1
+
+
 def test_categories_et_outils_recommandes(client):
     response = client.get("/api/v1/skills/category-map")
     assert response.status_code == 200

@@ -746,6 +746,23 @@ def _ensure_skills_catalog(db: sqlite3.Connection) -> None:
                 stamp,
             ),
         )
+    _reclassify_skills(db)
+
+
+def _reclassify_skills(db: sqlite3.Connection) -> None:
+    """Déplace les compétences existantes vers les catégories cibles.
+
+    Idempotent : n'écrit que si la catégorie diffère. Aucune compétence n'est
+    créée ni supprimée ; seul le classement est corrigé.
+    """
+    from .skills_categories import SKILL_RECLASSIFICATION
+
+    stamp = now()
+    for skill_id, category in SKILL_RECLASSIFICATION.items():
+        db.execute(
+            "UPDATE skills SET category=?, updated_at=? WHERE id=? AND category<>?",
+            (category, stamp, skill_id, category),
+        )
 
 
 def run_migrations() -> list[str]:

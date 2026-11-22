@@ -56,6 +56,30 @@ CATEGORY_TOOLS: dict[str, list[str]] = {
 }
 
 
+#: Reclassement des compétences existantes vers les catégories cibles.
+#: Sert à peupler les nouvelles catégories avec des compétences déjà présentes,
+#: sans en inventer. Appliqué au démarrage (idempotent).
+SKILL_RECLASSIFICATION: dict[str, str] = {
+    # Finance et comptabilité
+    "skill-analyse-de-bilan": "Finance et comptabilité",
+    "skill-previsionnel": "Finance et comptabilité",
+    "skill-indicateurs-financiers": "Finance et comptabilité",
+    # Juridique et conformité
+    "skill-analyse-de-clauses-contractuelles": "Juridique et conformité",
+    "skill-redaction-de-cgv": "Juridique et conformité",
+    "skill-vulgarisation-de-textes-de-loi": "Juridique et conformité",
+    "skill-conformite-rgpd": "Juridique et conformité",
+    # Ressources humaines (recrutement, intégration, formation)
+    "skill-fiche-de-poste": "Ressources humaines",
+    "skill-grille-d-entretien": "Ressources humaines",
+    "skill-plan-d-integration": "Ressources humaines",
+    "skill-evaluation-de-performance": "Ressources humaines",
+    "skill-quiz": "Ressources humaines",
+    "skill-plan-de-cours": "Ressources humaines",
+    "github-anthropic-academy-guide": "Ressources humaines",
+}
+
+
 def category_catalog() -> list[dict]:
     """Liste des catégories avec leurs outils recommandés."""
     items: list[dict] = []
