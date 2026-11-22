@@ -62,6 +62,8 @@ CATEGORY_TOOLS: dict[str, list[str]] = {
 #: Sert à peupler les nouvelles catégories avec des compétences déjà présentes,
 #: sans en inventer. Appliqué au démarrage (idempotent).
 SKILL_RECLASSIFICATION: dict[str, str] = {
+    # Données et BI
+    "skill-tableau-de-bord": "Données et BI",
     # Finance et comptabilité
     "skill-analyse-de-bilan": "Finance et comptabilité",
     "skill-previsionnel": "Finance et comptabilité",
