@@ -41,6 +41,7 @@ export const AgentsToolsCatalog = () => {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [skills, setSkills] = useState<SkillSummary[]>([]);
   const [agentSkills, setAgentSkills] = useState<Record<string, SkillSummary[]>>({});
+  const [orchestratorSkills, setOrchestratorSkills] = useState<Record<string, SkillSummary[]>>({});
   const [busyAgent, setBusyAgent] = useState<string | null>(null);
   const [openAgent, setOpenAgent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -67,6 +68,13 @@ export const AgentsToolsCatalog = () => {
         }),
       );
       setAgentSkills(Object.fromEntries(linked));
+      const inherited = await Promise.all(
+        (registry.items ?? []).map(async (orchestrator) => {
+          const linkedSkills = await orchestratorsApi.listSkills(orchestrator.id);
+          return [orchestrator.id, linkedSkills.items ?? []] as const;
+        }),
+      );
+      setOrchestratorSkills(Object.fromEntries(inherited));
     } catch (caught) {
       setError(describeApiError(caught));
     } finally {
@@ -239,6 +247,7 @@ export const AgentsToolsCatalog = () => {
                     {openAgent === agent.id && (
                       <SkillPicker
                         skills={skills}
+                        inherited={orchestratorSkills[agent.orchestrator_id] ?? []}
                         attached={attached}
                         busy={busyAgent === agent.id}
                         onAttach={(skillId) => void attachSkill(agent.id, skillId)}

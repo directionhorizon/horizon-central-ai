@@ -1,7 +1,7 @@
 /** API orchestrateurs — routes réelles /api/v1/orchestrators. */
 import { API_ROUTES } from '../config/env';
 import { http } from './http';
-import type { HealthStatus, Orchestrator } from './entities';
+import type { HealthStatus, Orchestrator, SkillSummary } from './entities';
 
 export interface OrchestratorListResponse {
   items: Orchestrator[];
@@ -58,6 +58,8 @@ export const orchestratorsApi = {
       method: 'PUT',
       body: { provider_id: providerId, model },
     }),
+  listSkills: (id: string): Promise<{ items: SkillSummary[] }> =>
+    http.requestWithRetry<{ items: SkillSummary[] }>(API_ROUTES.orchestratorSkills(id)),
   attachSkill: (id: string, skillId: string): Promise<Orchestrator> =>
     http.request<Orchestrator>(API_ROUTES.orchestratorSkills(id), {
       method: 'POST',

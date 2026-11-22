@@ -148,10 +148,12 @@ def disable_skill(db: sqlite3.Connection, skill_id: str) -> dict[str, Any] | Non
 
 
 def categories(db: sqlite3.Connection) -> list[str]:
+    from ..skills_categories import RETIRED_CATEGORIES
+
     rows = db.execute(
         "SELECT DISTINCT category FROM skills WHERE status='active' ORDER BY category"
     ).fetchall()
-    return [row["category"] for row in rows]
+    return [row["category"] for row in rows if row["category"] not in RETIRED_CATEGORIES]
 
 
 def attach_skill(db: sqlite3.Connection, orchestrator_id: str, skill_id: str) -> bool:

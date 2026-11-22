@@ -16,7 +16,6 @@ EXISTING_CATEGORIES = (
     "Analyse de données et recherche",
     "Productivité et gestion de projet",
     "Design, multimédia et créativité",
-    "Métier et expertise spécialisée",
     "Méta-skills (IA)",
     "Développement de jeux vidéo",
 )
@@ -35,6 +34,11 @@ NEW_CATEGORIES = (
     "Sécurité et contrôle",
 )
 
+#: Catégories retirées : jamais affichées, même si une compétence y reste.
+#: « Métier et expertise spécialisée » était un fourre-tout ; ses compétences
+#: ont été reclassées vers des catégories dédiées (voir SKILL_RECLASSIFICATION).
+RETIRED_CATEGORIES = ("Métier et expertise spécialisée",)
+
 #: Outils recommandés par catégorie (identifiants du catalogue d'outils).
 CATEGORY_TOOLS: dict[str, list[str]] = {
     "Création de contenu et rédaction": ["tool-web-search", "tool-email-send", "tool-image-generate"],
@@ -42,7 +46,6 @@ CATEGORY_TOOLS: dict[str, list[str]] = {
     "Analyse de données et recherche": ["tool-web-search", "tool-web-extract", "tool-data-extract", "tool-spreadsheet"],
     "Productivité et gestion de projet": ["tool-email-send", "tool-notifications", "tool-office-docs"],
     "Design, multimédia et créativité": ["tool-image-generate", "tool-image-edit", "tool-design", "tool-motion-design"],
-    "Métier et expertise spécialisée": ["tool-web-search", "tool-pdf-read"],
     "Méta-skills (IA)": ["tool-web-search"],
     "Développement de jeux vidéo": ["tool-code-python", "tool-model-3d", "tool-image-generate"],
     "Vente et relation client": ["tool-email-send", "tool-messaging", "tool-payment", "tool-telegram-bot"],
@@ -90,6 +93,8 @@ def category_catalog() -> list[dict]:
     """Liste des catégories avec leurs outils recommandés."""
     items: list[dict] = []
     for category in (*EXISTING_CATEGORIES, *NEW_CATEGORIES):
+        if category in RETIRED_CATEGORIES:
+            continue
         items.append(
             {
                 "category": category,
