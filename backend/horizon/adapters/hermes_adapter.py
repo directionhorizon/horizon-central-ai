@@ -19,7 +19,10 @@ class HermesAdapter(OrchestratorAdapter):
     """Système d'orchestration Hermes."""
 
     kind = "hermes"
-    label = "Hermes"
+    #: Hermes n'est pas un système d'orchestration : c'est la plateforme où le
+    #: FIRST AGENTIC SYSTEM a été conçu. Ce branchement ne sert qu'à la
+    #: compatibilité d'API ; aucun système du registre ne l'utilise.
+    label = "Hermes API (compatibilité)"
 
     def _config(self, row: dict[str, Any]) -> hermes.HermesConfig:
         try:

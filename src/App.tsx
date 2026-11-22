@@ -35,7 +35,7 @@ type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' 
  */
 const pages = [
   { id: 'workbench' as const, path: '/workbench', label: 'Espace de travail', icon: LayoutDashboard },
-  { id: 'cockpit' as const, path: '/cockpit', label: 'Poste de pilotage', icon: Gauge },
+  { id: 'cockpit' as const, path: '/cockpit', label: 'Conversation', icon: Gauge },
   { id: 'projects' as const, path: '/projects', label: 'Projets & missions', icon: FolderKanban },
   { id: 'orchestrators' as const, path: '/orchestrators', label: 'Orchestrateurs', icon: Network },
   { id: 'models' as const, path: '/models', label: 'Modèles', icon: Cpu },

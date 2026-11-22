@@ -232,7 +232,7 @@ export function Cockpit() {
             <ChevronLeft size={12} className="mr-1 inline" />{leftOpen ? 'Masquer' : 'Afficher'}
           </button>
           <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-cyan-300">HORIZON CENTRAL AI / POSTE DE PILOTAGE</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[.18em] text-cyan-300">HORIZON CENTRAL AI / CONVERSATION</p>
             <h1 className="text-lg font-semibold tracking-tight">
               {sessionTitle ?? 'Conversation avec HORIZON CORE'}
             </h1>

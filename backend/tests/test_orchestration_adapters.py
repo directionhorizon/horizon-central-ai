@@ -16,6 +16,21 @@ def test_registre_expose_hermes_et_natif():
     assert "horizon" in kinds
 
 
+def test_aucune_fiche_hermes_dans_le_registre(client):
+    """Hermes n'est pas un système d'orchestration : aucune fiche ne doit le nommer."""
+    items = client.get("/api/v1/orchestrators").json()["items"]
+    ids = {item["id"] for item in items}
+    assert "orchestrator-hermes" not in ids
+    assert "system-first-agentic" in ids
+
+
+def test_le_fas_est_le_systeme_de_repli(client):
+    """Une mission sans orchestrateur explicite part vers le FAS, jamais vers Hermes."""
+    from horizon.schema import DEFAULT_ORCHESTRATOR_ID
+
+    assert DEFAULT_ORCHESTRATOR_ID == "system-first-agentic"
+
+
 def test_kind_inconnu_non_resolu():
     assert get_adapter("inexistant") is None
     assert get_adapter("") is None

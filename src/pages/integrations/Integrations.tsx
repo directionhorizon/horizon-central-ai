@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react';
 import { integrationsApi } from '../../api/integrations';
+import { modelsApi } from '../../api/models';
 import { describeApiError } from '../../api/errors';
 import { useConnections, type ToolConnection } from '../../shared/ConnectionsContext';
 import type {
@@ -9,6 +10,7 @@ import type {
   IntegrationStats,
   IntegrationStatus,
   IntegrationTestResult,
+  LlmProvider,
 } from '../../api/entities';
 
 const STATUS_TONE: Record<IntegrationStatus, string> = {
@@ -46,7 +48,6 @@ const TOOL_PRESETS: ToolPreset[] = [
   { id: 'supabase', name: 'Supabase', category: 'storage', method: 'api_key', endpoint: '', keyEnv: 'HORIZON_SUPABASE_KEY', permissions: 'read,write', capabilities: 'sync,knowledge' },
   { id: 'drive', name: 'Google Drive', category: 'storage', method: 'oauth2', endpoint: '', keyEnv: 'HORIZON_GOOGLE_DRIVE_TOKEN', permissions: 'drive.file', capabilities: 'memory-sync' },
   { id: 'github', name: 'GitHub privé', category: 'storage', method: 'api_key', endpoint: 'https://api.github.com', keyEnv: 'HORIZON_GITHUB_TOKEN', permissions: 'repo', capabilities: 'code-sync' },
-  { id: 'hermes', name: 'Hermes local', category: 'orchestrator', method: 'endpoint', endpoint: 'http://127.0.0.1:8642/v1', keyEnv: 'HERMES_API_SERVER_KEY', permissions: 'runs:read,runs:write', capabilities: 'runs,sse,approval' },
   { id: 'windows', name: 'PC Windows local', category: 'machine', method: 'cli', endpoint: 'local://windows', keyEnv: '', permissions: 'local-execution', capabilities: 'system,metrics,files' },
   { id: 'mcp', name: 'Serveur MCP', category: 'mcp', method: 'mcp', endpoint: '', keyEnv: '', permissions: 'tools', capabilities: 'tools' },
   { id: 'custom', name: 'Personnalisé', category: 'app', method: 'rest', endpoint: '', keyEnv: '', permissions: '', capabilities: '' },
@@ -95,6 +96,11 @@ export function Integrations() {
   >({});
   const [oauthName, setOauthName] = useState('');
   const [oauthBusy, setOauthBusy] = useState<string | null>(null);
+  // Les fournisseurs IA vivent dans leur propre table (llm_providers), pas dans
+  // les intégrations : l'onglet « Fournisseurs IA » doit les lire directement.
+  const [llmProviders, setLlmProviders] = useState<LlmProvider[]>([]);
+  const [llmBusy, setLlmBusy] = useState<string | null>(null);
+  const [llmNotice, setLlmNotice] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
     setError(null);
@@ -127,6 +133,42 @@ export function Integrations() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    if (category !== 'llm_provider') return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const response = await modelsApi.list();
+        if (!cancelled) setLlmProviders(response.items);
+      } catch (caught) {
+        if (!cancelled) setError(describeApiError(caught));
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [category]);
+
+  const testLlmProvider = async (provider: LlmProvider) => {
+    setLlmBusy(provider.id);
+    try {
+      const result = await modelsApi.test(provider.id);
+      setLlmNotice((current) => ({
+        ...current,
+        [provider.id]: `${result.status} · ${result.models.length} modèle(s) exposé(s)`,
+      }));
+      setLlmProviders((current) =>
+        current.map((item) =>
+          item.id === provider.id ? { ...item, status: result.status } : item,
+        ),
+      );
+    } catch (caught) {
+      setLlmNotice((current) => ({ ...current, [provider.id]: describeApiError(caught) }));
+    } finally {
+      setLlmBusy(null);
+    }
+  };
 
   const connectOauth = async (provider: string) => {
     setOauthBusy(provider);
@@ -555,6 +597,58 @@ export function Integrations() {
           </section>
         )}
 
+        {category === 'llm_provider' && (
+          <section className="space-y-2">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <h2 className="text-sm font-semibold text-slate-100">
+                Fournisseurs IA configurés ({llmProviders.length})
+              </h2>
+              <p className="hz-hint">
+                Ces fournisseurs viennent du gestionnaire de modèles, pas des fiches de connexion.
+              </p>
+            </div>
+            {llmProviders.map((provider) => {
+              const notice = llmNotice[provider.id];
+              return (
+                <article key={provider.id} className="hz-card p-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-sm font-semibold text-slate-100">{provider.name}</span>
+                    <span className={`hz-badge ${provider.status === 'available' ? 'hz-badge--ok' : 'hz-badge--warn'}`}>
+                      {provider.status}
+                    </span>
+                    <span className={provider.api_key_configured ? 'hz-badge hz-badge--ok' : 'hz-badge hz-badge--warn'}>
+                      clé {provider.api_key_configured ? 'présente' : 'absente'}
+                    </span>
+                    <span className="hz-badge">{provider.kind}</span>
+                  </div>
+                  <p className="hz-hint mt-1 truncate">
+                    {provider.base_url || 'adresse non renseignée'}
+                    {provider.default_model ? ` · modèle : ${provider.default_model}` : ''}
+                    {provider.api_key_env ? ` · variable : ${provider.api_key_env}` : ''}
+                  </p>
+                  <div className="mt-2 flex flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      className="hz-btn"
+                      disabled={llmBusy === provider.id}
+                      onClick={() => void testLlmProvider(provider)}
+                    >
+                      {llmBusy === provider.id ? <Loader2 size={12} className="animate-spin" /> : <RefreshCw size={12} />}
+                      Tester
+                    </button>
+                    {notice && <span className="hz-hint">{notice}</span>}
+                  </div>
+                </article>
+              );
+            })}
+            {llmProviders.length === 0 && (
+              <p className="hz-card p-6 text-center text-xs text-slate-500">
+                Aucun fournisseur IA enregistré. Ajoutez-en un depuis le gestionnaire de modèles.
+              </p>
+            )}
+          </section>
+        )}
+
         <section className="space-y-2">
           {items.map((integration) => {
             const result = tests[integration.id];
@@ -606,7 +700,7 @@ export function Integrations() {
               </article>
             );
           })}
-          {items.length === 0 && !loading && (
+          {items.length === 0 && !loading && category !== 'llm_provider' && (
             <p className="hz-card p-6 text-center text-xs text-slate-500">
               Aucune connexion enregistrée. Créez une fiche pour centraliser un service.
             </p>

@@ -448,19 +448,15 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
-HERMES_SEED = {
-    "id": "orchestrator-hermes",
-    "name": "Hermes",
-    "kind": "hermes",
-    "description": "Orchestrateur d'exécution pilote : API server Hermes sur le poste local.",
-    "endpoint": "http://127.0.0.1:8642",
-    "version": "0.22.4",
-    "config_json": '{"api_key_env": "HERMES_API_SERVER_KEY", "profile": "default"}',
-}
+#: Ancien identifiant de fiche créé par erreur dans le registre.
+#: Hermes n'est pas un système d'orchestration : c'est la plateforme sur laquelle
+#: le FIRST AGENTIC SYSTEM a été conçu. La fiche est retirée des bases existantes
+#: (voir `_remove_legacy_hermes`) pour que le registre ne montre que le FAS.
+LEGACY_ORCHESTRATOR_IDS = ("orchestrator-hermes",)
 
 #: Système d'orchestration de repli quand une mission n'en désigne aucun.
-#: Le moteur natif HORIZON est le repli : aucune dépendance à un logiciel
-#: externe (Hermes reste optionnel et se choisit via `orchestrator_id`).
+#: Le moteur natif HORIZON (FIRST AGENTIC SYSTEM) est le repli : aucune
+#: dépendance à une plateforme externe.
 DEFAULT_ORCHESTRATOR_ID = "system-first-agentic"
 
 #: Système d'orchestration natif créé dans HORIZON (moteur d'exécution interne).
@@ -602,44 +598,16 @@ def _ensure_default_project(db: sqlite3.Connection) -> None:
     )
 
 
-def _ensure_hermes_orchestrator(db: sqlite3.Connection) -> None:
-    """Enregistre le pilote Hermes une fois, sans jamais écraser une édition locale."""
-    exists = db.execute("SELECT id FROM orchestrators WHERE id=?", (HERMES_SEED["id"],)).fetchone()
-    if exists:
-        return
-    stamp = now()
-    db.execute(
-        """INSERT INTO orchestrators
-           (id,name,kind,description,endpoint,version,status,health_status,config_json,created_at,updated_at)
-           VALUES(?,?,?,?,?,?,?,?,?,?,?)""",
-        (
-            HERMES_SEED["id"],
-            HERMES_SEED["name"],
-            HERMES_SEED["kind"],
-            HERMES_SEED["description"],
-            HERMES_SEED["endpoint"],
-            HERMES_SEED["version"],
-            "active",
-            "unverified",
-            HERMES_SEED["config_json"],
-            stamp,
-            stamp,
-        ),
-    )
-    # Capacité d'exécution : CORE peut router une mission vers ce pilote.
-    db.execute(
-        """INSERT OR IGNORE INTO orchestrator_capabilities
-           (id,orchestrator_id,capability_id,level,detail,created_at)
-           VALUES(?,?,?,?,?,?)""",
-        (
-            "cap-hermes-execution",
-            HERMES_SEED["id"],
-            "execution",
-            "primary",
-            "Exécution réelle des missions via l'API server Hermes.",
-            stamp,
-        ),
-    )
+def _remove_legacy_hermes(db: sqlite3.Connection) -> None:
+    """Retire la fiche « Hermes » du registre des systèmes d'orchestration.
+
+    Hermes n'a jamais été un système d'orchestration : c'est la plateforme sur
+    laquelle le FIRST AGENTIC SYSTEM a été conçu. La fiche était une erreur de
+    seed. Les missions rattachées passent à NULL (ON DELETE SET NULL) et le
+    système de repli reste le FAS. Idempotent : ne fait rien si absente.
+    """
+    for orchestrator_id in LEGACY_ORCHESTRATOR_IDS:
+        db.execute("DELETE FROM orchestrators WHERE id=?", (orchestrator_id,))
 
 
 def _ensure_first_agentic_system(db: sqlite3.Connection) -> None:
@@ -792,8 +760,8 @@ def run_migrations() -> list[str]:
             )
             applied.append(f"{version}:{name}")
         _ensure_default_project(db)
-        _ensure_hermes_orchestrator(db)
         _ensure_first_agentic_system(db)
+        _remove_legacy_hermes(db)
         _ensure_skills_catalog(db)
         _ensure_tools_catalog(db)
         db.commit()
