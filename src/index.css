@@ -372,6 +372,13 @@
 .horizon-tabs button:hover{background:var(--hover);color:var(--foreground)}
 .horizon-tabs button.active{border-color:color-mix(in srgb,var(--accent) 38%,transparent);background:color-mix(in srgb,var(--accent) 14%,transparent);color:var(--accent-text);box-shadow:inset 0 0 0 1px color-mix(in srgb,var(--accent) 12%,transparent)}
 .horizon-build-label{white-space:nowrap;color:var(--muted-foreground);font-size:9px;font-weight:600;letter-spacing:.14em}
+/* Sous-navigation : sections d'un même espace (onglets internes).
+   Elle n'apparaît que pour les espaces qui contiennent plusieurs pages. */
+.horizon-subnav{position:sticky;top:64px;z-index:900;display:flex;align-items:center;gap:2px;padding:6px 18px;background:color-mix(in srgb,var(--surface) 88%,transparent);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-bottom:1px solid var(--hairline);overflow-x:auto;scrollbar-width:none}
+.horizon-subnav::-webkit-scrollbar{display:none}
+.horizon-subnav button{white-space:nowrap;border:1px solid transparent;border-bottom:2px solid transparent;border-radius:7px;padding:6px 10px;background:transparent;color:var(--muted-foreground);font-size:11px;font-weight:550;cursor:pointer;transition:background var(--hz-motion-fast) var(--hz-ease),color var(--hz-motion-fast) var(--hz-ease),border-color var(--hz-motion-fast) var(--hz-ease)}
+.horizon-subnav button:hover{background:var(--hover);color:var(--foreground)}
+.horizon-subnav button.active{border-bottom-color:var(--accent);background:color-mix(in srgb,var(--accent) 10%,transparent);color:var(--accent-text)}
 .horizon-page{min-height:calc(100vh - 62px);background:var(--background);color:var(--foreground)}
 /* Indicateur de santé backend + sélecteur de session. */
 .horizon-health{display:flex;align-items:center;gap:6px;white-space:nowrap;font-size:10px;color:var(--muted-foreground)}
@@ -398,6 +405,8 @@
   .horizon-tabs{order:3;flex-basis:100%;overflow-x:auto;-webkit-overflow-scrolling:touch}
   .horizon-session-select{max-width:130px}
   .horizon-brand strong{font-size:12px}
+  /* La barre passe sur deux lignes : la sous-navigation ne peut plus coller sous elle. */
+  .horizon-subnav{position:static;padding:6px 10px}
 }
 @media(max-width:640px){
   .horizon-nav{gap:6px;padding:6px 8px}
@@ -405,6 +414,8 @@
   .horizon-tabs button{padding:6px 8px;gap:5px}
   .horizon-session-select{max-width:96px}
   .horizon-page{min-height:calc(100vh - 56px)}
+  .horizon-subnav{padding:4px 8px}
+  .horizon-subnav button{padding:5px 8px;font-size:10.5px}
 }
 
 
