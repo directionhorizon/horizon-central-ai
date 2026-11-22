@@ -181,3 +181,45 @@ def list_for_orchestrator(db: sqlite3.Connection, orchestrator_id: str) -> list[
         (orchestrator_id,),
     ).fetchall()
     return [dict(row) for row in rows]
+
+
+def attach_agent_skill(db: sqlite3.Connection, agent_id: str, skill_id: str) -> bool:
+    """Associe une compétence à un agent précis (spécialisation fine)."""
+    cursor = db.execute(
+        "INSERT OR IGNORE INTO agent_skills(agent_id,skill_id,created_at) VALUES(?,?,?)",
+        (agent_id, skill_id, now()),
+    )
+    db.commit()
+    return cursor.rowcount > 0
+
+
+def detach_agent_skill(db: sqlite3.Connection, agent_id: str, skill_id: str) -> bool:
+    cursor = db.execute(
+        "DELETE FROM agent_skills WHERE agent_id=? AND skill_id=?",
+        (agent_id, skill_id),
+    )
+    db.commit()
+    return cursor.rowcount > 0
+
+
+def list_for_agent(db: sqlite3.Connection, agent_id: str) -> list[dict[str, Any]]:
+    rows = db.execute(
+        f"""SELECT {PREFIXED} FROM skills s
+            JOIN agent_skills a ON a.skill_id = s.id
+            WHERE a.agent_id = ?
+            ORDER BY s.category, s.name""",
+        (agent_id,),
+    ).fetchall()
+    return [dict(row) for row in rows]
+
+
+def effective_skills(
+    db: sqlite3.Connection, orchestrator_id: str, agent_id: str
+) -> list[dict[str, Any]]:
+    """Compétences réellement applicables à un agent : système + agent, sans doublon."""
+    merged: dict[str, dict[str, Any]] = {}
+    for skill in list_for_orchestrator(db, orchestrator_id):
+        merged[skill["id"]] = skill
+    for skill in list_for_agent(db, agent_id):
+        merged[skill["id"]] = skill
+    return sorted(merged.values(), key=lambda s: (s.get("category") or "", s.get("name") or ""))

@@ -16,6 +16,7 @@ from typing import Any
 from . import llm
 from .repositories import agents as agents_repo
 from .repositories import llm as llm_repo
+from .repositories import skills as skills_repo
 
 
 class NativeEngineError(RuntimeError):
@@ -36,6 +37,37 @@ def _build_prompt(
     lines.append(
         "Traite la mission et livre un résultat clair, structuré et vérifiable. "
         "Signale explicitement tout bloquant ou toute information manquante."
+    )
+    return "\n".join(lines)
+
+
+def _build_system_prompt(agent: dict[str, Any], skills: list[dict[str, Any]]) -> str:
+    """Assemble le prompt système de l'agent en y injectant ses compétences.
+
+    Les compétences rattachées au système d'orchestration sont héritées par tous
+    ses agents ; celles rattachées à l'agent le spécialisent. Aucune compétence
+    n'est inventée : seules les fiches réellement présentes sont injectées.
+    """
+    base = agent.get("spec") or (
+        "Tu es un agent de HORIZON CENTRAL AI. Livre un résultat clair et vérifiable."
+    )
+    if not skills:
+        return base
+    lines = [base, "", "Compétences disponibles pour cette mission :"]
+    for skill in skills:
+        name = str(skill.get("name") or "").strip()
+        if not name:
+            continue
+        category = str(skill.get("category") or "").strip()
+        description = str(skill.get("description") or "").strip()
+        label = f"- {name}" + (f" ({category})" if category else "")
+        if description:
+            label += f" : {description}"
+        lines.append(label)
+    lines.append("")
+    lines.append(
+        "Mobilise ces compétences quand elles servent la mission ; ne les invente pas "
+        "et ne prétends pas en utiliser une qui n'est pas listée."
     )
     return "\n".join(lines)
 
@@ -79,9 +111,8 @@ async def run_mission(
     else:
         agent = pick_agent(db, orchestrator["id"])
     provider = choose_provider(db)
-    system_prompt = agent.get("spec") or (
-        "Tu es un agent de HORIZON CENTRAL AI. Livre un résultat clair et vérifiable."
-    )
+    skills = skills_repo.effective_skills(db, orchestrator["id"], agent["id"])
+    system_prompt = _build_system_prompt(agent, skills)
     messages = [
         {"role": "system", "content": system_prompt},
         {"role": "user", "content": _build_prompt(agent, mission, step)},

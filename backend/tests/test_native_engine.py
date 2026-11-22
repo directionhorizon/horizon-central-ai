@@ -83,6 +83,45 @@ def test_mission_native_executee_de_bout_en_bout(client, provider, monkeypatch):
     assert mission_after["status"] == "completed"
 
 
+def test_competences_injectees_dans_le_prompt_native(client, provider, monkeypatch):
+    """Les compétences du système et de l'agent sont réellement injectées."""
+    captured: dict = {}
+
+    async def _capture(row, messages, *, model=None, temperature=0.2, timeout_s=60.0):
+        captured["messages"] = messages
+        return {
+            "content": "ok",
+            "model": model or "modele-test",
+            "provider_id": row.get("id"),
+            "provider_name": row.get("name"),
+            "usage": {},
+        }
+
+    monkeypatch.setattr(llm, "chat", _capture)
+
+    skill = client.post(
+        "/api/v1/skills",
+        json={"name": "Redaction de synthese", "category": "Analyse", "description": "Synthese claire."},
+    ).json()
+    client.post(f"/api/v1/orchestrators/{FAS_SEED['id']}/skills", json={"skill_id": skill["id"]})
+
+    project = client.post("/api/v1/projects", json={"name": "Projet skills"}).json()
+    mission = client.post(
+        "/api/v1/missions",
+        json={
+            "project_id": project["id"],
+            "title": "Mission avec competences",
+            "orchestrator_id": FAS_SEED["id"],
+        },
+    ).json()
+    response = client.post(f"/api/v1/missions/{mission['id']}/dispatch", json={})
+    assert response.status_code == 202, response.text
+
+    system = captured["messages"][0]["content"]
+    assert "Redaction de synthese" in system
+    assert "Compétences disponibles" in system
+
+
 def test_mission_native_sans_fournisseur_refuse(client):
     _clear_providers(client)
     project = client.post("/api/v1/projects", json={"name": "Projet FAS sans modèle"}).json()

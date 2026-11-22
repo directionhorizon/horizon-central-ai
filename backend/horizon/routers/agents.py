@@ -10,8 +10,8 @@ from fastapi import APIRouter, Depends, HTTPException
 
 from ..auth import require_admin
 from ..db import connect
-from ..models import AgentCreate, AgentUpdate
-from ..repositories import agents, operations, orchestrators, tools
+from ..models import AgentCreate, AgentUpdate, SkillAttach
+from ..repositories import agents, operations, orchestrators, skills, tools
 
 router = APIRouter(prefix="/api/v1/agents", tags=["agents"])
 
@@ -97,5 +97,50 @@ def detach_agent_tool(agent_id: str, tool_id: str, actor: str = Depends(require_
         operations.log(
             db, actor=actor, action="agent.tool.detach", target_type="agent",
             target_id=agent_id, detail=f"Outil retiré : {tool_id}",
+        )
+    return item
+
+
+# --- Compétences attribuées à l'agent (spécialisation) ----------------------
+
+@router.get("/{agent_id}/skills")
+def list_agent_skills(agent_id: str):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        items = skills.list_for_agent(db, agent_id)
+    return {"items": items}
+
+
+@router.post("/{agent_id}/skills")
+def attach_agent_skill(
+    agent_id: str, payload: SkillAttach, actor: str = Depends(require_admin)
+):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        if skills.get_skill(db, payload.skill_id) is None:
+            raise HTTPException(404, "Compétence introuvable.")
+        skills.attach_agent_skill(db, agent_id, payload.skill_id)
+        item = agents.get_agent(db, agent_id)
+        operations.log(
+            db, actor=actor, action="agent.skill.attach", target_type="agent",
+            target_id=agent_id, detail=f"Compétence attribuée : {payload.skill_id}",
+        )
+    return item
+
+
+@router.delete("/{agent_id}/skills/{skill_id}")
+def detach_agent_skill(
+    agent_id: str, skill_id: str, actor: str = Depends(require_admin)
+):
+    with connect() as db:
+        if agents.get_agent(db, agent_id) is None:
+            raise HTTPException(404, "Agent introuvable.")
+        skills.detach_agent_skill(db, agent_id, skill_id)
+        item = agents.get_agent(db, agent_id)
+        operations.log(
+            db, actor=actor, action="agent.skill.detach", target_type="agent",
+            target_id=agent_id, detail=f"Compétence retirée : {skill_id}",
         )
     return item

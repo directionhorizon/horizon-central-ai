@@ -445,6 +445,21 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_scheduled_status ON scheduled_tasks(status, run_at)",
         ),
     ),
+    (
+        15,
+        "agent_skills",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS agent_skills (
+                agent_id TEXT NOT NULL REFERENCES agents(id) ON DELETE CASCADE,
+                skill_id TEXT NOT NULL REFERENCES skills(id) ON DELETE CASCADE,
+                created_at TEXT NOT NULL,
+                PRIMARY KEY (agent_id, skill_id)
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_agent_skills_agent ON agent_skills(agent_id)",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
