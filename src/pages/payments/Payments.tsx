@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, CreditCard, Loader2, Plus, RefreshCw } from 'lucide-react';
 import { paymentsApi } from '../../api/payments';
-import type { Payment } from '../../api/payments';
+import type { Payment, PaymentProvider } from '../../api/payments';
 import { describeApiError } from '../../api/errors';
 
 /**
@@ -36,6 +36,11 @@ export const Payments = () => {
   const [currency, setCurrency] = useState('eur');
   const [detail, setDetail] = useState('');
   const [confirm, setConfirm] = useState(false);
+  const [providers, setProviders] = useState<PaymentProvider[]>([]);
+  const [provider, setProvider] = useState('');
+  const [mode, setMode] = useState<'intent' | 'checkout'>('checkout');
+  const [customer, setCustomer] = useState('');
+  const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -53,6 +58,23 @@ export const Payments = () => {
     void load();
   }, [load]);
 
+  useEffect(() => {
+    let alive = true;
+    paymentsApi
+      .providers()
+      .then((response) => {
+        if (!alive) return;
+        setProviders(response.items ?? []);
+        setProvider((current) => current || response.default || '');
+      })
+      .catch(() => {
+        /* l'absence de registre ne doit pas bloquer la page */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   const submit = async (event: FormEvent) => {
     event.preventDefault();
     setBusy(true);
@@ -64,13 +86,18 @@ export const Payments = () => {
         currency,
         confirm,
         detail,
+        provider: provider || undefined,
+        mode,
+        customer: customer || undefined,
       });
       if (result.status === 'requires_human_validation') {
+        setCheckoutUrl(null);
         setNotice(
           'Validation humaine requise : aucun paiement créé. Cochez « Je confirme » puis relancez.',
         );
       } else {
         setNotice(`Paiement créé : ${result.id ?? 'identifiant inconnu'} (${result.status}).`);
+        setCheckoutUrl(result.checkout_url ?? null);
         setConfirm(false);
         await load();
       }
@@ -87,10 +114,10 @@ export const Payments = () => {
         <div>
           <p className="hz-eyebrow">Paiements</p>
           <h1 className="mt-1 flex items-center gap-2 text-lg font-semibold text-slate-100">
-            <CreditCard size={16} /> PaymentIntents
+            <CreditCard size={16} /> Paiements
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Création en mode test Stripe. La validation humaine est obligatoire.
+            Création multi-fournisseurs (Stripe, PayPal, Mollie). La validation humaine est obligatoire.
           </p>
         </div>
         <button type="button" className="hz-btn hz-btn--ghost" onClick={() => void load()}>
@@ -108,6 +135,18 @@ export const Payments = () => {
         <div className="flex items-start gap-2 rounded-lg border border-cyan-400/20 bg-cyan-400/10 p-3 text-xs text-cyan-100">
           <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
           <span>{notice}</span>
+        </div>
+      )}
+
+      {checkoutUrl && (
+        <div className="flex items-start gap-2 rounded-lg border border-emerald-400/20 bg-emerald-400/10 p-3 text-xs text-emerald-100">
+          <CheckCircle2 size={14} className="mt-0.5 shrink-0" />
+          <span>
+            Lien de paiement :{' '}
+            <a className="underline" href={checkoutUrl} target="_blank" rel="noreferrer">
+              {checkoutUrl}
+            </a>
+          </span>
         </div>
       )}
 
@@ -136,6 +175,44 @@ export const Payments = () => {
               <option value="usd">USD</option>
               <option value="gbp">GBP</option>
             </select>
+          </label>
+          <label className="text-xs text-slate-400">
+            Fournisseur
+            <select
+              value={provider}
+              onChange={(event) => setProvider(event.target.value)}
+              className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500/40 focus:outline-none"
+            >
+              <option value="">
+                Par défaut ({providers.find((item) => item.default)?.label ?? 'Stripe'})
+              </option>
+              {providers.map((item) => (
+                <option key={item.kind} value={item.kind}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="text-xs text-slate-400">
+            Mode
+            <select
+              value={mode}
+              onChange={(event) => setMode(event.target.value as 'intent' | 'checkout')}
+              className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500/40 focus:outline-none"
+            >
+              <option value="checkout">Checkout (lien hébergé)</option>
+              <option value="intent">PaymentIntent (direct)</option>
+            </select>
+          </label>
+          <label className="text-xs text-slate-400 md:col-span-2">
+            Client (identifiant, facultatif)
+            <input
+              type="text"
+              value={customer}
+              onChange={(event) => setCustomer(event.target.value)}
+              placeholder="cus_… ou adresse e-mail"
+              className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-slate-200 placeholder:text-slate-600 focus:border-cyan-500/40 focus:outline-none"
+            />
           </label>
           <label className="text-xs text-slate-400 md:col-span-2">
             Référence (facultatif)
@@ -186,7 +263,23 @@ export const Payments = () => {
                 <span className="text-xs text-slate-200">
                   {formatAmount(payment.amount, payment.currency)}
                 </span>
+                {payment.provider && (
+                  <span className="rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-slate-300">
+                    {payment.provider}
+                  </span>
+                )}
+                {payment.mode && <span className="text-[10px] text-slate-500">{payment.mode}</span>}
                 <span className={badge(payment.status)}>{payment.status}</span>
+                {payment.checkout_url && (
+                  <a
+                    className="text-[11px] text-cyan-300 underline"
+                    href={payment.checkout_url}
+                    target="_blank"
+                    rel="noreferrer"
+                  >
+                    Lien de paiement
+                  </a>
+                )}
                 {payment.detail && (
                   <span className="text-[11px] text-slate-500">{payment.detail}</span>
                 )}

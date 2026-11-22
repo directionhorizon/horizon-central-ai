@@ -100,12 +100,24 @@ class ToolRun(BaseModel):
 
 
 class PaymentCreate(BaseModel):
-    """Création d'un paiement. La validation humaine est obligatoire."""
+    """Création d'un paiement. La validation humaine est obligatoire.
+
+    `provider` choisit l'adaptateur (registre ouvert) ; `mode` distingue une
+    intention de paiement, une page de paiement hébergée et l'enregistrement
+    d'un moyen de paiement. Aucune donnée bancaire n'est jamais transmise ici.
+    """
 
     amount: int = Field(gt=0, description="Montant en plus petite unité (ex. centimes).")
     currency: str = Field(default="eur", min_length=3, max_length=3)
     confirm: bool = False
     detail: str = Field(default="", max_length=500)
+    provider: str = Field(default="", max_length=40, description="Adaptateur choisi.")
+    mode: Literal["intent", "checkout", "setup"] = "intent"
+    account: str = Field(default="", max_length=120, description="Connexion du registre.")
+    customer_email: str = Field(default="", max_length=200)
+    customer_name: str = Field(default="", max_length=200)
+    success_url: str = Field(default="", max_length=500)
+    cancel_url: str = Field(default="", max_length=500)
 
 
 class MCPServerCreate(BaseModel):

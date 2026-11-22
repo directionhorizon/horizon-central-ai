@@ -25,6 +25,7 @@ from urllib.parse import quote
 
 import httpx
 
+from . import payment_providers
 from .db import now
 
 DEFAULT_TIMEOUT = 20.0
@@ -783,54 +784,70 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
 
 @handler("tool-payment")
 async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
+    """Paiement via l'adaptateur du fournisseur choisi (aucun fournisseur codé en dur)."""
     amount = params.get("amount")
     if amount is None:
         raise ToolError("Montant requis (en plus petite unité, ex. centimes).")
     currency = str(params.get("currency") or "eur").lower()
+    mode = str(params.get("mode") or "intent").strip().lower()
+    kind = str(params.get("provider") or payment_providers.default_provider()).strip().lower()
     if params.get("confirm") is not True:
-        # Décision validée v1.1 : le paiement est la SEULE opération exigeant une
+        # Decision validee v1.1 : le paiement est la SEULE opération exigeant une
         # validation humaine explicite avant exécution. Aucune clé n'est lue ici.
         return {
             "status": "requires_human_validation",
             "amount": amount,
             "currency": currency,
+            "provider": kind,
+            "mode": mode,
             "detail": "Le paiement exige une validation humaine explicite : "
             "renvoyez confirm=true après accord.",
         }
-    key = _credential(db, params.get("account"), "HORIZON_STRIPE_SECRET_KEY", "compte Stripe")
-    async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
-        response = await client.post(
-            "https://api.stripe.com/v1/payment_intents",
-            auth=(key, ""),
-            data={
-                "amount": int(amount),
-                "currency": currency,
-                "automatic_payment_methods[enabled]": "true",
-            },
+    try:
+        provider = payment_providers.get_provider(kind)
+        credentials = payment_providers.resolve_credentials(
+            provider,
+            account=params.get("account"),
+            credential_reader=lambda account, name, label: _credential(
+                db, account, name, label
+            ),
+            env_reader=_env,
         )
-    if response.status_code >= 400:
-        raise ToolError(f"Stripe a refusé la demande (HTTP {response.status_code}).")
-    payload = response.json()
-    # Trace locale du PaymentIntent (best-effort : ne casse jamais l'exécution).
+        request = payment_providers.PaymentRequest(
+            amount=int(amount),
+            currency=currency,
+            detail=str(params.get("detail") or "").strip(),
+            customer_email=str(params.get("customer_email") or "").strip(),
+            customer_name=str(params.get("customer_name") or "").strip(),
+            success_url=str(params.get("success_url") or "").strip(),
+            cancel_url=str(params.get("cancel_url") or "").strip(),
+        )
+        result = await provider.create(request, credentials, mode=mode)
+    except payment_providers.ProviderError as error:
+        raise ToolError(str(error)) from error
+    except httpx.HTTPError as error:
+        raise ToolError(
+            f"Fournisseur {kind} injoignable ({type(error).__name__})."
+        ) from error
+    payload = result.as_dict()
+    # Trace locale (best-effort : ne casse jamais l'exécution).
     try:
         from .repositories import payments as payments_repo
 
         payments_repo.record_payment(
             db,
-            str(payload.get("id")),
-            int(payload.get("amount") or amount),
-            str(payload.get("currency") or currency),
-            str(payload.get("status") or "created"),
+            result.id,
+            result.amount,
+            result.currency,
+            result.status,
+            result.detail,
+            provider=result.provider,
+            mode=result.mode,
+            checkout_url=result.checkout_url,
         )
     except Exception:
         pass
-    return {
-        "status": payload.get("status"),
-        "id": payload.get("id"),
-        "amount": payload.get("amount"),
-        "currency": payload.get("currency"),
-    }
-
+    return payload
 
 @handler("tool-facebook")
 async def _facebook(db, params: dict[str, Any]) -> dict[str, Any]:

@@ -477,6 +477,15 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_payments_created ON payments(created_at)",
         ),
     ),
+    (
+        17,
+        "payments_multi_providers",
+        (
+            "ALTER TABLE payments ADD COLUMN provider TEXT NOT NULL DEFAULT 'stripe'",
+            "ALTER TABLE payments ADD COLUMN mode TEXT NOT NULL DEFAULT 'intent'",
+            "ALTER TABLE payments ADD COLUMN checkout_url TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.

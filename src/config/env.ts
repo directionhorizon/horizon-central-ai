@@ -114,6 +114,7 @@ export const API_ROUTES = {
 
   payments: '/api/v1/payments',
   payment: (id: string) => `/api/v1/payments/${encodeURIComponent(id)}`,
+  paymentProviders: '/api/v1/payments/providers',
 
   adminDiagnostics: '/api/v1/admin/diagnostics',
 } as const;
