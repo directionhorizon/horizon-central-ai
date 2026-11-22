@@ -34,6 +34,9 @@ class SyncProvider:
     def pull(self, table: str, since: str | None = None) -> list[dict[str, Any]]:  # pragma: no cover
         raise SyncError("Fournisseur non configuré.")
 
+    def delete(self, table: str, entity_id: str) -> dict[str, Any]:  # pragma: no cover
+        raise SyncError("Fournisseur non configuré.")
+
 
 class SupabaseProvider(SyncProvider):
     name = "supabase"
@@ -76,6 +79,21 @@ class SupabaseProvider(SyncProvider):
         if isinstance(data, list):
             return data[0] if data else {}
         return data if isinstance(data, dict) else {}
+
+    def delete(self, table: str, entity_id: str) -> dict[str, Any]:
+        url = f"{self._base_url}/rest/v1/{table}"
+        try:
+            response = httpx.delete(
+                url,
+                params={"id": f"eq.{entity_id}"},
+                headers=self._headers(),
+                timeout=TIMEOUT_S,
+            )
+        except httpx.HTTPError as exc:
+            raise SyncError(f"Échec réseau : {type(exc).__name__}") from exc
+        if response.status_code >= 400:
+            raise SyncError(f"HTTP {response.status_code} sur {table}")
+        return {}
 
     def pull(self, table: str, since: str | None = None) -> list[dict[str, Any]]:
         url = f"{self._base_url}/rest/v1/{table}"

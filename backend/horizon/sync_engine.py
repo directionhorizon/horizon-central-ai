@@ -82,8 +82,14 @@ def push_pending(provider: SyncProvider | None, actor: str = "sync_worker") -> d
             try:
                 table = table_for(item["entity"])
                 payload = sanitize_payload(item["entity"], json.loads(item["payload_json"] or "{}"))
-                remote = provider.push(table, payload)
-                sync.mark_synced(db, item["id"], remote.get("updated_at"))
+                # L'identifiant est la clé primaire : sans lui, un upsert distant
+                # répond HTTP 400 (colonne id non nulle). On l'ajoute toujours.
+                payload.setdefault("id", item["entity_id"])
+                if item.get("operation") == "delete":
+                    remote = provider.delete(table, item["entity_id"])
+                else:
+                    remote = provider.push(table, payload)
+                sync.mark_synced(db, item["id"], (remote or {}).get("updated_at"))
                 pushed += 1
             except UnknownEntity:
                 sync.mark_failed(db, item["id"], "Entité non synchronisable.")
