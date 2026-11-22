@@ -47,3 +47,16 @@ export const skillsApi = {
       timeoutMs: 30000,
     }),
 } as const;
+
+/** Compétences rattachées à un agent précis (spécialisation). */
+export const agentSkillsApi = {
+  list: (agentId: string): Promise<{ items: Skill[] }> =>
+    http.requestWithRetry<{ items: Skill[] }>(API_ROUTES.agentSkills(agentId)),
+  attach: (agentId: string, skillId: string): Promise<unknown> =>
+    http.request<unknown>(API_ROUTES.agentSkills(agentId), {
+      method: 'POST',
+      body: { skill_id: skillId },
+    }),
+  detach: (agentId: string, skillId: string): Promise<unknown> =>
+    http.request<unknown>(API_ROUTES.agentSkill(agentId, skillId), { method: 'DELETE' }),
+} as const;
