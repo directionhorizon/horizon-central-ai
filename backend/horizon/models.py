@@ -99,6 +99,15 @@ class ToolRun(BaseModel):
     agent_id: str | None = None
 
 
+class PaymentCreate(BaseModel):
+    """Création d'un paiement. La validation humaine est obligatoire."""
+
+    amount: int = Field(gt=0, description="Montant en plus petite unité (ex. centimes).")
+    currency: str = Field(default="eur", min_length=3, max_length=3)
+    confirm: bool = False
+    detail: str = Field(default="", max_length=500)
+
+
 class MCPServerCreate(BaseModel):
     """Enregistrement d'un serveur MCP (transport stdio)."""
 

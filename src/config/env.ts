@@ -111,6 +111,9 @@ export const API_ROUTES = {
   agentSkill: (id: string, skillId: string) =>
     `/api/v1/agents/${encodeURIComponent(id)}/skills/${encodeURIComponent(skillId)}`,
 
+  payments: '/api/v1/payments',
+  payment: (id: string) => `/api/v1/payments/${encodeURIComponent(id)}`,
+
   adminDiagnostics: '/api/v1/admin/diagnostics',
 } as const;
 

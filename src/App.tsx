@@ -1,6 +1,6 @@
 import { type ReactNode, useEffect, useRef } from 'react';
 import { BrowserRouter, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom';
-import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Plug, Sparkles, Users } from 'lucide-react';
+import { LayoutDashboard, Cpu, Network, Database, Bot, Activity, FolderKanban, Cloud, Gauge, Plug, Sparkles, Users, CreditCard } from 'lucide-react';
 import { BackendUnavailable } from './components/BackendUnavailable';
 import { MainWorkbench } from './pages/main-workbench/MainWorkbench';
 import { ModelManagerLive } from './pages/model-manager/ModelManagerLive';
@@ -13,11 +13,12 @@ import { SyncCenter } from './pages/sync-center/SyncCenter';
 import { Integrations } from './pages/integrations/Integrations';
 import { SkillsLibrary } from './pages/skills/SkillsLibrary';
 import { AgentsToolsCatalog } from './pages/agents-tools-catalog/AgentsToolsCatalog';
+import { Payments } from './pages/payments/Payments';
 import { Cockpit } from './pages/cockpit/Cockpit';
 import { ChatSessionProvider, useChatSession } from './shared/ChatSessionContext';
 import { ConnectionsProvider } from './shared/ConnectionsContext';
 
-type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' | 'agents' | 'integrations' | 'skills' | 'memory' | 'control' | 'monitor' | 'sync';
+type PageId = 'cockpit' | 'workbench' | 'projects' | 'models' | 'orchestrators' | 'agents' | 'integrations' | 'skills' | 'payments' | 'memory' | 'control' | 'monitor' | 'sync';
 /**
  * Navigation par espaces (étape 1) : 11 pages deviennent 4 espaces.
  *
@@ -44,6 +45,7 @@ const pages = [
   { id: 'models' as const, path: '/models', label: 'Modèles', icon: Cpu },
   { id: 'integrations' as const, path: '/integrations', label: 'Connexions', icon: Plug },
   { id: 'skills' as const, path: '/skills', label: 'Compétences', icon: Sparkles },
+  { id: 'payments' as const, path: '/payments', label: 'Paiements', icon: CreditCard },
   { id: 'memory' as const, path: '/memory', label: 'Mémoire & connaissance', icon: Database },
   { id: 'control' as const, path: '/control', label: 'Centre de contrôle', icon: Bot },
   { id: 'monitor' as const, path: '/monitor', label: 'Supervision', icon: Activity },
@@ -61,7 +63,7 @@ type NavGroup = {
 const groups: NavGroup[] = [
   { id: 'work', label: 'Travailler', icon: LayoutDashboard, pages: ['workbench', 'cockpit'] },
   { id: 'missions', label: 'Missions', icon: FolderKanban, pages: ['projects'] },
-  { id: 'capabilities', label: 'Capacités', icon: Network, pages: ['orchestrators', 'agents', 'models', 'integrations', 'skills'] },
+  { id: 'capabilities', label: 'Capacités', icon: Network, pages: ['orchestrators', 'agents', 'models', 'integrations', 'skills', 'payments'] },
   { id: 'system', label: 'Système', icon: Activity, pages: ['memory', 'control', 'monitor', 'sync'] },
 ];
 
@@ -166,6 +168,7 @@ function AppShell() {
           <Route path="/catalog" element={<Navigate to="/orchestrators" replace />} />
           <Route path="/integrations" element={workspace('integrations', <Integrations />)} />
           <Route path="/skills" element={workspace('skills', <SkillsLibrary />)} />
+        <Route path="/payments" element={workspace('payments', <Payments />)} />
           <Route path="/memory" element={workspace('memory', <KnowledgeMemoryLive />)} />
           <Route path="/control" element={workspace('control', <AIControlCenter />)} />
           <Route path="/control/:sessionId" element={workspace('control', <AIControlCenter />)} />

@@ -783,14 +783,13 @@ async def _image_generate(_db, params: dict[str, Any]) -> dict[str, Any]:
 
 @handler("tool-payment")
 async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
-    key = _credential(db, params.get("account"), "HORIZON_STRIPE_SECRET_KEY", "compte Stripe")
     amount = params.get("amount")
     if amount is None:
         raise ToolError("Montant requis (en plus petite unité, ex. centimes).")
     currency = str(params.get("currency") or "eur").lower()
     if params.get("confirm") is not True:
         # Décision validée v1.1 : le paiement est la SEULE opération exigeant une
-        # validation humaine explicite avant exécution.
+        # validation humaine explicite avant exécution. Aucune clé n'est lue ici.
         return {
             "status": "requires_human_validation",
             "amount": amount,
@@ -798,6 +797,7 @@ async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
             "detail": "Le paiement exige une validation humaine explicite : "
             "renvoyez confirm=true après accord.",
         }
+    key = _credential(db, params.get("account"), "HORIZON_STRIPE_SECRET_KEY", "compte Stripe")
     async with httpx.AsyncClient(timeout=DEFAULT_TIMEOUT) as client:
         response = await client.post(
             "https://api.stripe.com/v1/payment_intents",
@@ -811,6 +811,19 @@ async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
     if response.status_code >= 400:
         raise ToolError(f"Stripe a refusé la demande (HTTP {response.status_code}).")
     payload = response.json()
+    # Trace locale du PaymentIntent (best-effort : ne casse jamais l'exécution).
+    try:
+        from .repositories import payments as payments_repo
+
+        payments_repo.record_payment(
+            db,
+            str(payload.get("id")),
+            int(payload.get("amount") or amount),
+            str(payload.get("currency") or currency),
+            str(payload.get("status") or "created"),
+        )
+    except Exception:
+        pass
     return {
         "status": payload.get("status"),
         "id": payload.get("id"),

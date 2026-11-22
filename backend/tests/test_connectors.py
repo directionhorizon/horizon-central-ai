@@ -14,7 +14,7 @@ UNCONFIG = [
     ("tool-email-send", {"to": "a@b.c", "subject": "s", "body": "b"}),
     ("tool-telegram-bot", {"chat_id": "1", "text": "salut"}),
     ("tool-image-generate", {"prompt": "un chat"}),
-    ("tool-payment", {"amount": 100}),
+    ("tool-payment", {"amount": 100, "confirm": True}),
     ("tool-facebook", {"message": "bonjour"}),
     ("tool-instagram", {"image_url": "http://example.com/a.png"}),
     ("tool-tiktok", {}),

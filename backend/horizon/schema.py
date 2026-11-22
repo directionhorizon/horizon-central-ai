@@ -460,6 +460,23 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "CREATE INDEX IF NOT EXISTS idx_agent_skills_agent ON agent_skills(agent_id)",
         ),
     ),
+    (
+        16,
+        "payments",
+        (
+            """
+            CREATE TABLE IF NOT EXISTS payments (
+                id TEXT PRIMARY KEY,
+                amount INTEGER NOT NULL,
+                currency TEXT NOT NULL,
+                status TEXT NOT NULL DEFAULT 'created',
+                detail TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_payments_created ON payments(created_at)",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.
