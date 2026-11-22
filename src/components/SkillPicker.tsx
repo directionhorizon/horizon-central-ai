@@ -2,6 +2,13 @@ import { useMemo, useState } from 'react';
 import { Search, X } from 'lucide-react';
 import type { SkillSummary } from '../api/entities';
 
+/** Minuscules sans accents, pour comparer rôle et compétences. */
+const normalize = (value: string) =>
+  value
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '');
+
 /**
  * Sélecteur de compétences : recherche, filtre par catégorie, rattachement multiple.
  * Distingue les compétences héritées du système de celles propres à l'agent (D)
@@ -12,8 +19,12 @@ interface SkillPickerProps {
   inherited?: SkillSummary[];
   attached: SkillSummary[];
   busy?: boolean;
+  /** Contexte de l'agent : sert à proposer des compétences pertinentes (F). */
+  agent?: { name: string; role: string; description: string; spec: string };
   onAttach: (skillId: string) => void;
   onDetach: (skillId: string) => void;
+  /** Rattachement groupé (bouton « Ajouter les suggestions »). */
+  onAttachMany?: (skillIds: string[]) => void;
 }
 
 export const SkillPicker = ({
@@ -21,8 +32,10 @@ export const SkillPicker = ({
   inherited = [],
   attached,
   busy = false,
+  agent,
   onAttach,
   onDetach,
+  onAttachMany,
 }: SkillPickerProps) => {
   const [query, setQuery] = useState('');
   const [category, setCategory] = useState('');
@@ -51,8 +64,63 @@ export const SkillPicker = ({
     });
   }, [skills, query, category]);
 
+  // F — Suggestions : compétences dont le domaine recoupe le rôle de l'agent.
+  const suggestions = useMemo(() => {
+    if (!agent) return [] as SkillSummary[];
+    const text = normalize([agent.name, agent.role, agent.description, agent.spec].join(' '));
+    const words = new Set(text.split(/[^a-z0-9]+/).filter((word) => word.length >= 4));
+    const scored = skills
+      .filter((skill) => !attachedIds.has(skill.id) && !inheritedIds.has(skill.id))
+      .map((skill) => {
+        const skillText = normalize(
+          [skill.name, skill.category, skill.subcategory, skill.tags].join(' '),
+        );
+        let score = 0;
+        words.forEach((word) => {
+          if (skillText.includes(word)) score += 1;
+        });
+        if (skill.category && text.includes(normalize(skill.category))) score += 3;
+        return { skill, score };
+      })
+      .filter((entry) => entry.score > 0)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 5);
+    return scored.map((entry) => entry.skill);
+  }, [agent, skills, attachedIds, inheritedIds]);
+
   return (
     <div className="mt-2 rounded-lg border border-white/[0.08] bg-black/20 p-3">
+      {suggestions.length > 0 && (
+        <div className="mb-2 rounded-md border border-cyan-500/20 bg-cyan-500/[0.06] p-2">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] uppercase tracking-wide text-cyan-300/80">
+              Suggestions pour cet agent
+            </p>
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() =>
+                onAttachMany
+                  ? onAttachMany(suggestions.map((skill) => skill.id))
+                  : suggestions.forEach((skill) => onAttach(skill.id))
+              }
+              className="rounded-md border border-cyan-400/40 bg-cyan-500/10 px-2 py-0.5 text-[11px] text-cyan-100 hover:bg-cyan-500/20 disabled:opacity-50"
+            >
+              Ajouter {suggestions.length}
+            </button>
+          </div>
+          <div className="mt-1 flex flex-wrap gap-1">
+            {suggestions.map((skill) => (
+              <span
+                key={skill.id}
+                className="rounded-full border border-cyan-500/20 bg-cyan-500/[0.04] px-2 py-0.5 text-[11px] text-cyan-100/90"
+              >
+                {skill.name}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
       {inherited.length > 0 && (
         <div className="mb-2">
           <p className="mb-1 text-[10px] uppercase tracking-wide text-slate-500">

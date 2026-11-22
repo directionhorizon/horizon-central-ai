@@ -96,6 +96,20 @@ export const AgentsToolsCatalog = () => {
     }
   };
 
+  const attachManySkills = async (agentId: string, skillIds: string[]) => {
+    if (skillIds.length === 0) return;
+    setBusyAgent(agentId);
+    try {
+      await Promise.all(skillIds.map((skillId) => agentsApi.attachSkill(agentId, skillId)));
+      const attached = await agentsApi.listSkills(agentId);
+      setAgentSkills((current) => ({ ...current, [agentId]: attached.items ?? [] }));
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setBusyAgent(null);
+    }
+  };
+
   const detachSkill = async (agentId: string, skillId: string) => {
     setBusyAgent(agentId);
     try {
@@ -250,8 +264,10 @@ export const AgentsToolsCatalog = () => {
                         inherited={orchestratorSkills[agent.orchestrator_id] ?? []}
                         attached={attached}
                         busy={busyAgent === agent.id}
+                        agent={agent}
                         onAttach={(skillId) => void attachSkill(agent.id, skillId)}
                         onDetach={(skillId) => void detachSkill(agent.id, skillId)}
+                        onAttachMany={(skillIds) => void attachManySkills(agent.id, skillIds)}
                       />
                     )}
                   </li>
