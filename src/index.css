@@ -1130,11 +1130,12 @@ body.ws-resizing { cursor: col-resize; user-select: none; }
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 10px;
+  gap: 8px;
   width: 100%;
   max-width: 620px;
-  min-height: 300px;
-  padding: 26px 22px;
+  /* Bandeau compact : la zone de saisie doit rester visible sans défilement. */
+  min-height: 168px;
+  padding: 18px 20px;
   border: 1px solid color-mix(in srgb, var(--accent) 26%, transparent);
   border-radius: 22px;
   background:
@@ -1154,7 +1155,7 @@ body.ws-resizing { cursor: col-resize; user-select: none; }
   letter-spacing: -0.01em;
   color: var(--foreground);
 }
-.ask-wave { width: 100%; max-width: 520px; height: auto; color: var(--accent); opacity: 0.55; }
+.ask-wave { width: 100%; max-width: 340px; height: auto; color: var(--accent); opacity: 0.55; }
 .ask-wave--active { opacity: 1; }
 .ask-wave--active path {
   animation: ask-breathe 2.2s ease-in-out infinite alternate;
@@ -1248,7 +1249,7 @@ body.ws-resizing { cursor: col-resize; user-select: none; }
 }
 
 @media (max-width: 767px) {
-  .ask-frame { min-height: 240px; padding: 20px 16px; border-radius: 18px; }
+  .ask-frame { min-height: 140px; padding: 14px 14px; border-radius: 18px; }
   .wf-node { min-width: 132px; }
   .hz-offline__card { padding: 20px 16px; }
 }

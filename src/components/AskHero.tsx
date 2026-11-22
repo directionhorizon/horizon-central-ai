@@ -13,23 +13,25 @@ export function AskHero({ active, modelReady }: { active: boolean; modelReady: b
         </h1>
         <svg
           className={active ? 'ask-wave ask-wave--active' : 'ask-wave'}
-          viewBox="0 0 620 130"
+          viewBox="0 0 320 32"
           role="img"
           aria-label={active ? 'Demande en cours de traitement' : 'Aucune demande en cours'}
         >
           {traces.map((index) => {
-            const spread = 1 - index * 0.13;
+            // Au repos, l'amplitude est quasi nulle : une ligne, pas une fausse
+            // ondulation. Pendant une demande réelle, l'onde s'anime franchement.
+            const amplitude = active ? 1 - index * 0.13 : 0.12;
             return (
               <path
                 key={index}
-                d={`M8 65 C 120 ${65 - 46 * spread}, 150 ${65 + 46 * spread}, 250 ${65 - 34 * spread}
-                    C 330 ${65 + 40 * spread}, 360 ${65 - 30 * spread}, 440 ${65 + 22 * spread}
-                    C 510 ${65 - 18 * spread}, 560 ${65 + 10 * spread}, 612 65`}
+                d={`M4 16 C 40 ${16 - 12 * amplitude}, 70 ${16 + 12 * amplitude}, 110 16
+                    S 180 ${16 - 12 * amplitude}, 220 16
+                    S 290 ${16 + 12 * amplitude}, 316 16`}
                 fill="none"
                 stroke="currentColor"
-                strokeWidth={0.9}
+                strokeWidth={1.2}
                 strokeLinecap="round"
-                opacity={0.16 + index * 0.13}
+                opacity={active ? 0.9 - index * 0.13 : 0.45 - index * 0.06}
                 style={{ animationDelay: `${index * 90}ms` }}
               />
             );
@@ -39,8 +41,8 @@ export function AskHero({ active, modelReady }: { active: boolean; modelReady: b
           {active
             ? 'Requête en cours auprès du moteur local.'
             : modelReady
-              ? 'Un fournisseur est configuré : la réponse sera produite par le modèle local.'
-              : 'Aucun fournisseur IA configuré : le message est enregistré avec le statut accepted_no_model.'}
+              ? 'Fournisseur IA prêt : votre message sera envoyé au modèle.'
+              : 'Aucun fournisseur IA disponible : le message sera enregistré sans réponse.'}
         </p>
       </div>
     </div>

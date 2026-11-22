@@ -1,7 +1,8 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ArrowUp, Bot, CheckCircle2, FileCode2, FileText, Paperclip, Plus, Sparkles, User } from 'lucide-react';
 import { useChatSession } from '../../shared/ChatSessionContext';
 import { AskHero } from '../../components/AskHero';
+import { modelsApi } from '../../api/models';
 type Upload = {
   name: string;
   size: string;
@@ -21,8 +22,28 @@ export const MainWorkbench = () => {
   const { messages, sendMessage, status, errorMessage, clearError, execution, sessionTitle } = useChatSession();
   const [draft, setDraft] = useState('');
   const [uploads, setUploads] = useState<Upload[]>([]);
+  // Disponibilité réelle du fournisseur : lue auprès du backend, jamais déduite
+  // d'une exécution précédente (sinon l'accueil annonce « aucun fournisseur »
+  // alors que Gemini est bien configuré).
+  const [providerReady, setProviderReady] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const busy = status === 'loading';
+
+  useEffect(() => {
+    let cancelled = false;
+    modelsApi
+      .list()
+      .then((response) => {
+        if (cancelled) return;
+        setProviderReady(response.items.some((provider) => provider.status === 'available'));
+      })
+      .catch(() => {
+        if (!cancelled) setProviderReady(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   const submitMessage = () => {
     const value = draft.trim();
     if ((!value && uploads.length === 0) || busy) return;
@@ -60,13 +81,12 @@ export const MainWorkbench = () => {
             </div>
           </header>
 
-          {messages.length === 0 && <AskHero active={busy} modelReady={execution?.provider_id ? true : false} />}
+          {messages.length === 0 && <AskHero active={busy} modelReady={providerReady} />}
 
           {errorMessage && <div role="alert" className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-rose-400/30 bg-rose-400/10 px-4 py-3 text-xs leading-5 text-rose-200"><span>{errorMessage}</span><button type="button" onClick={clearError} className="shrink-0 rounded-md border border-rose-300/30 px-2 py-1 text-[11px] hover:bg-rose-400/10">Fermer</button></div>}
-          {execution && <p className="mb-4 text-[11px] text-slate-500">Dernier enregistrement serveur : <span className="text-slate-300">{execution.status}</span>{execution.provider_id ? ` · ${execution.provider_id}` : ' · aucun fournisseur configuré'}</p>}
+          {execution && <p className="mb-4 text-[11px] text-slate-500">Dernier enregistrement serveur : <span className="text-slate-300">{execution.status}</span>{execution.provider_id ? ` · ${execution.provider_id}` : ' · sélection automatique du fournisseur'}</p>}
 
           <div className="flex-1 space-y-6 overflow-y-auto pr-2 scrollbar-hide" aria-label="Conversation history">
-            {messages.length === 0 && !busy && <p className="rounded-2xl border border-dashed border-white/10 px-5 py-8 text-center text-sm text-slate-500">Aucun message dans cette session. Envoyez un premier message pour l'enregistrer côté backend.</p>}
             {messages.map(message => <article key={message.id} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'assistant' && <div className="mt-1 flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-400/20 bg-cyan-400/10 text-cyan-300"><Bot size={16} /></div>}
                 <div className={`max-w-2xl ${message.role === 'user' ? 'items-end' : 'items-start'} flex flex-col`}>
