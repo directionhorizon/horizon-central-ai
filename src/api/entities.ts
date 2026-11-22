@@ -81,6 +81,22 @@ export interface Orchestrator {
   skills: SkillSummary[];
 }
 
+/* --- Agents (membres d'un système d'orchestration) ------------------------ */
+
+export type AgentRole = 'orchestrator' | 'specialist';
+
+export interface Agent {
+  id: string;
+  orchestrator_id: string;
+  name: string;
+  role: AgentRole;
+  description: string;
+  spec: string;
+  status: 'active' | 'inactive';
+  created_at: string;
+  updated_at: string;
+}
+
 /* --- Bibliothèque de skills (compétences) -------------------------------- */
 
 export type SkillStatus = 'active' | 'disabled';

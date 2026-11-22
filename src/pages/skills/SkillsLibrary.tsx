@@ -24,6 +24,13 @@ const LEVEL_STYLE: Record<string, string> = {
 
 const ORIGIN_LABEL: Record<string, string> = {
   github: 'GitHub',
+  gist: 'GitHub Gist',
+  gitlab: 'GitLab',
+  bitbucket: 'Bitbucket',
+  huggingface: 'Hugging Face',
+  npm: 'npm',
+  pypi: 'PyPI',
+  external: 'Externe',
   integrated: 'Catalogue',
   manual: 'Ajoutée',
 };
@@ -50,6 +57,8 @@ export const SkillsLibrary = () => {
   const [importPackage, setImportPackage] = useState('');
   const [importing, setImporting] = useState(false);
   const [selected, setSelected] = useState<Skill | null>(null);
+  const [showAdd, setShowAdd] = useState(false);
+  const [showImport, setShowImport] = useState(false);
 
   const refresh = useCallback(async (search: string, cat: string) => {
     setError(null);
@@ -127,15 +136,31 @@ export const SkillsLibrary = () => {
 
   return (
     <div className="mx-auto max-w-6xl p-6">
-      <header className="mb-6 flex items-center gap-3">
+      <header className="mb-6 flex flex-wrap items-center gap-3">
         <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-violet-400/10 text-violet-200">
           <Sparkles size={18} />
         </span>
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-semibold text-slate-100">Compétences</h1>
           <p className="text-xs text-slate-500">
             Bibliothèque centrale à piocher pour un agent, un système d'orchestration, ou pour améliorer l'existant.
           </p>
+        </div>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-2 rounded-lg border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-medium text-cyan-100 hover:bg-cyan-400/20"
+          >
+            <GitBranch size={14} /> Importer
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowAdd(true)}
+            className="flex items-center gap-2 rounded-lg border border-violet-400/25 bg-violet-400/15 px-3 py-2 text-xs font-medium text-violet-100 hover:bg-violet-400/25"
+          >
+            <Plus size={14} /> Ajouter
+          </button>
         </div>
       </header>
 
@@ -241,10 +266,17 @@ export const SkillsLibrary = () => {
         )}
       </section>
 
-      <section className="rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-5">
-        <h2 className="mb-4 flex items-center gap-2 text-base font-semibold text-slate-100">
-          <Plus size={16} className="text-violet-300" /> Ajouter une compétence
-        </h2>
+      {showAdd && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowAdd(false)}>
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#12151e] p-5" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-4 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                <Plus size={16} className="text-violet-300" /> Ajouter une compétence
+              </h2>
+              <button type="button" onClick={() => setShowAdd(false)} className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200" aria-label="Fermer">
+                <X size={18} />
+              </button>
+            </div>
         <form onSubmit={handleCreate} className="grid gap-3 md:grid-cols-2">
           <input
             value={name}
@@ -287,15 +319,24 @@ export const SkillsLibrary = () => {
             Ajouter à la bibliothèque
           </button>
         </form>
-      </section>
+          </div>
+        </div>
+      )}
 
-      <section className="mt-5 rounded-xl border border-white/[0.08] bg-[#12151e]/80 p-5">
-        <h2 className="mb-2 flex items-center gap-2 text-base font-semibold text-slate-100">
-          <GitBranch size={16} className="text-cyan-300" /> Importer depuis une source externe
-        </h2>
+      {showImport && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4" onClick={() => setShowImport(false)}>
+          <div className="w-full max-w-2xl rounded-2xl border border-white/10 bg-[#12151e] p-5" onClick={(event) => event.stopPropagation()}>
+            <div className="mb-2 flex items-center justify-between">
+              <h2 className="flex items-center gap-2 text-base font-semibold text-slate-100">
+                <GitBranch size={16} className="text-cyan-300" /> Importer depuis une source externe
+              </h2>
+              <button type="button" onClick={() => setShowImport(false)} className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200" aria-label="Fermer">
+                <X size={18} />
+              </button>
+            </div>
         <p className="mb-3 text-xs leading-5 text-slate-500">
-          URL d'un fichier JSON (GitHub, Hugging Face…) ou paquet npm / PyPI. Seules les
-          métadonnées sont importées — aucun code n'est exécuté, rien n'est écrasé.
+          URL d'un fichier JSON (GitHub, GitLab, Bitbucket, Hugging Face…) ou paquet npm / PyPI.
+          Seules les métadonnées sont importées — aucun code n'est exécuté, rien n'est écrasé.
         </p>
         <div className="mb-2 flex flex-wrap gap-2">
           {(['url', 'npm', 'pypi'] as const).map((item) => (
@@ -309,7 +350,7 @@ export const SkillsLibrary = () => {
                   : 'border-white/10 text-slate-400 hover:bg-white/5'
               }`}
             >
-              {item === 'url' ? 'URL (GitHub, Hugging Face)' : item === 'npm' ? 'Paquet npm' : 'Paquet PyPI'}
+              {item === 'url' ? 'URL (GitHub, GitLab, Bitbucket, Hugging Face)' : item === 'npm' ? 'Paquet npm' : 'Paquet PyPI'}
             </button>
           ))}
         </div>
@@ -339,7 +380,9 @@ export const SkillsLibrary = () => {
             Importer
           </button>
         </div>
-      </section>
+          </div>
+        </div>
+      )}
 
       {selected && (
         <div

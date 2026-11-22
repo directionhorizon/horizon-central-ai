@@ -106,6 +106,7 @@ export const API_ROUTES = {
   orchestratorSkills: (id: string) => `/api/v1/orchestrators/${encodeURIComponent(id)}/skills`,
   orchestratorSkill: (id: string, skillId: string) =>
     `/api/v1/orchestrators/${encodeURIComponent(id)}/skills/${encodeURIComponent(skillId)}`,
+  agents: '/api/v1/agents',
   agentSkills: (id: string) => `/api/v1/agents/${encodeURIComponent(id)}/skills`,
   agentSkill: (id: string, skillId: string) =>
     `/api/v1/agents/${encodeURIComponent(id)}/skills/${encodeURIComponent(skillId)}`,

@@ -3,8 +3,10 @@ import { useNavigate } from 'react-router-dom';
 import { Boxes, CheckCircle2, ExternalLink, Loader2, Network, Plug, RefreshCw, ShieldQuestion } from 'lucide-react';
 import { orchestratorsApi } from '../../api/orchestrators';
 import { integrationsApi } from '../../api/integrations';
+import { agentsApi } from '../../api/agents';
+import { skillsApi } from '../../api/skills';
 import { describeApiError } from '../../api/errors';
-import type { Integration, Orchestrator } from '../../api/entities';
+import type { Agent, Integration, Orchestrator, SkillSummary } from '../../api/entities';
 
 /**
  * Espace « Outils, agents et services ».
@@ -35,6 +37,10 @@ export const AgentsToolsCatalog = () => {
   const navigate = useNavigate();
   const [orchestrators, setOrchestrators] = useState<Orchestrator[]>([]);
   const [integrations, setIntegrations] = useState<Integration[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [skills, setSkills] = useState<SkillSummary[]>([]);
+  const [agentSkills, setAgentSkills] = useState<Record<string, SkillSummary[]>>({});
+  const [busyAgent, setBusyAgent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -42,18 +48,56 @@ export const AgentsToolsCatalog = () => {
     setError(null);
     setLoading(true);
     try {
-      const [registry, connections] = await Promise.all([
+      const [registry, connections, agentList, skillList] = await Promise.all([
         orchestratorsApi.list(),
         integrationsApi.list(),
+        agentsApi.list({ status: 'active' }),
+        skillsApi.list({ status: 'active' }),
       ]);
       setOrchestrators(registry.items ?? []);
       setIntegrations(connections.items ?? []);
+      setAgents(agentList.items ?? []);
+      setSkills(skillList.items ?? []);
+      const linked = await Promise.all(
+        (agentList.items ?? []).map(async (agent) => {
+          const attached = await agentsApi.listSkills(agent.id);
+          return [agent.id, attached.items ?? []] as const;
+        }),
+      );
+      setAgentSkills(Object.fromEntries(linked));
     } catch (caught) {
       setError(describeApiError(caught));
     } finally {
       setLoading(false);
     }
   }, []);
+
+  const attachSkill = async (agentId: string, skillId: string) => {
+    if (!skillId) return;
+    setBusyAgent(agentId);
+    try {
+      await agentsApi.attachSkill(agentId, skillId);
+      const attached = await agentsApi.listSkills(agentId);
+      setAgentSkills((current) => ({ ...current, [agentId]: attached.items ?? [] }));
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setBusyAgent(null);
+    }
+  };
+
+  const detachSkill = async (agentId: string, skillId: string) => {
+    setBusyAgent(agentId);
+    try {
+      await agentsApi.detachSkill(agentId, skillId);
+      const attached = await agentsApi.listSkills(agentId);
+      setAgentSkills((current) => ({ ...current, [agentId]: attached.items ?? [] }));
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setBusyAgent(null);
+    }
+  };
 
   useEffect(() => {
     void load();
@@ -143,6 +187,78 @@ export const AgentsToolsCatalog = () => {
                   </span>
                 </li>
               ))}
+            </ul>
+          )}
+        </section>
+
+        <section className="hz-panel mb-4 p-0">
+          <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+            <p className="hz-eyebrow">Agents et compétences</p>
+            <span className="hz-hint">{agents.length} agent(s) actif(s)</span>
+          </div>
+          {loading ? (
+            <p className="hz-hint flex items-center gap-2 p-4">
+              <Loader2 size={12} className="animate-spin" /> Chargement…
+            </p>
+          ) : agents.length === 0 ? (
+            <p className="hz-hint p-4">Aucun agent actif enregistré.</p>
+          ) : (
+            <ul className="divide-y divide-white/5">
+              {agents.map((agent) => {
+                const attached = agentSkills[agent.id] ?? [];
+                const available = skills.filter((skill) => !attached.some((s) => s.id === skill.id));
+                return (
+                  <li key={agent.id} className="px-4 py-3">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <span className="text-sm font-medium text-slate-100">{agent.name}</span>
+                      <span className="hz-badge">{agent.role}</span>
+                      <span className="hz-hint">{agent.orchestrator_id}</span>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-1.5">
+                      {attached.length === 0 && (
+                        <span className="hz-hint">Aucune compétence rattachée.</span>
+                      )}
+                      {attached.map((skill) => (
+                        <span
+                          key={skill.id}
+                          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] text-slate-300"
+                        >
+                          {skill.name}
+                          <button
+                            type="button"
+                            onClick={() => void detachSkill(agent.id, skill.id)}
+                            disabled={busyAgent === agent.id}
+                            className="text-slate-500 hover:text-rose-300 disabled:opacity-40"
+                            aria-label={`Retirer ${skill.name}`}
+                          >
+                            ×
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                    {available.length > 0 && (
+                      <div className="mt-2">
+                        <select
+                          defaultValue=""
+                          onChange={(event) => {
+                            void attachSkill(agent.id, event.target.value);
+                            event.target.value = '';
+                          }}
+                          disabled={busyAgent === agent.id}
+                          className="rounded-lg border border-white/10 bg-[#0d1320] px-2 py-1 text-xs text-slate-200 outline-none focus:border-cyan-400/40 disabled:opacity-40"
+                        >
+                          <option value="">+ Rattacher une compétence…</option>
+                          {available.map((skill) => (
+                            <option key={skill.id} value={skill.id}>
+                              {skill.name}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
         </section>

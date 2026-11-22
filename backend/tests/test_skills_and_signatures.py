@@ -82,6 +82,34 @@ def test_import_url_hote_non_autorise_refuse(client):
     assert "non autorisée" in response.json()["detail"]
 
 
+def test_sources_externes_proposees(client):
+    response = client.get("/api/v1/skills/sources")
+    assert response.status_code == 200
+    ids = {item["id"] for item in response.json()["items"]}
+    assert {"github", "gitlab", "bitbucket", "huggingface", "npm", "pypi"} <= ids
+
+
+def test_categories_et_outils_recommandes(client):
+    response = client.get("/api/v1/skills/category-map")
+    assert response.status_code == 200
+    items = response.json()["items"]
+    names = {item["category"] for item in items}
+    assert "Vente et relation client" in names
+    assert "Automatisation et intégrations" in names
+    vente = next(item for item in items if item["category"] == "Vente et relation client")
+    assert "tool-payment" in vente["tools"]
+
+
+def test_detection_origine_par_hote():
+    from horizon.routers.skills import _detect_origin
+
+    assert _detect_origin("https://raw.githubusercontent.com/o/r/main/skills.json") == "github"
+    assert _detect_origin("https://gist.githubusercontent.com/x/y/raw/skills.json") == "gist"
+    assert _detect_origin("https://gitlab.com/o/r/-/raw/main/skills.json") == "gitlab"
+    assert _detect_origin("https://bitbucket.org/o/r/raw/main/skills.json") == "bitbucket"
+    assert _detect_origin("https://huggingface.co/datasets/x/skills.json") == "huggingface"
+
+
 def test_ecriture_signee_mais_invisible(client):
     created = client.post("/api/v1/projects", json={"name": "Projet signe"})
     assert created.status_code == 201

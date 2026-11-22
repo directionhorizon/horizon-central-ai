@@ -26,7 +26,39 @@ ALLOWED_IMPORT_HOSTS = {
     "gist.githubusercontent.com",
     "huggingface.co",
     "hf.co",
+    "gitlab.com",
+    "raw.gitlab.com",
+    "bitbucket.org",
 }
+
+#: Sources externes proposées à l'utilisateur (host + libellé + type).
+#: Aucune URL n'est inventée : ce sont des hôtes publics connus. L'utilisateur
+#: fournit le lien exact du fichier JSON de compétences.
+SKILL_SOURCES = (
+    {"id": "github", "label": "GitHub", "host": "raw.githubusercontent.com", "kind": "url"},
+    {"id": "gist", "label": "GitHub Gist", "host": "gist.githubusercontent.com", "kind": "url"},
+    {"id": "gitlab", "label": "GitLab", "host": "gitlab.com", "kind": "url"},
+    {"id": "bitbucket", "label": "Bitbucket", "host": "bitbucket.org", "kind": "url"},
+    {"id": "huggingface", "label": "Hugging Face", "host": "huggingface.co", "kind": "url"},
+    {"id": "npm", "label": "Paquet npm", "host": "registry.npmjs.org", "kind": "package"},
+    {"id": "pypi", "label": "Paquet PyPI", "host": "pypi.org", "kind": "package"},
+)
+
+
+def _detect_origin(url: str) -> str:
+    """Déduit la provenance d'une URL de compétences, sans jamais deviner le contenu."""
+    host = (urlparse(url).hostname or "").lower()
+    if "gist" in host:
+        return "gist"
+    if "github" in host:
+        return "github"
+    if "gitlab" in host:
+        return "gitlab"
+    if "bitbucket" in host:
+        return "bitbucket"
+    if "huggingface" in host or host.endswith("hf.co"):
+        return "huggingface"
+    return "external"
 MAX_IMPORT_BYTES = 1_000_000
 
 #: Registres de paquets pris en charge (hôtes fixes, jamais fournis par l'utilisateur).
@@ -99,6 +131,20 @@ def list_categories():
     return {"items": items}
 
 
+@router.get("/sources")
+def list_sources():
+    """Sources externes autorisées pour l'import de compétences."""
+    return {"items": list(SKILL_SOURCES)}
+
+
+@router.get("/category-map")
+def category_map():
+    """Catégories de compétences et outils recommandés par catégorie."""
+    from ..skills_categories import category_catalog
+
+    return {"items": category_catalog()}
+
+
 @router.post("/import")
 async def import_skills(payload: SkillImportRequest, actor: str = Depends(require_admin)):
     """Importe des compétences — depuis un bundle JSON ou une URL d'une source autorisée.
@@ -123,8 +169,12 @@ async def import_skills(payload: SkillImportRequest, actor: str = Depends(requir
         parsed = urlparse(payload.url)
         if parsed.scheme != "https" or parsed.hostname not in ALLOWED_IMPORT_HOSTS:
             raise HTTPException(
-                400, "Source non autorisée : seules les URL GitHub en HTTPS sont acceptées."
+                400,
+                "Source non autorisée : utilisez une URL HTTPS GitHub, GitLab, Bitbucket "
+                "ou Hugging Face.",
             )
+        # La provenance est déduite de l'hôte réel (jamais devinée).
+        origin = _detect_origin(payload.url)
         try:
             async with httpx.AsyncClient(timeout=20.0, follow_redirects=True) as client:
                 response = await client.get(
