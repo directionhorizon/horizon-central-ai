@@ -30,6 +30,7 @@ NEW_CATEGORIES = (
     "Données et BI",
     "Marketing et acquisition",
     "Ressources humaines",
+    "Formation et éducation",
     "Automatisation et intégrations",
     "Sécurité et contrôle",
 )
@@ -51,6 +52,7 @@ CATEGORY_TOOLS: dict[str, list[str]] = {
     "Données et BI": ["tool-db-query", "tool-spreadsheet", "tool-data-extract", "tool-api-call"],
     "Marketing et acquisition": ["tool-social-post", "tool-image-generate", "tool-web-search", "tool-email-send"],
     "Ressources humaines": ["tool-email-send", "tool-office-docs", "tool-pdf-read"],
+    "Formation et éducation": ["tool-office-docs", "tool-image-generate"],
     "Automatisation et intégrations": ["tool-api-call", "tool-code-python", "tool-web-extract", "tool-db-query"],
     "Sécurité et contrôle": ["tool-terminal", "tool-web-search", "tool-file-read"],
 }
@@ -69,14 +71,16 @@ SKILL_RECLASSIFICATION: dict[str, str] = {
     "skill-redaction-de-cgv": "Juridique et conformité",
     "skill-vulgarisation-de-textes-de-loi": "Juridique et conformité",
     "skill-conformite-rgpd": "Juridique et conformité",
-    # Ressources humaines (recrutement, intégration, formation)
+    # Ressources humaines (recrutement, intégration, performance)
     "skill-fiche-de-poste": "Ressources humaines",
     "skill-grille-d-entretien": "Ressources humaines",
     "skill-plan-d-integration": "Ressources humaines",
     "skill-evaluation-de-performance": "Ressources humaines",
-    "skill-quiz": "Ressources humaines",
-    "skill-plan-de-cours": "Ressources humaines",
-    "github-anthropic-academy-guide": "Ressources humaines",
+    # Formation et éducation (pédagogie)
+    "skill-quiz": "Formation et éducation",
+    "skill-plan-de-cours": "Formation et éducation",
+    "github-anthropic-academy-guide": "Formation et éducation",
+    "skill-vulgarisation-de-concepts": "Formation et éducation",
 }
 
 

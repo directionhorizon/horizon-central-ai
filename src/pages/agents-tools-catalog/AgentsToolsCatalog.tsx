@@ -6,6 +6,7 @@ import { integrationsApi } from '../../api/integrations';
 import { agentsApi } from '../../api/agents';
 import { skillsApi } from '../../api/skills';
 import { describeApiError } from '../../api/errors';
+import { SkillPicker } from '../../components/SkillPicker';
 import type { Agent, Integration, Orchestrator, SkillSummary } from '../../api/entities';
 
 /**
@@ -41,6 +42,7 @@ export const AgentsToolsCatalog = () => {
   const [skills, setSkills] = useState<SkillSummary[]>([]);
   const [agentSkills, setAgentSkills] = useState<Record<string, SkillSummary[]>>({});
   const [busyAgent, setBusyAgent] = useState<string | null>(null);
+  const [openAgent, setOpenAgent] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -206,7 +208,6 @@ export const AgentsToolsCatalog = () => {
             <ul className="divide-y divide-white/5">
               {agents.map((agent) => {
                 const attached = agentSkills[agent.id] ?? [];
-                const available = skills.filter((skill) => !attached.some((s) => s.id === skill.id));
                 return (
                   <li key={agent.id} className="px-4 py-3">
                     <div className="flex flex-wrap items-center gap-2">
@@ -215,46 +216,34 @@ export const AgentsToolsCatalog = () => {
                       <span className="hz-hint">{agent.orchestrator_id}</span>
                     </div>
                     <div className="mt-2 flex flex-wrap items-center gap-1.5">
-                      {attached.length === 0 && (
+                      {attached.length === 0 ? (
                         <span className="hz-hint">Aucune compétence rattachée.</span>
-                      )}
-                      {attached.map((skill) => (
-                        <span
-                          key={skill.id}
-                          className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/[0.03] px-2 py-0.5 text-[11px] text-slate-300"
-                        >
-                          {skill.name}
-                          <button
-                            type="button"
-                            onClick={() => void detachSkill(agent.id, skill.id)}
-                            disabled={busyAgent === agent.id}
-                            className="text-slate-500 hover:text-rose-300 disabled:opacity-40"
-                            aria-label={`Retirer ${skill.name}`}
+                      ) : (
+                        attached.map((skill) => (
+                          <span
+                            key={skill.id}
+                            className="inline-flex items-center gap-1 rounded-full border border-cyan-400/20 bg-cyan-400/10 px-2 py-0.5 text-[11px] text-cyan-100"
                           >
-                            ×
-                          </button>
-                        </span>
-                      ))}
+                            {skill.name}
+                          </span>
+                        ))
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => setOpenAgent(openAgent === agent.id ? null : agent.id)}
+                        className="rounded-lg border border-white/10 bg-white/[0.03] px-2 py-1 text-[11px] text-slate-300 hover:border-cyan-400/40 hover:text-cyan-100"
+                      >
+                        {openAgent === agent.id ? 'Fermer' : 'Gérer les compétences'}
+                      </button>
                     </div>
-                    {available.length > 0 && (
-                      <div className="mt-2">
-                        <select
-                          defaultValue=""
-                          onChange={(event) => {
-                            void attachSkill(agent.id, event.target.value);
-                            event.target.value = '';
-                          }}
-                          disabled={busyAgent === agent.id}
-                          className="rounded-lg border border-white/10 bg-[#0d1320] px-2 py-1 text-xs text-slate-200 outline-none focus:border-cyan-400/40 disabled:opacity-40"
-                        >
-                          <option value="">+ Rattacher une compétence…</option>
-                          {available.map((skill) => (
-                            <option key={skill.id} value={skill.id}>
-                              {skill.name}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
+                    {openAgent === agent.id && (
+                      <SkillPicker
+                        skills={skills}
+                        attached={attached}
+                        busy={busyAgent === agent.id}
+                        onAttach={(skillId) => void attachSkill(agent.id, skillId)}
+                        onDetach={(skillId) => void detachSkill(agent.id, skillId)}
+                      />
                     )}
                   </li>
                 );

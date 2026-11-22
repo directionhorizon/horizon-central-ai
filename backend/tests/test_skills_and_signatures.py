@@ -89,6 +89,21 @@ def test_sources_externes_proposees(client):
     assert {"github", "gitlab", "bitbucket", "huggingface", "npm", "pypi"} <= ids
 
 
+def test_categories_nouvelles_peuplees(client):
+    """Les nouvelles catégories métier contiennent au moins une compétence."""
+    for category in (
+        "Vente et relation client",
+        "Support et opérations",
+        "Données et BI",
+        "Marketing et acquisition",
+        "Automatisation et intégrations",
+        "Sécurité et contrôle",
+        "Formation et éducation",
+    ):
+        result = client.get("/api/v1/skills", params={"category": category}).json()
+        assert result["count"] >= 1, f"catégorie vide : {category}"
+
+
 def test_reclassement_des_competences_existantes(client):
     """Les compétences « métier » sont déplacées vers les nouvelles catégories."""
     finance = client.get("/api/v1/skills", params={"category": "Finance et comptabilité"}).json()
