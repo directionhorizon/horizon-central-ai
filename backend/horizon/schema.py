@@ -486,6 +486,27 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "ALTER TABLE payments ADD COLUMN checkout_url TEXT NOT NULL DEFAULT ''",
         ),
     ),
+    (
+        18,
+        "payments_idempotency_events",
+        (
+            "ALTER TABLE payments ADD COLUMN idempotency_key TEXT NOT NULL DEFAULT ''",
+            "CREATE UNIQUE INDEX IF NOT EXISTS idx_payments_idempotency "
+            "ON payments(idempotency_key) WHERE idempotency_key <> ''",
+            """
+            CREATE TABLE IF NOT EXISTS payment_events (
+                id TEXT PRIMARY KEY,
+                provider TEXT NOT NULL DEFAULT '',
+                event_type TEXT NOT NULL DEFAULT '',
+                payment_id TEXT NOT NULL DEFAULT '',
+                payload TEXT NOT NULL DEFAULT '',
+                created_at TEXT NOT NULL
+            )
+            """,
+            "CREATE INDEX IF NOT EXISTS idx_payment_events_payment "
+            "ON payment_events(payment_id)",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.

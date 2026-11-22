@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, CreditCard, Loader2, Plus, RefreshCw } from 'lucide-react';
 import { paymentsApi } from '../../api/payments';
-import type { Payment, PaymentProvider } from '../../api/payments';
+import type { Payment, PaymentEvent, PaymentProvider } from '../../api/payments';
 import { describeApiError } from '../../api/errors';
 
 /**
@@ -41,6 +41,8 @@ export const Payments = () => {
   const [mode, setMode] = useState<'intent' | 'checkout'>('checkout');
   const [customer, setCustomer] = useState('');
   const [checkoutUrl, setCheckoutUrl] = useState<string | null>(null);
+  const [events, setEvents] = useState<PaymentEvent[]>([]);
+  const [refunding, setRefunding] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setError(null);
@@ -57,6 +59,21 @@ export const Payments = () => {
   useEffect(() => {
     void load();
   }, [load]);
+
+  useEffect(() => {
+    let alive = true;
+    paymentsApi
+      .events()
+      .then((response) => {
+        if (alive) setEvents(response.items ?? []);
+      })
+      .catch(() => {
+        /* le journal d'événements ne doit pas bloquer la page */
+      });
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   useEffect(() => {
     let alive = true;
@@ -81,19 +98,28 @@ export const Payments = () => {
     setError(null);
     setNotice(null);
     try {
-      const result = await paymentsApi.create({
-        amount: Number(amount),
-        currency,
-        confirm,
-        detail,
-        provider: provider || undefined,
-        mode,
-        customer: customer || undefined,
-      });
+      // Clé d'idempotence : un double-clic ne crée jamais deux paiements.
+      const idempotencyKey = crypto.randomUUID();
+      const result = await paymentsApi.create(
+        {
+          amount: Number(amount),
+          currency,
+          confirm,
+          detail,
+          provider: provider || undefined,
+          mode,
+          customer: customer || undefined,
+        },
+        idempotencyKey,
+      );
       if (result.status === 'requires_human_validation') {
         setCheckoutUrl(null);
         setNotice(
           'Validation humaine requise : aucun paiement créé. Cochez « Je confirme » puis relancez.',
+        );
+      } else if (result.replayed) {
+        setNotice(
+          `Rejeu détecté : aucun nouveau paiement créé, celui déjà enregistré est renvoyé (${result.id ?? 'inconnu'}).`,
         );
       } else {
         setNotice(`Paiement créé : ${result.id ?? 'identifiant inconnu'} (${result.status}).`);
@@ -105,6 +131,25 @@ export const Payments = () => {
       setError(describeApiError(caught));
     } finally {
       setBusy(false);
+    }
+  };
+
+  const refund = async (payment: Payment) => {
+    const label = formatAmount(payment.amount, payment.currency);
+    if (!window.confirm(`Rembourser ${label} pour ${payment.id} ?`)) return;
+    setRefunding(payment.id);
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await paymentsApi.refund(payment.id, {});
+      setNotice(
+        `Remboursement ${result.status ?? 'envoyé'} : ${result.id ?? 'sans identifiant'}.`,
+      );
+      await load();
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setRefunding(null);
     }
   };
 
@@ -283,7 +328,40 @@ export const Payments = () => {
                 {payment.detail && (
                   <span className="text-[11px] text-slate-500">{payment.detail}</span>
                 )}
-                <span className="ml-auto text-[10px] text-slate-600">{payment.created_at}</span>
+                <button
+                  type="button"
+                  className="hz-btn hz-btn--ghost ml-auto"
+                  disabled={refunding === payment.id}
+                  onClick={() => void refund(payment)}
+                >
+                  {refunding === payment.id ? 'Remboursement…' : 'Rembourser'}
+                </button>
+                <span className="text-[10px] text-slate-600">{payment.created_at}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+
+      <section className="hz-panel p-0">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <p className="hz-eyebrow">Événements fournisseurs</p>
+          <span className="text-[11px] text-slate-500">{events.length}</span>
+        </div>
+        {events.length === 0 ? (
+          <p className="p-4 text-xs text-slate-500">
+            Aucun webhook reçu. Déclarez /api/v1/payments/webhook/stripe chez le fournisseur.
+          </p>
+        ) : (
+          <ul className="divide-y divide-white/5">
+            {events.map((item) => (
+              <li key={item.id} className="flex flex-wrap items-center gap-2 px-4 py-2.5">
+                <span className="font-mono text-[11px] text-slate-300">{item.id}</span>
+                <span className="text-[11px] text-slate-400">{item.type}</span>
+                {item.payment_id && (
+                  <span className="font-mono text-[10px] text-slate-500">{item.payment_id}</span>
+                )}
+                <span className="ml-auto text-[10px] text-slate-600">{item.created_at}</span>
               </li>
             ))}
           </ul>

@@ -116,8 +116,16 @@ class PaymentCreate(BaseModel):
     account: str = Field(default="", max_length=120, description="Connexion du registre.")
     customer_email: str = Field(default="", max_length=200)
     customer_name: str = Field(default="", max_length=200)
+    customer: str = Field(default="", max_length=200)
     success_url: str = Field(default="", max_length=500)
     cancel_url: str = Field(default="", max_length=500)
+
+
+class RefundCreate(BaseModel):
+    """Demande de remboursement (partiel si `amount` est fourni)."""
+
+    amount: int = Field(default=0, ge=0, description="Montant en centimes ; 0 = total.")
+    reason: str = Field(default="", max_length=200)
 
 
 class MCPServerCreate(BaseModel):

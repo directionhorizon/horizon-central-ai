@@ -821,6 +821,8 @@ async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
             customer_name=str(params.get("customer_name") or "").strip(),
             success_url=str(params.get("success_url") or "").strip(),
             cancel_url=str(params.get("cancel_url") or "").strip(),
+            customer=str(params.get("customer") or "").strip(),
+            idempotency_key=str(params.get("idempotency_key") or "").strip(),
         )
         result = await provider.create(request, credentials, mode=mode)
     except payment_providers.ProviderError as error:
@@ -844,6 +846,7 @@ async def _payment(db, params: dict[str, Any]) -> dict[str, Any]:
             provider=result.provider,
             mode=result.mode,
             checkout_url=result.checkout_url,
+            idempotency_key=str(params.get("idempotency_key") or "").strip(),
         )
     except Exception:
         pass

@@ -36,6 +36,8 @@ class PaymentRequest:
     customer_name: str = ""
     success_url: str = ""
     cancel_url: str = ""
+    customer: str = ""
+    idempotency_key: str = ""
 
     def decimal_amount(self) -> str:
         """Montant en unité majeure, format « 10.00 » (PayPal, Mollie)."""
@@ -91,6 +93,30 @@ class PaymentProvider(ABC):
         mode: str = MODE_INTENT,
     ) -> PaymentResult:
         """Crée un paiement (ou un enregistrement de carte) chez le fournisseur."""
+
+    async def refund(
+        self,
+        payment_id: str,
+        amount: int,
+        credentials: Mapping[str, str],
+        reason: str = "",
+    ) -> PaymentResult:
+        """Rembourse un paiement. Refus honnête si l'adaptateur ne le gère pas."""
+        raise ProviderError(
+            f"Le fournisseur « {self.label} » ne gère pas encore les remboursements."
+        )
+
+    def verify_webhook(
+        self, payload: bytes, headers: Mapping[str, str]
+    ) -> dict[str, Any]:
+        """Vérifie la signature d'un événement entrant. Refus par défaut."""
+        raise ProviderError(
+            f"Le fournisseur « {self.label} » n'a pas de vérification de webhook."
+        )
+
+    def webhook_event(self, event: Mapping[str, Any]) -> tuple[str, str] | None:
+        """Traduit un événement vérifié en (identifiant de paiement, statut local)."""
+        return None
 
     def describe(self, configured: bool = False) -> dict[str, Any]:
         return {

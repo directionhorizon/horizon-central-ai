@@ -26,7 +26,8 @@ from horizon.repositories import operations as operations_repo
 from horizon.routers import core as core_router
 from horizon.routers import (
     agents, auth as auth_router, diagnostics, documents, integrations, llm_models, mcp as mcp_router,
-    missions, oauth as oauth_router, operations, orchestrators, payments, projects, skills, sync, system, tools,
+    missions, oauth as oauth_router, operations, orchestrators, payment_webhooks, payments,
+    projects, skills, sync, system, tools,
 )
 from horizon.schema import run_migrations
 
@@ -90,7 +91,13 @@ app = FastAPI(title="HORIZON CENTRAL AI — Core API", version="0.4.0", lifespan
 app.add_middleware(
     CORSMiddleware, allow_origins=ORIGINS, allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE"],
-    allow_headers=["Content-Type", "Authorization", "X-Horizon-Token"],
+    allow_headers=[
+        "Content-Type",
+        "Authorization",
+        "X-Horizon-Token",
+        "Idempotency-Key",
+        "Stripe-Signature",
+    ],
 )
 
 # --- Garde-fou réseau et en-têtes de sécurité ---------------------------------
@@ -178,6 +185,7 @@ for module in (
     mcp_router,
     missions,
     payments,
+    payment_webhooks,
     documents,
     llm_models,
     integrations,
