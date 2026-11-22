@@ -29,6 +29,10 @@ ALLOWED_IMPORT_HOSTS = {
     "gitlab.com",
     "raw.gitlab.com",
     "bitbucket.org",
+    "openai.com",
+    "platform.openai.com",
+    "anthropic.com",
+    "docs.anthropic.com",
 }
 
 #: Sources externes proposées à l'utilisateur (host + libellé + type).
@@ -40,6 +44,8 @@ SKILL_SOURCES = (
     {"id": "gitlab", "label": "GitLab", "host": "gitlab.com", "kind": "url"},
     {"id": "bitbucket", "label": "Bitbucket", "host": "bitbucket.org", "kind": "url"},
     {"id": "huggingface", "label": "Hugging Face", "host": "huggingface.co", "kind": "url"},
+    {"id": "openai", "label": "OpenAI", "host": "platform.openai.com", "kind": "url"},
+    {"id": "anthropic", "label": "Anthropic", "host": "docs.anthropic.com", "kind": "url"},
     {"id": "npm", "label": "Paquet npm", "host": "registry.npmjs.org", "kind": "package"},
     {"id": "pypi", "label": "Paquet PyPI", "host": "pypi.org", "kind": "package"},
 )
@@ -58,6 +64,10 @@ def _detect_origin(url: str) -> str:
         return "bitbucket"
     if "huggingface" in host or host.endswith("hf.co"):
         return "huggingface"
+    if "openai" in host:
+        return "openai"
+    if "anthropic" in host:
+        return "anthropic"
     return "external"
 MAX_IMPORT_BYTES = 1_000_000
 

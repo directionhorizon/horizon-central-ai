@@ -86,7 +86,7 @@ def test_sources_externes_proposees(client):
     response = client.get("/api/v1/skills/sources")
     assert response.status_code == 200
     ids = {item["id"] for item in response.json()["items"]}
-    assert {"github", "gitlab", "bitbucket", "huggingface", "npm", "pypi"} <= ids
+    assert {"github", "gitlab", "bitbucket", "huggingface", "openai", "anthropic", "npm", "pypi"} <= ids
 
 
 def test_categories_nouvelles_peuplees(client):
@@ -133,6 +133,8 @@ def test_detection_origine_par_hote():
     assert _detect_origin("https://gitlab.com/o/r/-/raw/main/skills.json") == "gitlab"
     assert _detect_origin("https://bitbucket.org/o/r/raw/main/skills.json") == "bitbucket"
     assert _detect_origin("https://huggingface.co/datasets/x/skills.json") == "huggingface"
+    assert _detect_origin("https://platform.openai.com/docs/skills.json") == "openai"
+    assert _detect_origin("https://docs.anthropic.com/fr/skills.json") == "anthropic"
 
 
 def test_ecriture_signee_mais_invisible(client):

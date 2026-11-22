@@ -28,6 +28,8 @@ const ORIGIN_LABEL: Record<string, string> = {
   gitlab: 'GitLab',
   bitbucket: 'Bitbucket',
   huggingface: 'Hugging Face',
+  openai: 'OpenAI',
+  anthropic: 'Anthropic',
   npm: 'npm',
   pypi: 'PyPI',
   external: 'Externe',
@@ -335,7 +337,7 @@ export const SkillsLibrary = () => {
               </button>
             </div>
         <p className="mb-3 text-xs leading-5 text-slate-500">
-          URL d'un fichier JSON (GitHub, GitLab, Bitbucket, Hugging Face…) ou paquet npm / PyPI.
+          URL d'un fichier JSON (GitHub, GitLab, Bitbucket, Hugging Face, OpenAI, Anthropic…) ou paquet npm / PyPI.
           Seules les métadonnées sont importées — aucun code n'est exécuté, rien n'est écrasé.
         </p>
         <div className="mb-2 flex flex-wrap gap-2">
@@ -359,7 +361,7 @@ export const SkillsLibrary = () => {
             <input
               value={importUrl}
               onChange={(event) => setImportUrl(event.target.value)}
-              placeholder="https://raw.githubusercontent.com/… ou huggingface.co/…"
+              placeholder="https://raw.githubusercontent.com/… ou huggingface.co/… ou platform.openai.com/…"
               className="h-9 flex-1 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-cyan-400/50"
             />
           ) : (
