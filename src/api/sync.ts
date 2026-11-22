@@ -27,6 +27,8 @@ export const syncApi = {
     ),
   push: (): Promise<SyncPushResult> =>
     http.request<SyncPushResult>(API_ROUTES.syncPush, { method: 'POST', timeoutMs: 120000 }),
+  retry: (): Promise<{ status: string; requeued: number }> =>
+    http.request<{ status: string; requeued: number }>(API_ROUTES.syncRetry, { method: 'POST' }),
   pull: (): Promise<SyncPullResult> =>
     http.request<SyncPullResult>(API_ROUTES.syncPull, { method: 'POST', timeoutMs: 120000 }),
   resolveConflict: (id: string): Promise<unknown> =>

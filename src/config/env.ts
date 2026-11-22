@@ -88,6 +88,7 @@ export const API_ROUTES = {
   syncQueue: '/api/v1/sync/queue',
   syncPush: '/api/v1/sync/push',
   syncPull: '/api/v1/sync/pull',
+  syncRetry: '/api/v1/sync/retry',
   syncConflicts: '/api/v1/sync/conflicts',
   syncConflictResolve: (id: string) => `/api/v1/sync/conflicts/${encodeURIComponent(id)}/resolve`,
 

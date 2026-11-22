@@ -25,6 +25,34 @@ ALLOWED_ENTITIES = {
 }
 
 
+#: Colonnes réellement présentes dans les tables distantes (schéma Supabase).
+#: Les charges locales contiennent parfois des champs imbriqués (steps, checkpoints)
+#: qui n'existent pas côté distant : ils sont retirés avant l'envoi pour éviter un HTTP 400.
+REMOTE_COLUMNS: dict[str, set[str]] = {
+    "projects": {"id", "name", "description", "status", "created_at", "updated_at"},
+    "orchestrators": {
+        "id", "name", "kind", "description", "endpoint", "version", "status",
+        "health_status", "last_checked_at", "config_json", "created_at", "updated_at",
+    },
+    "missions": {
+        "id", "project_id", "title", "description", "status", "priority",
+        "orchestrator_id", "created_at", "updated_at",
+    },
+    "documents": {
+        "id", "project_id", "title", "content", "tags", "source", "status",
+        "created_at", "updated_at",
+    },
+}
+
+
+def sanitize_payload(entity: str, payload: dict[str, Any]) -> dict[str, Any]:
+    """Ne garde que les colonnes connues de la table distante."""
+    allowed = REMOTE_COLUMNS.get(entity)
+    if not allowed:
+        return payload
+    return {key: value for key, value in payload.items() if key in allowed}
+
+
 class UnknownEntity(ValueError):
     """Entité absente de la liste blanche."""
 
@@ -53,7 +81,8 @@ def push_pending(provider: SyncProvider | None, actor: str = "sync_worker") -> d
         for item in pending:
             try:
                 table = table_for(item["entity"])
-                remote = provider.push(table, json.loads(item["payload_json"] or "{}"))
+                payload = sanitize_payload(item["entity"], json.loads(item["payload_json"] or "{}"))
+                remote = provider.push(table, payload)
                 sync.mark_synced(db, item["id"], remote.get("updated_at"))
                 pushed += 1
             except UnknownEntity:

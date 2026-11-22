@@ -25,7 +25,7 @@ export const SyncCenter = () => {
   const [failed, setFailed] = useState<SyncQueueItem[]>([]);
   const [conflicts, setConflicts] = useState<SyncConflict[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busy, setBusy] = useState<null | 'push' | 'pull'>(null);
+  const [busy, setBusy] = useState<null | 'push' | 'pull' | 'retry'>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
@@ -72,6 +72,23 @@ export const SyncCenter = () => {
         const pulled = await Promise.resolve(result as { pulled: number; conflicts: number });
         setNotice(`Réception terminée : ${pulled.pulled} élément(s), ${pulled.conflicts} conflit(s).`);
       }
+      await refresh();
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const retryFailed = async () => {
+    setBusy('retry');
+    setError(null);
+    setNotice(null);
+    try {
+      const result = await syncApi.retry();
+      setNotice(
+        `${result.requeued} échec(s) remis en attente. Le worker les poussera automatiquement.`,
+      );
       await refresh();
     } catch (caught) {
       setError(describeApiError(caught));
@@ -257,6 +274,15 @@ export const SyncCenter = () => {
             >
               {busy === 'pull' ? <Loader2 size={14} className="animate-spin" /> : <ArrowDownToLine size={14} />}
               Récupérer le distant
+            </button>
+            <button
+              type="button"
+              disabled={busy !== null}
+              onClick={() => void retryFailed()}
+              className="inline-flex items-center gap-2 rounded-lg border border-white/10 px-3 py-2 text-xs text-slate-300 hover:bg-white/5 disabled:opacity-40"
+            >
+              {busy === 'retry' ? <Loader2 size={14} className="animate-spin" /> : <RefreshCw size={14} />}
+              Réessayer les échecs
             </button>
           </div>
         </section>

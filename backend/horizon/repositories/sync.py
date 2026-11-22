@@ -91,6 +91,20 @@ def mark_failed(db: sqlite3.Connection, row_id: str, error: str) -> None:
     db.commit()
 
 
+def requeue_failed(db: sqlite3.Connection, limit: int = 200) -> int:
+    """Remet les échecs en attente pour un nouvel essai. Renvoie le nombre remis."""
+    rows = db.execute(
+        "SELECT id FROM sync_outbox WHERE status='failed' ORDER BY created_at LIMIT ?", (limit,)
+    ).fetchall()
+    for row in rows:
+        db.execute(
+            "UPDATE sync_outbox SET status='pending', last_error='', updated_at=? WHERE id=?",
+            (now(), row["id"]),
+        )
+    db.commit()
+    return len(rows)
+
+
 def mark_conflict(db: sqlite3.Connection, row_id: str, reason: str) -> None:
     db.execute(
         "UPDATE sync_outbox SET status='conflict', last_error=?, updated_at=? WHERE id=?",

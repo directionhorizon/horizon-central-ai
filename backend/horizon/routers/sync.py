@@ -93,6 +93,18 @@ def sync_push(actor: str = Depends(require_admin)):
     return push_pending(get_provider(), actor=actor)
 
 
+@router.post("/retry")
+def sync_retry(actor: str = Depends(require_admin)):
+    """Remet les échecs en file d'attente (aucun envoi immédiat)."""
+    with connect() as db:
+        count = sync.requeue_failed(db)
+        operations.log(
+            db, actor=actor, action="sync.retry", target_type="sync",
+            target_id=None, detail=f"{count} échec(s) remis en attente.",
+        )
+    return {"status": "completed", "requeued": count}
+
+
 @router.post("/pull")
 def sync_pull(actor: str = Depends(require_admin)):
     """Récupère les modifications distantes et signale les conflits."""
