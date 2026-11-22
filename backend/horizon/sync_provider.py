@@ -34,6 +34,9 @@ class SyncProvider:
     def pull(self, table: str, since: str | None = None) -> list[dict[str, Any]]:  # pragma: no cover
         raise SyncError("Fournisseur non configuré.")
 
+    def update(self, table: str, entity_id: str, payload: dict[str, Any]) -> dict[str, Any]:  # pragma: no cover
+        raise SyncError("Fournisseur non configuré.")
+
     def delete(self, table: str, entity_id: str) -> dict[str, Any]:  # pragma: no cover
         raise SyncError("Fournisseur non configuré.")
 
@@ -66,6 +69,34 @@ class SupabaseProvider(SyncProvider):
                 url,
                 json=payload,
                 headers=self._headers(prefer="resolution=merge-duplicates,return=representation"),
+                timeout=TIMEOUT_S,
+            )
+        except httpx.HTTPError as exc:
+            raise SyncError(f"Échec réseau : {type(exc).__name__}") from exc
+        if response.status_code >= 400:
+            raise SyncError(f"HTTP {response.status_code} sur {table}")
+        try:
+            data = response.json()
+        except ValueError:
+            return {}
+        if isinstance(data, list):
+            return data[0] if data else {}
+        return data if isinstance(data, dict) else {}
+
+    def update(self, table: str, entity_id: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Met à jour une ligne existante (PATCH filtré par id).
+
+        Un PATCH n'essaie jamais d'insérer : il ne peut donc pas échouer sur
+        des colonnes obligatoires absentes, contrairement à un upsert.
+        """
+        url = f"{self._base_url}/rest/v1/{table}"
+        body = {key: value for key, value in payload.items() if key != "id"}
+        try:
+            response = httpx.patch(
+                url,
+                params={"id": f"eq.{entity_id}"},
+                json=body,
+                headers=self._headers(prefer="return=representation"),
                 timeout=TIMEOUT_S,
             )
         except httpx.HTTPError as exc:
