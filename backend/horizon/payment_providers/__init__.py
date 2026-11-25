@@ -25,6 +25,7 @@ from .base import (
 from .mollie_provider import MollieProvider
 from .moneyfusion_provider import MoneyFusionProvider
 from .paypal_provider import PayPalProvider
+from .saspay_provider import SasPayProvider
 from .stripe_provider import StripeProvider
 
 _REGISTRY: dict[str, PaymentProvider] = {}
@@ -137,6 +138,7 @@ register(StripeProvider())
 register(PayPalProvider())
 register(MollieProvider())
 register(MoneyFusionProvider())
+register(SasPayProvider())
 
 __all__ = [
     "MODE_CHECKOUT",

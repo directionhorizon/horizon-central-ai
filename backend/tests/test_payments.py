@@ -1,6 +1,8 @@
 """Tests des paiements : garde-fou de validation humaine et liste locale."""
 from __future__ import annotations
 
+import pytest
+
 
 def test_liste_paiements_vide(client):
     response = client.get("/api/v1/payments")
@@ -401,3 +403,181 @@ def test_fournisseurs_paiement_inscrits_au_registre(client):
         for fiche in integrations.list_integrations(db, category="payment"):
             assert "sk_" not in str(fiche)
             assert "whsec_" not in str(fiche)
+
+
+# --- Adaptateur SasPay ---------------------------------------------------------
+
+
+def test_registre_contient_saspay():
+    from horizon import payment_providers
+
+    kinds = {item["kind"]: item for item in payment_providers.describe_providers()}
+    assert "saspay" in kinds
+    assert "checkout" in kinds["saspay"]["capabilities"]
+    assert kinds["saspay"]["env_vars"] == ["HORIZON_SASPAY_API_KEY"]
+
+
+def test_saspay_refuse_un_mode_non_supporte(monkeypatch):
+    import asyncio
+
+    from horizon.payment_providers import saspay_provider
+
+    monkeypatch.setenv("HORIZON_SASPAY_API_KEY", "sk_test_fake")
+    provider = saspay_provider.SasPayProvider()
+    request = saspay_provider.PaymentRequest(amount=5000, currency="xaf")
+    with pytest.raises(saspay_provider.ProviderError):
+        asyncio.run(provider.create(request, {}, mode="intent"))
+
+
+def test_saspay_cree_une_session_de_checkout(client, monkeypatch):
+    """Une session hebergée est créée et son URL est conservée."""
+    from horizon.payment_providers import saspay_provider
+
+    monkeypatch.setenv("HORIZON_SASPAY_API_KEY", "sk_test_fake")
+    _FakeAsyncClient.response = {
+        "success": True,
+        "data": {
+            "id": "c9a17e2c-4b1a-4f0e-9c3d-2a1b3c4d5e6f",
+            "status": "PENDING",
+            "checkout_url": "https://pay.saspay.me/kZ2v9rT4bQxL8mNpYw",
+        },
+        "code": 200,
+    }
+    monkeypatch.setattr(saspay_provider.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/payments",
+        json={
+            "amount": 5000,
+            "currency": "xaf",
+            "confirm": True,
+            "provider": "saspay",
+            "mode": "checkout",
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["provider"] == "saspay"
+    assert body["mode"] == "checkout"
+    assert body["checkout_url"] == "https://pay.saspay.me/kZ2v9rT4bQxL8mNpYw"
+    item = client.get(f"/api/v1/payments/{body['id']}").json()
+    assert item["checkout_url"] == "https://pay.saspay.me/kZ2v9rT4bQxL8mNpYw"
+    assert item["detail"]  # jamais vide, meme sans reference saisie
+
+
+def _signature(body: bytes, secret: str, timestamp: str) -> str:
+    import hashlib
+    import hmac
+
+    return hmac.new(
+        secret.encode(), f"{timestamp}.".encode() + body, hashlib.sha256
+    ).hexdigest()
+
+
+def _evenement_saspay(type_: str, identifiant: str) -> bytes:
+    import json
+
+    return json.dumps(
+        {
+            "event": type_,
+            "data": {
+                "id": identifiant,
+                "transaction_id": identifiant,
+                "reference": "TXN-2026-000456",
+                "amount": "25000.00",
+                "currency": "XAF",
+            },
+        }
+    ).encode("utf-8")
+
+
+def test_saspay_webhook_signature_valide(monkeypatch):
+    import time
+
+    from horizon.payment_providers import saspay_provider
+
+    monkeypatch.setenv("HORIZON_SASPAY_WEBHOOK_SECRET", "secret-test")
+    body = _evenement_saspay("transaction.success", "txn_1")
+    stamp = str(int(time.time()))
+    headers = {
+        "X-Webhook-Signature": _signature(body, "secret-test", stamp),
+        "X-Webhook-Timestamp": stamp,
+        "X-Webhook-Event": "transaction.success",
+    }
+    provider = saspay_provider.SasPayProvider()
+    event = provider.verify_webhook(body, headers)
+    assert event["type"] == "transaction.success"
+    assert event["id"] == "transaction.success:txn_1"
+    assert provider.webhook_event(event) == ("txn_1", "succeeded")
+
+
+def test_saspay_webhook_signature_invalide(monkeypatch):
+    import time
+
+    from horizon.payment_providers import saspay_provider
+
+    monkeypatch.setenv("HORIZON_SASPAY_WEBHOOK_SECRET", "secret-test")
+    body = _evenement_saspay("transaction.success", "txn_2")
+    headers = {
+        "X-Webhook-Signature": "0" * 64,
+        "X-Webhook-Timestamp": str(int(time.time())),
+    }
+    with pytest.raises(saspay_provider.ProviderError):
+        saspay_provider.SasPayProvider().verify_webhook(body, headers)
+
+
+def test_saspay_webhook_horodatage_expire(monkeypatch):
+    from horizon.payment_providers import saspay_provider
+
+    monkeypatch.setenv("HORIZON_SASPAY_WEBHOOK_SECRET", "secret-test")
+    body = _evenement_saspay("transaction.success", "txn_3")
+    stamp = "1000000000"  # 2001 : hors tolerance
+    headers = {
+        "X-Webhook-Signature": _signature(body, "secret-test", stamp),
+        "X-Webhook-Timestamp": stamp,
+    }
+    with pytest.raises(saspay_provider.ProviderError):
+        saspay_provider.SasPayProvider().verify_webhook(body, headers)
+
+
+def test_saspay_webhook_route_et_idempotence(client, monkeypatch):
+    """La route verifie la signature, enregistre l'evenement et ne le rejoue pas."""
+    import time
+
+    monkeypatch.setenv("HORIZON_SASPAY_WEBHOOK_SECRET", "secret-test")
+    body = _evenement_saspay("transaction.failed", "txn_route")
+    stamp = str(int(time.time()))
+    headers = {
+        "X-Webhook-Signature": _signature(body, "secret-test", stamp),
+        "X-Webhook-Timestamp": stamp,
+    }
+    first = client.post("/api/v1/payments/webhook/saspay", content=body, headers=headers)
+    assert first.status_code == 200, first.text
+    assert first.json()["duplicate"] is False
+    assert first.json()["status"] == "failed"
+    second = client.post("/api/v1/payments/webhook/saspay", content=body, headers=headers)
+    assert second.json()["duplicate"] is True
+
+
+def test_saspay_refuse_une_signature_absente(client, monkeypatch):
+    monkeypatch.setenv("HORIZON_SASPAY_WEBHOOK_SECRET", "secret-test")
+    body = _evenement_saspay("transaction.success", "txn_4")
+    response = client.post("/api/v1/payments/webhook/saspay", content=body)
+    assert response.status_code == 400
+
+
+def test_fiche_saspay_au_registre(client):
+    from horizon import payment_providers
+    from horizon.db import connect
+    from horizon.repositories import integrations
+
+    with connect() as db:
+        payment_providers.sync_registry(db)
+        fiches = {
+            f["id"]: f for f in integrations.list_integrations(db, category="payment")
+        }
+    assert "payment:saspay" in fiches
+    fiche = fiches["payment:saspay"]
+    assert fiche["api_key_env"] == "HORIZON_SASPAY_API_KEY"
+    assert "checkout" in fiche["capabilities"]
+    assert "sk_" not in str(fiche)
+

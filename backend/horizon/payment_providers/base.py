@@ -20,6 +20,15 @@ MODE_INTENT = "intent"      # intention de paiement (débit côté fournisseur)
 MODE_CHECKOUT = "checkout"  # page de paiement hébergée (lien à ouvrir)
 MODE_SETUP = "setup"        # enregistrement d'un moyen de paiement (sans débit)
 
+#: Devises sans décimale : le montant est déjà en unité entière (FCFA, yen…).
+#: Partagé par les adaptateurs pour éviter deux définitions divergentes.
+ZERO_DECIMAL = frozenset(
+    {
+        "xof", "xaf", "jpy", "krw", "clp", "gnf", "cdf", "rwf", "bif", "mga", "kmf",
+        "vnd", "pyg", "ugx", "djf", "isk",
+    }
+)
+
 
 class ProviderError(RuntimeError):
     """Erreur d'un fournisseur de paiement, message lisible et sans secret."""

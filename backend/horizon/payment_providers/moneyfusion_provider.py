@@ -19,6 +19,7 @@ import httpx
 
 from .base import (
     MODE_CHECKOUT,
+    ZERO_DECIMAL,
     PaymentProvider,
     PaymentRequest,
     PaymentResult,
@@ -29,20 +30,7 @@ from .base import (
 #: Base de l'API de vérification de statut (documentation MoneyFusion).
 STATUS_BASE = "https://pay.moneyfusion.net/paiementNotif"
 
-#: Devises sans décimale : le montant est déjà exprimé en unité entière (FCFA).
-ZERO_DECIMAL = {
-    "xof",
-    "xaf",
-    "jpy",
-    "krw",
-    "clp",
-    "gnf",
-    "cdf",
-    "rwf",
-    "bif",
-    "mga",
-    "kmf",
-}
+#: Les devises sans décimale sont définies une seule fois dans `base.ZERO_DECIMAL`.
 
 #: Statuts MoneyFusion -> statuts locaux HORIZON.
 STATUS_MAP = {
