@@ -14,16 +14,25 @@ import { describeApiError } from '../../api/errors';
 const statusStyle: Record<string, string> = {
   requires_payment_method: 'bg-amber-400/10 text-amber-300',
   requires_human_validation: 'bg-amber-400/10 text-amber-300',
+  pending: 'bg-amber-400/10 text-amber-300',
   succeeded: 'bg-emerald-400/10 text-emerald-300',
   processing: 'bg-cyan-400/10 text-cyan-300',
   canceled: 'bg-slate-500/10 text-slate-400',
+  failed: 'bg-rose-400/10 text-rose-300',
+  refunded: 'bg-violet-400/10 text-violet-300',
+  partially_refunded: 'bg-violet-400/10 text-violet-300',
 };
 
 const badge = (value: string) =>
   `rounded-full px-2 py-0.5 text-[10px] font-medium ${statusStyle[value] ?? 'bg-white/5 text-slate-300'}`;
 
+/** Devises sans décimale (FCFA, yen…) : le montant est déjà en unité entière. */
+const ZERO_DECIMAL = new Set(['xof', 'xaf', 'jpy', 'cdf', 'kmf', 'bif', 'mga']);
+
 const formatAmount = (amount: number, currency: string) =>
-  `${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
+  ZERO_DECIMAL.has(currency.toLowerCase())
+    ? `${Math.round(amount)} ${currency.toUpperCase()}`
+    : `${(amount / 100).toFixed(2)} ${currency.toUpperCase()}`;
 
 export const Payments = () => {
   const [items, setItems] = useState<Payment[]>([]);
@@ -162,7 +171,7 @@ export const Payments = () => {
             <CreditCard size={16} /> Paiements
           </h1>
           <p className="mt-1 text-xs text-slate-500">
-            Création multi-fournisseurs (Stripe, PayPal, Mollie). La validation humaine est obligatoire.
+            Création multi-fournisseurs (Stripe, PayPal, Mollie, MoneyFusion). La validation humaine est obligatoire.
           </p>
         </div>
         <button type="button" className="hz-btn hz-btn--ghost" onClick={() => void load()}>
@@ -199,7 +208,7 @@ export const Payments = () => {
         <p className="hz-eyebrow">Créer un paiement</p>
         <form className="mt-3 grid gap-3 md:grid-cols-4" onSubmit={submit}>
           <label className="text-xs text-slate-400">
-            Montant (centimes)
+            Montant ({ZERO_DECIMAL.has(currency) ? 'unité' : 'centimes'})
             <input
               type="number"
               min={1}
@@ -219,13 +228,23 @@ export const Payments = () => {
               <option value="eur">EUR</option>
               <option value="usd">USD</option>
               <option value="gbp">GBP</option>
+              <option value="xaf">XAF (FCFA Congo)</option>
+              <option value="xof">XOF (FCFA UEMOA)</option>
             </select>
           </label>
           <label className="text-xs text-slate-400">
             Fournisseur
             <select
               value={provider}
-              onChange={(event) => setProvider(event.target.value)}
+              onChange={(event) => {
+                const next = event.target.value;
+                setProvider(next);
+                // MoneyFusion : page hébergée uniquement, montants en FCFA.
+                if (next === 'moneyfusion') {
+                  setMode('checkout');
+                  setCurrency('xaf');
+                }
+              }}
               className="mt-1 w-full rounded-md border border-white/10 bg-black/30 px-2 py-1.5 text-xs text-slate-200 focus:border-cyan-500/40 focus:outline-none"
             >
               <option value="">
@@ -350,7 +369,7 @@ export const Payments = () => {
         </div>
         {events.length === 0 ? (
           <p className="p-4 text-xs text-slate-500">
-            Aucun webhook reçu. Déclarez /api/v1/payments/webhook/stripe chez le fournisseur.
+            Aucun webhook reçu. Déclarez /api/v1/payments/webhook/&lt;fournisseur&gt; chez le fournisseur.
           </p>
         ) : (
           <ul className="divide-y divide-white/5">

@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from horizon import llm as llm_adapter
+from horizon import payment_providers
 from horizon import scheduler
 from horizon import sync_worker
 from horizon import tool_runtime
@@ -71,6 +72,9 @@ async def lifespan(_: FastAPI):
     # présent) n'est plus affichée « planned » mais « ready ». Idempotent.
     with connect() as db:
         tool_runtime.sync_catalog_status(db)
+        # Chaque adaptateur de paiement est inscrit au registre des connexions
+        # (fiche stable, idempotente). Aucun secret n'y est écrit.
+        payment_providers.sync_registry(db)
     # Synchronisation automatique : inactif par défaut (HORIZON_SYNC_AUTO=1
     # pour l'activer). Le démarrage n'est jamais bloqué par le réseau.
     worker = asyncio.create_task(sync_worker.run_loop())

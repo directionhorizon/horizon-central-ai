@@ -44,3 +44,10 @@ _patch_auth.py
 *.rej
 *.tmp
 *.lnk
+
+# Sorties de build/test et archives de deploiement locales
+*_out.txt
+*_err.txt
+build_out.txt
+deploy_*.tgz
+*.tgz

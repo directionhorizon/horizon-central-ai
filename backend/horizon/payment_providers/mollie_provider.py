@@ -12,6 +12,7 @@ from .base import (
     PaymentRequest,
     PaymentResult,
     ProviderError,
+    fallback_detail,
 )
 
 API_BASE = "https://api.mollie.com/v2"
@@ -69,14 +70,18 @@ class MollieProvider(PaymentProvider):
         payload = response.json()
         links = payload.get("_links") or {}
         checkout_url = str((links.get("checkout") or {}).get("href") or "")
+        identifier = str(payload.get("id") or "")
+        amount = int(request.amount)
+        currency = request.currency.lower()
         return PaymentResult(
             provider=self.kind,
-            id=str(payload.get("id") or ""),
+            id=identifier,
             status=str(payload.get("status") or "open"),
-            amount=int(request.amount),
-            currency=request.currency.lower(),
+            amount=amount,
+            currency=currency,
             mode=MODE_CHECKOUT,
-            detail=request.detail,
+            detail=request.detail
+            or fallback_detail(self.label, amount, currency, identifier),
             checkout_url=checkout_url,
             raw=payload,
         )

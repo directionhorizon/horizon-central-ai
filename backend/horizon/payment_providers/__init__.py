@@ -23,6 +23,7 @@ from .base import (
     ProviderError,
 )
 from .mollie_provider import MollieProvider
+from .moneyfusion_provider import MoneyFusionProvider
 from .paypal_provider import PayPalProvider
 from .stripe_provider import StripeProvider
 
@@ -79,6 +80,37 @@ def describe_providers(
     return items
 
 
+def sync_registry(db: Any) -> list[dict[str, Any]]:
+    """Enregistre ou rafraîchit une fiche par fournisseur dans le registre.
+
+    Une fiche = un identifiant stable (`payment:<kind>`), jamais de doublon.
+    Aucun secret n'est écrit : seul le *nom* de la variable d'environnement est
+    conservé. Le statut reste « partiel » tant qu'un test réel n'a pas été
+    déclenché depuis la page des connexions (règle du registre).
+    """
+    from ..repositories import integrations as integrations_repo
+
+    fiches: list[dict[str, Any]] = []
+    for provider in providers():
+        configured = _is_configured(provider, _env_reader)
+        fiches.append(
+            integrations_repo.upsert_integration(
+                db,
+                f"payment:{provider.kind}",
+                {
+                    "name": provider.label or provider.kind,
+                    "category": "payment",
+                    "method": "api_key" if provider.env_vars else "endpoint",
+                    "endpoint": provider.docs_url,
+                    "status": "partial" if configured else "not_configured",
+                    "capabilities": ", ".join(provider.capabilities),
+                    "api_key_env": provider.env_vars[0] if provider.env_vars else "",
+                },
+            )
+        )
+    return fiches
+
+
 def resolve_credentials(
     provider: PaymentProvider,
     *,
@@ -104,6 +136,7 @@ def resolve_credentials(
 register(StripeProvider())
 register(PayPalProvider())
 register(MollieProvider())
+register(MoneyFusionProvider())
 
 __all__ = [
     "MODE_CHECKOUT",
@@ -119,4 +152,5 @@ __all__ = [
     "providers",
     "register",
     "resolve_credentials",
+    "sync_registry",
 ]

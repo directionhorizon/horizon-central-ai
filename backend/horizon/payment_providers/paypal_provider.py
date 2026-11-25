@@ -12,6 +12,7 @@ from .base import (
     PaymentRequest,
     PaymentResult,
     ProviderError,
+    fallback_detail,
 )
 
 
@@ -116,14 +117,18 @@ class PayPalProvider(PaymentProvider):
             if str(link.get("rel")) in {"payer-action", "approve"}:
                 checkout_url = str(link.get("href") or "")
                 break
+        identifier = str(order.get("id") or "")
+        amount = int(request.amount)
+        currency = request.currency.lower()
         return PaymentResult(
             provider=self.kind,
-            id=str(order.get("id") or ""),
+            id=identifier,
             status=str(order.get("status") or "CREATED"),
-            amount=int(request.amount),
-            currency=request.currency.lower(),
+            amount=amount,
+            currency=currency,
             mode=MODE_CHECKOUT,
-            detail=request.detail,
+            detail=request.detail
+            or fallback_detail(self.label, amount, currency, identifier),
             checkout_url=checkout_url,
             raw=order,
         )

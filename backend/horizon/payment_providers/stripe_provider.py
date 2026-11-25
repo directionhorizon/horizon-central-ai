@@ -18,6 +18,7 @@ from .base import (
     PaymentRequest,
     PaymentResult,
     ProviderError,
+    fallback_detail,
 )
 
 API_BASE = "https://api.stripe.com/v1"
@@ -237,14 +238,20 @@ class StripeProvider(PaymentProvider):
     def _normalize(
         self, payload: dict[str, Any], request: PaymentRequest, mode: str
     ) -> PaymentResult:
+        identifier = str(payload.get("id") or "")
+        amount = int(
+            payload.get("amount_total") or payload.get("amount") or request.amount
+        )
+        currency = str(payload.get("currency") or request.currency).lower()
         return PaymentResult(
             provider=self.kind,
-            id=str(payload.get("id") or ""),
+            id=identifier,
             status=str(payload.get("status") or "created"),
-            amount=int(payload.get("amount_total") or payload.get("amount") or request.amount),
-            currency=str(payload.get("currency") or request.currency).lower(),
+            amount=amount,
+            currency=currency,
             mode=mode,
-            detail=request.detail,
+            detail=request.detail
+            or fallback_detail(self.label, amount, currency, identifier),
             checkout_url=str(payload.get("url") or ""),
             raw=payload,
         )

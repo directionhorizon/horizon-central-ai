@@ -28,6 +28,7 @@ CATEGORIES = (
     "machine",
     "storage",
     "communication",
+    "payment",
 )
 
 METHODS = ("oauth2", "api_key", "bearer", "endpoint", "mcp", "rest", "cli", "webhook")
@@ -140,6 +141,48 @@ def update_integration(
     db.execute(f"UPDATE integrations SET {', '.join(assignments)} WHERE id=?", tuple(params))
     db.commit()
     return get_integration(db, integration_id)
+
+
+def upsert_integration(
+    db: sqlite3.Connection, integration_id: str, payload: dict[str, Any]
+) -> dict[str, Any]:
+    """Enregistre ou rafraîchit une fiche de façon idempotente (même identifiant).
+
+    Les champs descriptifs sont mis à jour ; les choix de l'utilisateur
+    (`permissions`, `config`) et l'état d'archivage ne sont jamais écrasés.
+    Aucun secret n'est écrit : seul le nom de la variable d'environnement est
+    conservé (`api_key_env`).
+    """
+    stamp = now()
+    db.execute(
+        "INSERT INTO integrations(id,name,category,method,endpoint,status,"
+        "permissions,capabilities,api_key_env,config_json,created_at,updated_at) "
+        "VALUES(?,?,?,?,?,?,'',?,?,?,?,?) "
+        "ON CONFLICT(id) DO UPDATE SET "
+        "name=excluded.name, "
+        "category=excluded.category, "
+        "method=excluded.method, "
+        "endpoint=excluded.endpoint, "
+        "status=excluded.status, "
+        "capabilities=excluded.capabilities, "
+        "api_key_env=excluded.api_key_env, "
+        "updated_at=excluded.updated_at",
+        (
+            integration_id,
+            str(payload.get("name") or integration_id)[:120],
+            str(payload.get("category") or "app"),
+            str(payload.get("method") or "endpoint"),
+            str(payload.get("endpoint") or "")[:500],
+            str(payload.get("status") or "not_configured"),
+            str(payload.get("capabilities") or "")[:500],
+            str(payload.get("api_key_env") or "")[:120],
+            "",
+            stamp,
+            stamp,
+        ),
+    )
+    db.commit()
+    return get_integration(db, integration_id) or {}
 
 
 def archive_integration(db: sqlite3.Connection, integration_id: str) -> dict[str, Any] | None:

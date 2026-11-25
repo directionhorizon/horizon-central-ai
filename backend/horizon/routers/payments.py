@@ -79,7 +79,7 @@ async def create_payment(
                 payload.amount,
                 payload.currency,
                 str(result.get("status") or "created"),
-                payload.detail,
+                str(result.get("detail") or payload.detail),
                 provider=str(result.get("provider") or payload.provider or "stripe"),
                 mode=str(result.get("mode") or payload.mode),
                 checkout_url=str(result.get("checkout_url") or ""),

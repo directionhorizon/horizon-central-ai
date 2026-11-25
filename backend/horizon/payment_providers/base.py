@@ -25,6 +25,20 @@ class ProviderError(RuntimeError):
     """Erreur d'un fournisseur de paiement, message lisible et sans secret."""
 
 
+def fallback_detail(
+    label: str, amount: int, currency: str, identifier: str = ""
+) -> str:
+    """Libellé lisible quand l'appelant n'a pas fourni de référence.
+
+    Une ligne de paiement ne doit jamais rester vide : on y met le fournisseur,
+    le montant et l'identifiant technique, sans jamais exposer de donnée bancaire.
+    """
+    text = f"Paiement {label} — {amount / 100:.2f} {str(currency or '').upper()}"
+    if identifier:
+        text += f" — {identifier}"
+    return text
+
+
 @dataclass(frozen=True)
 class PaymentRequest:
     """Demande normalisée, indépendante du fournisseur."""

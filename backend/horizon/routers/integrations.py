@@ -35,6 +35,7 @@ CATEGORY_LABELS = {
     "machine": "Machines et environnements",
     "storage": "Services de stockage",
     "communication": "Services de communication",
+    "payment": "Moyens de paiement",
 }
 
 METHOD_LABELS = {

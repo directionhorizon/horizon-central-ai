@@ -90,6 +90,30 @@ def test_paiement_stripe_enregistre_detail_et_provider(client, monkeypatch):
     assert item["mode"] == "intent"
 
 
+def test_paiement_sans_reference_genere_un_detail_lisible(client, monkeypatch):
+    """Sans référence saisie, la ligne reste lisible (fournisseur, montant, id)."""
+    from horizon.payment_providers import stripe_provider
+
+    monkeypatch.setenv("HORIZON_STRIPE_SECRET_KEY", "sk_test_fake")
+    _FakeAsyncClient.response = {
+        "id": "pi_test_sans_reference",
+        "amount": 2500,
+        "currency": "eur",
+        "status": "requires_payment_method",
+    }
+    monkeypatch.setattr(stripe_provider.httpx, "AsyncClient", _FakeAsyncClient)
+    response = client.post(
+        "/api/v1/payments",
+        json={"amount": 2500, "currency": "eur", "confirm": True, "provider": "stripe"},
+    )
+    assert response.status_code == 200, response.text
+    item = client.get("/api/v1/payments/pi_test_sans_reference").json()
+    assert item["detail"], "le détail ne doit jamais être vide"
+    assert "Stripe" in item["detail"]
+    assert "25.00 EUR" in item["detail"]
+    assert "pi_test_sans_reference" in item["detail"]
+
+
 def test_fournisseur_inconnu_refuse(client):
     response = client.post(
         "/api/v1/payments",
@@ -231,3 +255,149 @@ def test_remboursement_stripe_met_a_jour_le_statut(client, monkeypatch):
     assert response.json()["id"] == "re_test"
     item = client.get("/api/v1/payments/pi_refundable").json()
     assert item["status"] == "refunded"
+
+
+def _fake_moneyfusion_create(monkeypatch, payload):
+    from horizon.payment_providers import moneyfusion_provider
+
+    monkeypatch.setenv("HORIZON_MONEYFUSION_API_URL", "https://app.moneyfusion.net/fake")
+    monkeypatch.setattr(moneyfusion_provider.httpx, "AsyncClient", _FakeAsyncClient)
+    _FakeAsyncClient.response = payload
+
+
+class _FakeSyncResponse:
+    def __init__(self, payload, status_code=200):
+        self._payload = payload
+        self.status_code = status_code
+
+    def json(self):
+        return self._payload
+
+
+def test_paiement_moneyfusion_cree_lien_et_journalise(client, monkeypatch):
+    """MoneyFusion rend une URL de paiement ; la référence locale est conservée."""
+    _fake_moneyfusion_create(
+        monkeypatch,
+        {
+            "statut": True,
+            "token": "mf_token_1",
+            "message": "ok",
+            "url": "https://pay.moneyfusion.net/mf_token_1",
+        },
+    )
+    response = client.post(
+        "/api/v1/payments",
+        json={
+            "amount": 5000,
+            "currency": "xaf",
+            "confirm": True,
+            "provider": "moneyfusion",
+            "mode": "checkout",
+            "detail": "Commande #42",
+            "customer": "062000000",
+        },
+    )
+    assert response.status_code == 200, response.text
+    body = response.json()
+    assert body["provider"] == "moneyfusion"
+    assert body["mode"] == "checkout"
+    assert body["checkout_url"].startswith("https://pay.moneyfusion.net/")
+    item = client.get("/api/v1/payments/mf_token_1").json()
+    assert item["detail"] == "Commande #42"
+    assert item["mode"] == "checkout"
+
+
+def test_paiement_moneyfusion_mode_intent_refuse(client, monkeypatch):
+    """MoneyFusion n'expose qu'une page hébergée : le mode intent est refusé."""
+    _fake_moneyfusion_create(monkeypatch, {"statut": True})
+    response = client.post(
+        "/api/v1/payments",
+        json={
+            "amount": 5000,
+            "currency": "xaf",
+            "confirm": True,
+            "provider": "moneyfusion",
+            "mode": "intent",
+        },
+    )
+    assert response.status_code == 400
+    assert "checkout" in response.json()["detail"].lower()
+
+
+def test_webhook_moneyfusion_verifie_a_la_source(client, monkeypatch):
+    """Le webhook non signé n'est cru qu'après vérification auprès de l'API."""
+    from horizon.payment_providers import moneyfusion_provider
+
+    _fake_moneyfusion_create(
+        monkeypatch,
+        {
+            "statut": True,
+            "token": "mf_token_2",
+            "url": "https://pay.moneyfusion.net/mf_token_2",
+        },
+    )
+    client.post(
+        "/api/v1/payments",
+        json={
+            "amount": 5000,
+            "currency": "xaf",
+            "confirm": True,
+            "provider": "moneyfusion",
+            "mode": "checkout",
+        },
+    )
+    monkeypatch.setattr(
+        moneyfusion_provider.httpx,
+        "get",
+        lambda url, **kwargs: _FakeSyncResponse({"statut": "paid", "Montant": 5000}),
+    )
+    payload = b'{"tokenPay": "mf_token_2", "statut": "paid"}'
+    first = client.post(
+        "/api/v1/payments/webhook/moneyfusion",
+        content=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    assert first.status_code == 200, first.text
+    assert first.json()["duplicate"] is False
+    assert first.json()["status"] == "succeeded"
+    assert client.get("/api/v1/payments/mf_token_2").json()["status"] == "succeeded"
+    second = client.post(
+        "/api/v1/payments/webhook/moneyfusion",
+        content=payload,
+        headers={"Content-Type": "application/json"},
+    )
+    assert second.status_code == 200
+    assert second.json()["duplicate"] is True
+    events = client.get("/api/v1/payments/events").json()["items"]
+    assert [item["id"] for item in events].count("mf_token_2:succeeded") == 1
+
+
+def test_fournisseurs_paiement_inscrits_au_registre(client):
+    """Chaque adaptateur de paiement a une fiche stable dans le registre."""
+    from horizon import payment_providers
+    from horizon.db import connect
+    from horizon.repositories import integrations
+
+    with connect() as db:
+        fiches = integrations.list_integrations(db, category="payment")
+        identifiants = {fiche["id"] for fiche in fiches}
+        assert "payment:stripe" in identifiants
+        assert "payment:moneyfusion" in identifiants
+        assert "payment:paypal" in identifiants
+        assert "payment:mollie" in identifiants
+
+        moneyfusion = next(f for f in fiches if f["id"] == "payment:moneyfusion")
+        assert "checkout" in moneyfusion["capabilities"]
+        assert moneyfusion["api_key_env"] == "HORIZON_MONEYFUSION_API_URL"
+        assert moneyfusion["category"] == "payment"
+
+        # Idempotence : un second passage ne crée aucun doublon.
+        before = len(fiches)
+        payment_providers.sync_registry(db)
+        after = len(integrations.list_integrations(db, category="payment"))
+        assert after == before
+
+        # Aucun secret n'est stocké dans la fiche.
+        for fiche in integrations.list_integrations(db, category="payment"):
+            assert "sk_" not in str(fiche)
+            assert "whsec_" not in str(fiche)
