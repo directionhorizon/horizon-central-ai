@@ -1,8 +1,26 @@
-"""Adaptateur SasPay (Mobile Money + carte, Afrique de l'Ouest et du Centre).
+"""Adaptateur SasPay — la **voie Mobile Money** de HORIZON (Afrique centrale).
 
 SasPay expose une API REST unique : HORIZON crée une **session de checkout
 hébergée**, renvoie l'URL au client, et SasPay notifie les changements de statut
 par **webhook signé** (HMAC-SHA256 sur « horodatage.corps brut »).
+
+Pourquoi cet adaptateur : au Congo-Brazzaville, Stripe, PayPal et les grands PSP
+ne couvrent pas le pays. La réalité locale, c'est le **Mobile Money** — MTN MoMo
+et Airtel Money (et la carte pour le reste). SasPay est une couche d'intégration
+technique posée sur des PSP agréés, qui donne accès à ces réseaux avec une seule
+API. HORIZON reste le décideur : aucun fournisseur n'est codé en dur.
+
+Ce qui est implémenté ici :
+- l'**encaissement** par page de paiement hébergée (`POST /checkout-sessions/`) ;
+- la **vérification du webhook** (signature + horodatage) et la traduction des
+  événements en statuts locaux.
+
+Ce qui n'est PAS implémenté (l'API amont le permet, HORIZON ne l'expose pas) :
+- le **décaissement** (`POST /payouts/initialize/`, envoi vers un numéro Mobile
+  Money — exige une IP whitelistée côté SasPay) ;
+- les **remboursements** : SasPay n'expose pas d'endpoint dédié dans sa
+  documentation publique, donc l'adaptateur refuse honnêtement au lieu de
+  prétendre.
 
 Sécurité :
 - la clé secrète (`sk_live_` / `sk_test_`) vit uniquement dans l'environnement ;
