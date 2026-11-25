@@ -89,6 +89,23 @@ def _body(client: httpx.Client, slug: str) -> str:
         return str(payload.get("body") or payload.get("code") or "")
     return r.text
 
+def _context(code: str, width: int = 3) -> str:
+    """Affiche les lignes voisines du bloc de recherche par nom, SANS numero.
+
+    Les numeros de ligne du conteneur ESZIP ne correspondent pas a ceux de
+    l'editeur Supabase : les afficher induirait en erreur. On montre donc le
+    texte brut, a retrouver par recherche dans l'editeur.
+    """
+    lines = code.splitlines()
+    for index, line in enumerate(lines):
+        if '.eq("nom"' in line:
+            start = max(0, index - width)
+            end = min(len(lines), index + width + 1)
+            return "\n".join(f"    {lines[n].strip()}" for n in range(start, end))
+    return "\n".join(f"    {line.strip()}" for line in lines[:12])
+
+
+
 
 def main(argv: list[str]) -> int:
     parser = argparse.ArgumentParser(
@@ -140,7 +157,7 @@ def main(argv: list[str]) -> int:
             if count == 0:
                 problems += 1
                 print("  AUCUNE CORRESPONDANCE — voici le code reel autour de la recherche par nom :")
-                print(_context(code, old))
+                print(_context(code))
                 continue
             if count > 1:
                 problems += 1
