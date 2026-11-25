@@ -51,3 +51,6 @@ _patch_auth.py
 build_out.txt
 deploy_*.tgz
 *.tgz
+
+# Sauvegardes locales de fonctions distantes (avant modification)
+backups/
