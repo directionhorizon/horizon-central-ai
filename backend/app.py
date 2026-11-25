@@ -17,6 +17,7 @@ from fastapi.responses import JSONResponse
 from pydantic import BaseModel, Field
 
 from horizon import llm as llm_adapter
+from horizon import mayela_feed
 from horizon import payment_providers
 from horizon import scheduler
 from horizon import sync_worker
@@ -27,7 +28,7 @@ from horizon.repositories import operations as operations_repo
 from horizon.routers import core as core_router
 from horizon.routers import (
     agents, auth as auth_router, diagnostics, documents, integrations, llm_models, mcp as mcp_router,
-    missions, oauth as oauth_router, operations, orchestrators, payment_webhooks, payments,
+    mayela, missions, oauth as oauth_router, operations, orchestrators, payment_webhooks, payments,
     projects, skills, sync, system, tools,
 )
 from horizon.schema import run_migrations
@@ -75,6 +76,9 @@ async def lifespan(_: FastAPI):
         # Chaque adaptateur de paiement est inscrit au registre des connexions
         # (fiche stable, idempotente). Aucun secret n'y est écrit.
         payment_providers.sync_registry(db)
+        # MAYELA reste proprietaire de ses donnees : HORIZON s'y inscrit comme
+        # simple lecteur (fiche stable, idempotente, sans secret).
+        mayela_feed.sync_registry(db)
     # Synchronisation automatique : inactif par défaut (HORIZON_SYNC_AUTO=1
     # pour l'activer). Le démarrage n'est jamais bloqué par le réseau.
     worker = asyncio.create_task(sync_worker.run_loop())
@@ -193,6 +197,7 @@ for module in (
     documents,
     llm_models,
     integrations,
+    mayela,
     oauth_router,
     operations,
     skills,
