@@ -1,10 +1,11 @@
 # ORGANIGRAMME — HORIZON CENTRAL AI (avec l'exécuteur)
 
 Ce document décrit **l'organisation réelle** du système, y compris le **moteur
-d'orchestration (exécuteur)** en cours de construction. Légende des états :
+d'orchestration (exécuteur)** opérationnel depuis le 2026-11-27. Légende des états :
 
 - ✅ **existe** (vérifié dans le code / en ligne)
-- 🟡 **à construire** (le moteur multi-agents)
+- 🟢 **opérationnel** (testé réellement en production)
+- 🟡 **partiel** (reste à faire, décrit précisément)
 - ❌ **à brancher** (mémoire/KR, politiques d'action, connecteurs)
 
 ```mermaid
@@ -31,7 +32,7 @@ flowchart TB
   API --> CORE
   CORE["CORE — Planificateur + Routeur<br/>core.py : build_plan · select_orchestrator<br/>/api/v1/core/plan · /api/v1/core/route"] --> EXEC
 
-  subgraph EXEC["MOTEUR D'ORCHESTRATION — EXÉCUTEUR (générique, à construire)"]
+  subgraph EXEC["MOTEUR D'ORCHESTRATION — EXÉCUTEUR (générique, 🟢 opérationnel)"]
     direction LR
     E1["1. Décomposer"] --> E2["2. Router vers les agents"] --> E3["3. Exécuter chaque étape"]
     E3 --> E4["4. Suivre (statuts)"] --> E5["5. Consolider"] --> E6["6. Revue qualité"] --> E7["7. Livrer"]
@@ -89,17 +90,21 @@ flowchart TB
 | **Utilisateur** | app de bureau (mode en ligne), navigateur, mobile | ✅ |
 | **API CORE** | registres (systèmes, agents, compétences, projets, missions, runs, outils) + sécurité + journal | ✅ |
 | **CORE planificateur / routeur** | transforme une demande en mission + étapes et choisit le système | ✅ |
-| **MOTEUR (exécuteur)** | décompose → route vers les **agents** → exécute → suit → consolide → revue → livre | 🟡 **à construire** |
+| **MOTEUR (exécuteur)** | décompose → route vers les **agents** → exécute → suit → consolide | 🟢 **opérationnel** (`orchestrator_engine.py`, vérifié en ligne : mission `1acfa905`, 5 étapes / 5 agents) |
 | **Adaptateurs (UOIM)** | branche tout type de système sans code en dur | ✅ |
 | **Systèmes** | MARKETING 360 (7 agents) · FIRST AGENTIC SYSTEM (4 agents) | ✅ |
 | **Ressources** | LLM, outils, compétences, mémoire/KR, connecteurs | ✅ / ❌ selon la ligne |
 
-## Ce que l'exécuteur utilisera (déjà en place)
-Missions, **étapes**, checkpoints, **runs** (statut/sortie/usage/runtime), journal ;
-`effective_skills` (compétences par agent) ; outil **`tool-delegate`** (déléguer à un
-`agent_id`) ; outil **`tool-plan`** ; adaptateurs par `kind` ; fournisseur LLM.
+## Ce que l'exécuteur utilise (en place et vérifié)
+Missions, **étapes** (`assigned_agent_id`), checkpoints, **runs** (statut/sortie/usage/
+runtime, `agent_id`), journal ; `effective_skills` (compétences par agent) ; outil
+**`tool-delegate`** ; outil **`tool-plan`** ; adaptateurs par `kind` ; fournisseur LLM
+(choix automatique du fournisseur configuré).
 
-## Ce qui manque pour qu'il fonctionne
-1. **`agent_id`** sur les étapes et les exécutions (aujourd'hui : `assigned_orchestrator_id` seulement) ;
-2. **l'exécuteur d'étapes** (la boucle) et la **consolidation/revue** ;
-3. la **boucle d'appel d'outils** dans le moteur (pour qu'un agent appelle `tool-plan` / `tool-delegate`).
+## Ce qui reste à faire
+1. **Boucle d'appel d'outils** dans le moteur : qu'un agent appelle réellement une main
+   (recherche web, PDF, image, fichiers) au cours de son étape.
+2. **Revue qualité** formalisée après la consolidation (la consolidation distingue déjà
+   faits, estimations et hypothèses).
+3. **Parallélisation** des étapes indépendantes et reprise ciblée d'une étape en échec.
+4. Test PDF **en ligne** après dépôt d'un document réel dans l'espace de travail serveur.
