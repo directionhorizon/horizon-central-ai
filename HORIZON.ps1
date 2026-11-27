@@ -50,6 +50,8 @@ function Open-AppWindow([string]$url, [string]$profile) {
     return $false
 }
 
+$mode = 'online'   # 'online' = A (serveur en ligne uniquement) ; 'hybride' = B (local en secours)
+
 $online = $false
 try {
     $probe = Invoke-WebRequest -Uri "$onlineUrl/api/v1/health" -UseBasicParsing -TimeoutSec 5
@@ -57,11 +59,27 @@ try {
 } catch { $online = $false }
 
 if ($online) {
-    Write-Host "HORIZON CENTRAL AI - mode EN LIGNE ($onlineUrl)" -ForegroundColor Green
+    Write-Host "HORIZON CENTRAL AI - EN LIGNE ($onlineUrl)" -ForegroundColor Green
     Open-AppWindow $onlineUrl (Join-Path $env:LOCALAPPDATA 'HORIZON\browser-profile-online') | Out-Null
-    Write-Host "Aucune mise a jour a gerer sur ce PC : le serveur en ligne fait foi." -ForegroundColor DarkGray
+    Write-Host "Source de verite : le serveur en ligne. Aucune mise a jour a gerer ici." -ForegroundColor DarkGray
     exit 0
 }
+
+if ($mode -eq 'online') {
+    # Mode A : aucune copie locale. On explique clairement, sans rien inventer.
+    Write-Host "Serveur en ligne injoignable : $onlineUrl" -ForegroundColor Red
+    $errorPage = Join-Path $root 'desktop\desktop-error.html'
+    if (Test-Path -LiteralPath $errorPage) {
+        $fileUrl = 'file:///' + ($errorPage -replace '\\', '/')
+        $reason = "Impossible de joindre le serveur en ligne ($onlineUrl). Verifiez la connexion Internet, puis relancez HORIZON."
+        $query = '?title=' + [uri]::EscapeDataString('HORIZON CENTRAL AI -- serveur en ligne injoignable') +
+            '&reason=' + [uri]::EscapeDataString($reason) +
+            '&app=' + [uri]::EscapeDataString($onlineUrl)
+        Open-AppWindow "$fileUrl$query" (Join-Path $env:LOCALAPPDATA 'HORIZON\browser-profile-online') | Out-Null
+    }
+    exit 1
+}
+
 Write-Host "Pas d'acces a $onlineUrl : demarrage du moteur LOCAL (mode hors ligne)." -ForegroundColor Yellow
 
 if (-not (Test-Path -LiteralPath $python)) {
