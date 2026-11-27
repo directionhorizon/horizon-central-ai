@@ -68,7 +68,7 @@ export const OrchestratorRegistry = () => {
   const [description, setDescription] = useState('');
   const [linkTarget, setLinkTarget] = useState<Record<string, string>>({});
   const [allSkills, setAllSkills] = useState<SkillSummary[]>([]);
-  const [systemSkills, setSystemSkills] = useState<Record<string, SkillSummary[]>>({});
+  const [systemSkills, setSystemSkills] = useState<Record<string, Array<{ agent: string; skills: SkillSummary[] }>>>({});
   const [skillTarget, setSkillTarget] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
@@ -82,21 +82,22 @@ export const OrchestratorRegistry = () => {
       setOrchestrators(list.items);
       setProjects(projectList.items);
       setAllSkills(skillList.items);
-      // Le système = réunion de ses agents : on agrège leurs compétences.
+      // Le système EST ses agents : on regroupe leurs compétences PAR AGENT.
       const agentList = await agentsApi.list({ status: 'active' });
-      const unions = await Promise.all(
+      const grouped = await Promise.all(
         list.items.map(async (orchestrator) => {
-          const linked = await Promise.all(
+          const groups = await Promise.all(
             (agentList.items ?? [])
               .filter((agent) => agent.orchestrator_id === orchestrator.id)
-              .map(async (agent) => (await agentsApi.listSkills(agent.id)).items ?? []),
+              .map(async (agent) => ({
+                agent: agent.name,
+                skills: (await agentsApi.listSkills(agent.id)).items ?? [],
+              })),
           );
-          const merged = new Map<string, SkillSummary>();
-          linked.flat().forEach((skill) => merged.set(skill.id, skill));
-          return [orchestrator.id, Array.from(merged.values())] as const;
+          return [orchestrator.id, groups.filter((group) => group.skills.length > 0)] as const;
         }),
       );
-      setSystemSkills(Object.fromEntries(unions));
+      setSystemSkills(Object.fromEntries(grouped));
     } catch (caught) {
       setError(describeApiError(caught));
     } finally {
@@ -268,7 +269,7 @@ export const OrchestratorRegistry = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">{item.name}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {(systemSkills[item.id] ?? []).length} compétence(s)
+                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {new Set((systemSkills[item.id] ?? []).flatMap((group) => group.skills.map((skill) => skill.id))).size} compétence(s)
                       </p>
                     </div>
                     <span className={badge(statusStyle, item.status)} title={item.status}>
@@ -319,25 +320,32 @@ export const OrchestratorRegistry = () => {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                          Compétences du système — réunion de ses agents
+                          Compétences du système — celles de ses agents
                         </p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {(systemSkills[item.id] ?? []).map((skill) => (
-                            <span
-                              key={skill.id}
-                              className="inline-flex items-center gap-1 rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
-                            >
-                              {skill.name}
-                            </span>
+                        <p className="mt-1 text-[10px] text-slate-600">
+                          Le système, c'est l'ensemble de ses agents : voici les compétences de chacun
+                          (on les rattache dans « Agents &amp; outils »).
+                        </p>
+                        <div className="mt-2 space-y-2">
+                          {(systemSkills[item.id] ?? []).map((group) => (
+                            <div key={group.agent} className="flex flex-wrap items-center gap-2">
+                              <span className="min-w-[160px] text-[10px] font-medium text-slate-400">
+                                {group.agent}
+                              </span>
+                              {group.skills.map((skill) => (
+                                <span
+                                  key={skill.id}
+                                  className="rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
+                                >
+                                  {skill.name}
+                                </span>
+                              ))}
+                            </div>
                           ))}
                           {(systemSkills[item.id] ?? []).length === 0 && (
-                            <span className="text-[11px] text-slate-500">Aucune compétence chez ses agents.</span>
+                            <span className="text-[11px] text-slate-500">Aucun agent avec des compétences.</span>
                           )}
                         </div>
-                        <p className="mt-2 text-[10px] text-slate-600">
-                          Le système n'a pas de compétences « à lui » : elles se rattachent aux agents
-                          (voir « Agents &amp; outils »).
-                        </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Projets associés</p>
