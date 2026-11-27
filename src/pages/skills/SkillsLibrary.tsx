@@ -532,7 +532,7 @@ export const SkillsLibrary = () => {
               <div>
                 <h2 className="text-base font-semibold text-slate-100">Affecter « {assignFor.name} »</h2>
                 <p className="mt-1 text-xs text-slate-500">
-                  Choisis le système d'orchestration ou l'agent auquel ajouter cette compétence (capacité).
+                  Choisis le système d'orchestration ou l'agent auquel ajouter cette compétence.
                 </p>
               </div>
               <button

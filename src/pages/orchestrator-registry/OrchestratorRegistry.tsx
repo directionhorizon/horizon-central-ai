@@ -158,7 +158,7 @@ export const OrchestratorRegistry = () => {
             </div>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white">Orchestrateurs</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Les orchestrateurs enregistrés, leurs capacités déclarées, leurs projets et leur disponibilité
+              Les orchestrateurs enregistrés, leurs compétences ajoutées, leurs projets et leur disponibilité
               vérifiée par un appel réel. Aucune donnée de démonstration sur cette page.
             </p>
             <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-500">
@@ -251,7 +251,7 @@ export const OrchestratorRegistry = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">{item.name}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {item.skills.length} capacité(s)
+                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {item.skills.length} compétence(s)
                       </p>
                     </div>
                     <span className={badge(statusStyle, item.status)} title={item.status}>
@@ -302,7 +302,7 @@ export const OrchestratorRegistry = () => {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                          Capacités — compétences ajoutées
+                          Compétences ajoutées
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
                           {item.skills.map((skill) => (
@@ -320,18 +320,18 @@ export const OrchestratorRegistry = () => {
                                     async () => {
                                       await orchestratorsApi.detachSkill(item.id, skill.id);
                                     },
-                                    'Capacité retirée.',
+                                    'Compétence retirée.',
                                   )
                                 }
                                 className="ml-1 text-violet-300 hover:text-rose-300 disabled:opacity-40"
-                                title="Retirer cette capacité"
+                                title="Retirer cette compétence"
                               >
                                 ×
                               </button>
                             </span>
                           ))}
                           {item.skills.length === 0 && (
-                            <span className="text-[11px] text-slate-500">Aucune capacité ajoutée.</span>
+                            <span className="text-[11px] text-slate-500">Aucune compétence ajoutée.</span>
                           )}
                         </div>
                         <div className="mt-2 flex flex-wrap gap-2">
@@ -363,12 +363,12 @@ export const OrchestratorRegistry = () => {
                                   await orchestratorsApi.attachSkill(item.id, target);
                                   setSkillTarget((current) => ({ ...current, [item.id]: '' }));
                                 },
-                                'Capacité ajoutée.',
+                                'Compétence ajoutée.',
                               )
                             }
                             className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
                           >
-                            Ajouter la capacité
+                            Ajouter la compétence
                           </button>
                         </div>
                       </div>
@@ -422,7 +422,6 @@ export const OrchestratorRegistry = () => {
                           </button>
                         </div>
                       </div>
-                      {/* Les compétences ajoutées sont gérées dans la rubrique « Capacités » ci-dessus. */}
                       <p className="text-[10px] text-slate-600">Dernière vérification : {item.last_checked_at ?? 'jamais'}</p>
                     </div>
                   )}

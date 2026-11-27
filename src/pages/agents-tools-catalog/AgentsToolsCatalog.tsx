@@ -207,7 +207,7 @@ export const AgentsToolsCatalog = () => {
                     {HEALTH_LABEL[item.health_status] ?? item.health_status}
                   </span>
                   <span className="hz-hint">
-                    {item.capabilities.length} capacité(s) déclarée(s) · statut {item.status}
+                    {item.skills.length} compétence(s) ajoutée(s) · statut {item.status}
                   </span>
                 </li>
               ))}
