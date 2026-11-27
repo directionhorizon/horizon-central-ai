@@ -17,6 +17,53 @@ function Test-Port([int]$port) {
     return [bool](Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue)
 }
 
+# --- Mode HYBRIDE (B) : HORIZON EN LIGNE d'abord ; le local n'est qu'un secours.
+# Le serveur en ligne fait foi (meme version, memes donnees) : aucune mise a jour
+# a gerer sur ce PC. Si Internet manque, on demarre le moteur local hors ligne.
+$onlineUrl = 'https://horizon.mayela-crm.com'
+$browsers = @(
+    'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+    'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+    'C:\Program Files\Google\Chrome\Application\chrome.exe',
+    'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe'
+)
+$windowFlags = @(
+    '--no-first-run',
+    '--no-default-browser-check',
+    '--start-maximized',
+    '--window-size=1500,950',
+    '--disable-features=msEdgeSleepingTabs,SleepingTabs,CalculateNativeWinOcclusion',
+    '--disable-background-timer-throttling',
+    '--disable-renderer-backgrounding',
+    '--disable-backgrounding-occluded-windows'
+)
+function Open-AppWindow([string]$url, [string]$profile) {
+    if (-not (Test-Path -LiteralPath $profile)) {
+        New-Item -ItemType Directory -Path $profile -Force | Out-Null
+    }
+    $engine = $browsers | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if ($engine) {
+        Start-Process -FilePath $engine -ArgumentList (@("--app=$url", "--user-data-dir=$profile") + $windowFlags) | Out-Null
+        return $true
+    }
+    Start-Process $url | Out-Null
+    return $false
+}
+
+$online = $false
+try {
+    $probe = Invoke-WebRequest -Uri "$onlineUrl/api/v1/health" -UseBasicParsing -TimeoutSec 5
+    if ($probe.StatusCode -eq 200) { $online = $true }
+} catch { $online = $false }
+
+if ($online) {
+    Write-Host "HORIZON CENTRAL AI - mode EN LIGNE ($onlineUrl)" -ForegroundColor Green
+    Open-AppWindow $onlineUrl (Join-Path $env:LOCALAPPDATA 'HORIZON\browser-profile-online') | Out-Null
+    Write-Host "Aucune mise a jour a gerer sur ce PC : le serveur en ligne fait foi." -ForegroundColor DarkGray
+    exit 0
+}
+Write-Host "Pas d'acces a $onlineUrl : demarrage du moteur LOCAL (mode hors ligne)." -ForegroundColor Yellow
+
 if (-not (Test-Path -LiteralPath $python)) {
     Write-Host "Environnement Python absent : $python" -ForegroundColor Red
     Write-Host "Creer le venv et installer backend\requirements.txt." -ForegroundColor Yellow
