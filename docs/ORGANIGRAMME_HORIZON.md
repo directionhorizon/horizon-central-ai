@@ -73,7 +73,7 @@ flowchart TB
   subgraph RES["Ressources transverses"]
     L["Fournisseur LLM (Gemini) — routage & secours"]
     T["Outils / mains — 56 dont 30 prêtes : tool-plan, tool-delegate, tool-skills…"]
-    K["Compétences — catalogue (140 + 10 ajoutées)"]
+    K["Compétences — catalogue (149, vérifié en ligne)"]
     KR["Mémoire / Knowledge (KR) — à brancher"]
     C["Connecteurs : Supabase · Drive · GitHub — non configurés"]
   end
