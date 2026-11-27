@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AlertTriangle, CheckCircle2, Loader2, Network, Plus, RefreshCw, Search, ShieldCheck, Wifi, WifiOff } from 'lucide-react';
 import { orchestratorsApi } from '../../api/orchestrators';
+import { agentsApi } from '../../api/agents';
 import { projectsApi } from '../../api/projects';
 import { skillsApi } from '../../api/skills';
 import { describeApiError } from '../../api/errors';
@@ -67,6 +68,7 @@ export const OrchestratorRegistry = () => {
   const [description, setDescription] = useState('');
   const [linkTarget, setLinkTarget] = useState<Record<string, string>>({});
   const [allSkills, setAllSkills] = useState<SkillSummary[]>([]);
+  const [systemSkills, setSystemSkills] = useState<Record<string, SkillSummary[]>>({});
   const [skillTarget, setSkillTarget] = useState<Record<string, string>>({});
 
   const refresh = useCallback(async () => {
@@ -80,6 +82,21 @@ export const OrchestratorRegistry = () => {
       setOrchestrators(list.items);
       setProjects(projectList.items);
       setAllSkills(skillList.items);
+      // Le système = réunion de ses agents : on agrège leurs compétences.
+      const agentList = await agentsApi.list({ status: 'active' });
+      const unions = await Promise.all(
+        list.items.map(async (orchestrator) => {
+          const linked = await Promise.all(
+            (agentList.items ?? [])
+              .filter((agent) => agent.orchestrator_id === orchestrator.id)
+              .map(async (agent) => (await agentsApi.listSkills(agent.id)).items ?? []),
+          );
+          const merged = new Map<string, SkillSummary>();
+          linked.flat().forEach((skill) => merged.set(skill.id, skill));
+          return [orchestrator.id, Array.from(merged.values())] as const;
+        }),
+      );
+      setSystemSkills(Object.fromEntries(unions));
     } catch (caught) {
       setError(describeApiError(caught));
     } finally {
@@ -158,7 +175,7 @@ export const OrchestratorRegistry = () => {
             </div>
             <h1 className="text-4xl font-semibold tracking-[-0.04em] text-white">Orchestrateurs</h1>
             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-400">
-              Les orchestrateurs enregistrés, leurs compétences ajoutées, leurs projets et leur disponibilité
+              Les orchestrateurs enregistrés, les compétences de leurs agents (réunion), leurs projets et leur disponibilité
               vérifiée par un appel réel. Aucune donnée de démonstration sur cette page.
             </p>
             <p className="mt-2 max-w-2xl text-xs leading-5 text-slate-500">
@@ -251,7 +268,7 @@ export const OrchestratorRegistry = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">{item.name}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {item.skills.length} compétence(s)
+                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {(systemSkills[item.id] ?? []).length} compétence(s)
                       </p>
                     </div>
                     <span className={badge(statusStyle, item.status)} title={item.status}>
@@ -302,75 +319,25 @@ export const OrchestratorRegistry = () => {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
-                          Compétences ajoutées
+                          Compétences du système — réunion de ses agents
                         </p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {item.skills.map((skill) => (
+                          {(systemSkills[item.id] ?? []).map((skill) => (
                             <span
                               key={skill.id}
                               className="inline-flex items-center gap-1 rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
                             >
                               {skill.name}
-                              <button
-                                type="button"
-                                disabled={busy === item.id}
-                                onClick={() =>
-                                  void run(
-                                    item.id,
-                                    async () => {
-                                      await orchestratorsApi.detachSkill(item.id, skill.id);
-                                    },
-                                    'Compétence retirée.',
-                                  )
-                                }
-                                className="ml-1 text-violet-300 hover:text-rose-300 disabled:opacity-40"
-                                title="Retirer cette compétence"
-                              >
-                                ×
-                              </button>
                             </span>
                           ))}
-                          {item.skills.length === 0 && (
-                            <span className="text-[11px] text-slate-500">Aucune compétence ajoutée.</span>
+                          {(systemSkills[item.id] ?? []).length === 0 && (
+                            <span className="text-[11px] text-slate-500">Aucune compétence chez ses agents.</span>
                           )}
                         </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <select
-                            value={skillTarget[item.id] ?? ''}
-                            onChange={(event) =>
-                              setSkillTarget((current) => ({ ...current, [item.id]: event.target.value }))
-                            }
-                            className="h-8 rounded-md border border-white/10 bg-[#171a24] px-2 text-[11px] text-slate-300"
-                          >
-                            <option value="">Sélectionner une compétence…</option>
-                            {allSkills
-                              .filter((skill) => !item.skills.some((assigned) => assigned.id === skill.id))
-                              .map((skill) => (
-                                <option key={skill.id} value={skill.id}>
-                                  {skill.name} — {skill.category}
-                                </option>
-                              ))}
-                          </select>
-                          <button
-                            type="button"
-                            disabled={busy === item.id || !skillTarget[item.id]}
-                            onClick={() =>
-                              void run(
-                                item.id,
-                                async () => {
-                                  const target = skillTarget[item.id];
-                                  if (!target) return;
-                                  await orchestratorsApi.attachSkill(item.id, target);
-                                  setSkillTarget((current) => ({ ...current, [item.id]: '' }));
-                                },
-                                'Compétence ajoutée.',
-                              )
-                            }
-                            className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
-                          >
-                            Ajouter la compétence
-                          </button>
-                        </div>
+                        <p className="mt-2 text-[10px] text-slate-600">
+                          Le système n'a pas de compétences « à lui » : elles se rattachent aux agents
+                          (voir « Agents &amp; outils »).
+                        </p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Projets associés</p>
