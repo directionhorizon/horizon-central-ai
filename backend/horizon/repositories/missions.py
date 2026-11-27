@@ -20,7 +20,7 @@ def _mission(db: sqlite3.Connection, mission_id: str) -> dict[str, Any] | None:
 
 def _steps(db: sqlite3.Connection, mission_id: str) -> list[dict[str, Any]]:
     rows = db.execute(
-        """SELECT id,mission_id,position,title,status,assigned_orchestrator_id,
+        """SELECT id,mission_id,position,title,status,assigned_orchestrator_id,assigned_agent_id,
                   started_at,completed_at,error
            FROM mission_steps WHERE mission_id=? ORDER BY position,id""",
         (mission_id,),
@@ -138,8 +138,8 @@ def add_step(db: sqlite3.Connection, mission_id: str, data: dict[str, Any]) -> d
         position = next_position(db, mission_id)
     db.execute(
         """INSERT INTO mission_steps(
-            id,mission_id,position,title,status,assigned_orchestrator_id,error
-        ) VALUES(?,?,?,?,?,?,?)""",
+            id,mission_id,position,title,status,assigned_orchestrator_id,assigned_agent_id,error
+        ) VALUES(?,?,?,?,?,?,?,?)""",
         (
             str(uuid.uuid4()),
             mission_id,
@@ -147,6 +147,7 @@ def add_step(db: sqlite3.Connection, mission_id: str, data: dict[str, Any]) -> d
             data["title"],
             "pending",
             data.get("assigned_orchestrator_id"),
+            data.get("assigned_agent_id", ""),
             "",
         ),
     )
@@ -169,6 +170,8 @@ def update_step(
             allowed[key] = changes[key]
     if "assigned_orchestrator_id" in changes:
         allowed["assigned_orchestrator_id"] = changes["assigned_orchestrator_id"]
+    if "assigned_agent_id" in changes:
+        allowed["assigned_agent_id"] = changes["assigned_agent_id"]
     new_status = changes.get("status")
     if new_status is not None:
         allowed["status"] = new_status

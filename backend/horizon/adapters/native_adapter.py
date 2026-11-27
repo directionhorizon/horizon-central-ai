@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .. import native_engine
+from .. import native_engine, orchestrator_engine
 from ..db import connect, now
 from ..repositories import runs
 from .base import AdapterError, DispatchResult, HealthResult, OrchestratorAdapter
@@ -38,7 +38,13 @@ class NativeHorizonAdapter(OrchestratorAdapter):
     ) -> DispatchResult:
         with connect() as db:
             try:
-                result = await native_engine.run_mission(db, row, mission, step)
+                if orchestrator_engine.is_enabled(row):
+                    # Moteur multi-agents : plan -> agents -> consolidation.
+                    result = await orchestrator_engine.execute(db, row, mission)
+                else:
+                    result = await native_engine.run_mission(db, row, mission, step)
+            except orchestrator_engine.OrchestrationError as error:
+                raise AdapterError(str(error)) from error
             except native_engine.NativeEngineError as error:
                 raise AdapterError(str(error)) from error
         # Persiste le résultat dans la ligne de dispatch (retrouvée par clé d'idempotence).

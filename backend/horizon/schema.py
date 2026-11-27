@@ -507,6 +507,20 @@ MIGRATIONS: list[tuple[int, str, tuple[str, ...]]] = [
             "ON payment_events(payment_id)",
         ),
     ),
+    (
+        19,
+        "mission_steps_assigned_agent",
+        (
+            "ALTER TABLE mission_steps ADD COLUMN assigned_agent_id TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
+    (
+        20,
+        "orchestrator_runs_agent",
+        (
+            "ALTER TABLE orchestrator_runs ADD COLUMN agent_id TEXT NOT NULL DEFAULT ''",
+        ),
+    ),
 ]
 
 # Orchestrateur pilote P0 : adresse et NOM de variable uniquement, aucune valeur secrète.

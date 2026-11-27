@@ -14,7 +14,7 @@ from typing import Any
 from ..db import now
 
 RUN_FIELDS = (
-    "id,mission_id,step_id,orchestrator_id,run_id,session_id,idempotency_key,status,phase,"
+    "id,mission_id,step_id,orchestrator_id,agent_id,run_id,session_id,idempotency_key,status,phase,"
     "replayed_count,requested_at,started_at,finished_at,output,error,usage_json,runtime_json,raw_status_json"
 )
 
@@ -66,14 +66,15 @@ def create_run(db: sqlite3.Connection, data: dict[str, Any]) -> dict[str, Any]:
     rid, stamp = str(uuid.uuid4()), now()
     db.execute(
         """INSERT INTO orchestrator_runs(
-            id,mission_id,step_id,orchestrator_id,run_id,session_id,idempotency_key,status,phase,
+            id,mission_id,step_id,orchestrator_id,agent_id,run_id,session_id,idempotency_key,status,phase,
             replayed_count,requested_at,started_at,finished_at,output,error,usage_json,runtime_json,raw_status_json
-        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+        ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
         (
             rid,
             data["mission_id"],
             data.get("step_id"),
             data.get("orchestrator_id"),
+            data.get("agent_id", ""),
             data.get("run_id", ""),
             data.get("session_id", ""),
             data["idempotency_key"],
@@ -102,6 +103,7 @@ def update_run(db: sqlite3.Connection, run_id: str, changes: dict[str, Any]) -> 
         "phase": "phase",
         "run_id": "run_id",
         "session_id": "session_id",
+        "agent_id": "agent_id",
         "output": "output",
         "error": "error",
         "started_at": "started_at",
