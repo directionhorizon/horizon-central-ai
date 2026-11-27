@@ -1,8 +1,10 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import { GitBranch, Loader2, Plus, Search, Sparkles, Tag, X } from 'lucide-react';
 import { skillsApi, type CreateSkillInput } from '../../api/skills';
+import { orchestratorsApi } from '../../api/orchestrators';
+import { agentsApi } from '../../api/agents';
 import { describeApiError } from '../../api/errors';
-import type { Skill } from '../../api/entities';
+import type { Agent, Orchestrator, Skill } from '../../api/entities';
 
 /**
  * Bibliothèque de compétences (skills).
@@ -61,6 +63,12 @@ export const SkillsLibrary = () => {
   const [selected, setSelected] = useState<Skill | null>(null);
   const [showAdd, setShowAdd] = useState(false);
   const [showImport, setShowImport] = useState(false);
+  const [orchestrators, setOrchestrators] = useState<Orchestrator[]>([]);
+  const [agents, setAgents] = useState<Agent[]>([]);
+  const [assignFor, setAssignFor] = useState<Skill | null>(null);
+  const [assignTarget, setAssignTarget] = useState('');
+  const [assignBusy, setAssignBusy] = useState(false);
+  const [targetsLoaded, setTargetsLoaded] = useState(false);
 
   const refresh = useCallback(async (search: string, cat: string) => {
     setError(null);
@@ -136,6 +144,49 @@ export const SkillsLibrary = () => {
     }
   };
 
+  const openAssign = async (skill: Skill) => {
+    setAssignFor(skill);
+    setAssignTarget('');
+    setError(null);
+    setNotice(null);
+    if (targetsLoaded) return;
+    try {
+      const [orchestratorList, agentList] = await Promise.all([
+        orchestratorsApi.list(),
+        agentsApi.list({ status: 'active' }),
+      ]);
+      setOrchestrators(orchestratorList.items ?? []);
+      setAgents(agentList.items ?? []);
+      setTargetsLoaded(true);
+    } catch (caught) {
+      setError(describeApiError(caught));
+    }
+  };
+
+  const handleAssign = async () => {
+    if (!assignFor || !assignTarget) return;
+    setAssignBusy(true);
+    setError(null);
+    setNotice(null);
+    try {
+      const separator = assignTarget.indexOf(':');
+      const kind = assignTarget.slice(0, separator);
+      const id = assignTarget.slice(separator + 1);
+      if (kind === 'orch') {
+        await orchestratorsApi.attachSkill(id, assignFor.id);
+      } else {
+        await agentsApi.attachSkill(id, assignFor.id);
+      }
+      setNotice(`Compétence « ${assignFor.name} » affectée.`);
+      setAssignFor(null);
+      setAssignTarget('');
+    } catch (caught) {
+      setError(describeApiError(caught));
+    } finally {
+      setAssignBusy(false);
+    }
+  };
+
   return (
     <div className="mx-auto max-w-6xl p-6">
       <header className="mb-6 flex flex-wrap items-center gap-3">
@@ -145,7 +196,7 @@ export const SkillsLibrary = () => {
         <div className="flex-1">
           <h1 className="text-lg font-semibold text-slate-100">Compétences</h1>
           <p className="text-xs text-slate-500">
-            Bibliothèque centrale à piocher pour un agent, un système d'orchestration, ou pour améliorer l'existant.
+            Catalogue central : filtre, puis clique sur « + » pour affecter une compétence à un système ou à un agent.
           </p>
         </div>
         <div className="flex gap-2">
@@ -224,13 +275,27 @@ export const SkillsLibrary = () => {
               >
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <h3 className="text-sm font-semibold text-slate-100">{skill.name}</h3>
-                  <span
-                    className={`shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-medium ${
-                      LEVEL_STYLE[skill.level] ?? 'border-white/10 text-slate-300'
-                    }`}
-                  >
-                    {LEVEL_LABEL[skill.level] ?? skill.level}
-                  </span>
+                  <div className="flex shrink-0 items-center gap-1.5">
+                    <span
+                      className={`rounded-full border px-2 py-0.5 text-[10px] font-medium ${
+                        LEVEL_STYLE[skill.level] ?? 'border-white/10 text-slate-300'
+                      }`}
+                    >
+                      {LEVEL_LABEL[skill.level] ?? skill.level}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        void openAssign(skill);
+                      }}
+                      title="Affecter cette compétence à un système ou à un agent"
+                      aria-label="Affecter cette compétence"
+                      className="rounded-lg border border-violet-400/30 bg-violet-400/10 p-1 text-violet-200 hover:bg-violet-400/20"
+                    >
+                      <Plus size={14} />
+                    </button>
+                  </div>
                 </div>
                 <div className="mb-2 flex flex-wrap items-center gap-1.5">
                   <span className="inline-flex w-fit items-center gap-1 rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-slate-400">
@@ -451,6 +516,64 @@ export const SkillsLibrary = () => {
                 )}
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {assignFor && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+          onClick={() => setAssignFor(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-2xl border border-white/10 bg-[#12151e] p-5"
+            onClick={(event) => event.stopPropagation()}
+          >
+            <div className="mb-3 flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-base font-semibold text-slate-100">Affecter « {assignFor.name} »</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Choisis le système d'orchestration ou l'agent auquel ajouter cette compétence (capacité).
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setAssignFor(null)}
+                className="rounded-lg p-1 text-slate-400 hover:bg-white/5 hover:text-slate-200"
+                aria-label="Fermer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <select
+              value={assignTarget}
+              onChange={(event) => setAssignTarget(event.target.value)}
+              className="h-10 w-full rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs text-slate-100 outline-none focus:border-violet-400/50"
+            >
+              <option value="">Sélectionner une cible…</option>
+              <optgroup label="Systèmes d'orchestration">
+                {orchestrators.map((item) => (
+                  <option key={item.id} value={`orch:${item.id}`}>
+                    {item.name}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Agents">
+                {agents.map((item) => (
+                  <option key={item.id} value={`agent:${item.id}`}>
+                    {item.name} — {item.orchestrator_id}
+                  </option>
+                ))}
+              </optgroup>
+            </select>
+            <button
+              type="button"
+              disabled={assignBusy || !assignTarget}
+              onClick={() => void handleAssign()}
+              className="mt-3 flex h-9 w-full items-center justify-center gap-2 rounded-lg bg-violet-400/15 text-xs font-medium text-violet-200 hover:bg-violet-400/25 disabled:opacity-40"
+            >
+              {assignBusy ? <Loader2 size={14} className="animate-spin" /> : <Plus size={14} />}
+              Affecter la compétence
+            </button>
           </div>
         </div>
       )}

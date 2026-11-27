@@ -65,7 +65,6 @@ export const OrchestratorRegistry = () => {
   const [kind, setKind] = useState('local');
   const [endpoint, setEndpoint] = useState('');
   const [description, setDescription] = useState('');
-  const [capability, setCapability] = useState('');
   const [linkTarget, setLinkTarget] = useState<Record<string, string>>({});
   const [allSkills, setAllSkills] = useState<SkillSummary[]>([]);
   const [skillTarget, setSkillTarget] = useState<Record<string, string>>({});
@@ -112,7 +111,7 @@ export const OrchestratorRegistry = () => {
       orchestrators.filter(
         (item) =>
           (filter === 'All' || item.status === filter || item.health_status === filter) &&
-          [item.name, item.kind, item.description, item.endpoint, ...item.capabilities.map((c) => c.capability_id)]
+          [item.name, item.kind, item.description, item.endpoint, ...item.skills.map((s) => s.name)]
             .join(' ')
             .toLowerCase()
             .includes(query.toLowerCase()),
@@ -140,14 +139,10 @@ export const OrchestratorRegistry = () => {
           kind: kind.trim() || 'local',
           description: description.trim(),
           endpoint: endpoint.trim(),
-          capabilities: capability.trim()
-            ? [{ capability_id: capability.trim().toLowerCase(), level: 'standard', detail: '' }]
-            : [],
         });
         setName('');
         setEndpoint('');
         setDescription('');
-        setCapability('');
       },
       'Orchestrateur enregistré.',
     );
@@ -256,7 +251,7 @@ export const OrchestratorRegistry = () => {
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold text-white">{item.name}</p>
                       <p className="mt-1 text-xs text-slate-500">
-                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {item.capabilities.length} capacité(s)
+                        {item.kind} · {item.endpoint || 'aucun endpoint'} · {item.skills.length} capacité(s)
                       </p>
                     </div>
                     <span className={badge(statusStyle, item.status)} title={item.status}>
@@ -306,16 +301,75 @@ export const OrchestratorRegistry = () => {
                         </button>
                       </div>
                       <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Capacités</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">
+                          Capacités — compétences ajoutées
+                        </p>
                         <div className="mt-2 flex flex-wrap gap-2">
-                          {item.capabilities.map((cap) => (
-                            <span key={cap.id} className="rounded-full bg-white/5 px-2.5 py-1 text-[10px] text-slate-300">
-                              {cap.capability_id}
+                          {item.skills.map((skill) => (
+                            <span
+                              key={skill.id}
+                              className="inline-flex items-center gap-1 rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
+                            >
+                              {skill.name}
+                              <button
+                                type="button"
+                                disabled={busy === item.id}
+                                onClick={() =>
+                                  void run(
+                                    item.id,
+                                    async () => {
+                                      await orchestratorsApi.detachSkill(item.id, skill.id);
+                                    },
+                                    'Capacité retirée.',
+                                  )
+                                }
+                                className="ml-1 text-violet-300 hover:text-rose-300 disabled:opacity-40"
+                                title="Retirer cette capacité"
+                              >
+                                ×
+                              </button>
                             </span>
                           ))}
-                          {item.capabilities.length === 0 && (
-                            <span className="text-[11px] text-slate-500">Aucune capacité déclarée.</span>
+                          {item.skills.length === 0 && (
+                            <span className="text-[11px] text-slate-500">Aucune capacité ajoutée.</span>
                           )}
+                        </div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <select
+                            value={skillTarget[item.id] ?? ''}
+                            onChange={(event) =>
+                              setSkillTarget((current) => ({ ...current, [item.id]: event.target.value }))
+                            }
+                            className="h-8 rounded-md border border-white/10 bg-[#171a24] px-2 text-[11px] text-slate-300"
+                          >
+                            <option value="">Sélectionner une compétence…</option>
+                            {allSkills
+                              .filter((skill) => !item.skills.some((assigned) => assigned.id === skill.id))
+                              .map((skill) => (
+                                <option key={skill.id} value={skill.id}>
+                                  {skill.name} — {skill.category}
+                                </option>
+                              ))}
+                          </select>
+                          <button
+                            type="button"
+                            disabled={busy === item.id || !skillTarget[item.id]}
+                            onClick={() =>
+                              void run(
+                                item.id,
+                                async () => {
+                                  const target = skillTarget[item.id];
+                                  if (!target) return;
+                                  await orchestratorsApi.attachSkill(item.id, target);
+                                  setSkillTarget((current) => ({ ...current, [item.id]: '' }));
+                                },
+                                'Capacité ajoutée.',
+                              )
+                            }
+                            className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
+                          >
+                            Ajouter la capacité
+                          </button>
                         </div>
                       </div>
                       <div>
@@ -368,76 +422,7 @@ export const OrchestratorRegistry = () => {
                           </button>
                         </div>
                       </div>
-                      <div>
-                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-600">Compétences</p>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          {item.skills.map((skill) => (
-                            <span
-                              key={skill.id}
-                              className="inline-flex items-center gap-1 rounded-full bg-violet-400/10 px-2.5 py-1 text-[10px] text-violet-200"
-                            >
-                              {skill.name}
-                              <button
-                                type="button"
-                                disabled={busy === item.id}
-                                onClick={() =>
-                                  void run(
-                                    item.id,
-                                    async () => {
-                                      await orchestratorsApi.detachSkill(item.id, skill.id);
-                                    },
-                                    'Compétence retirée.',
-                                  )
-                                }
-                                className="ml-1 text-violet-300 hover:text-rose-300 disabled:opacity-40"
-                                title="Retirer cette compétence"
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                          {item.skills.length === 0 && (
-                            <span className="text-[11px] text-slate-500">Aucune compétence associée.</span>
-                          )}
-                        </div>
-                        <div className="mt-2 flex flex-wrap gap-2">
-                          <select
-                            value={skillTarget[item.id] ?? ''}
-                            onChange={(event) =>
-                              setSkillTarget((current) => ({ ...current, [item.id]: event.target.value }))
-                            }
-                            className="h-8 rounded-md border border-white/10 bg-[#171a24] px-2 text-[11px] text-slate-300"
-                          >
-                            <option value="">Sélectionner une compétence…</option>
-                            {allSkills
-                              .filter((skill) => !item.skills.some((assigned) => assigned.id === skill.id))
-                              .map((skill) => (
-                                <option key={skill.id} value={skill.id}>
-                                  {skill.name} — {skill.category}
-                                </option>
-                              ))}
-                          </select>
-                          <button
-                            type="button"
-                            disabled={busy === item.id || !skillTarget[item.id]}
-                            onClick={() =>
-                              void run(
-                                item.id,
-                                async () => {
-                                  const target = skillTarget[item.id];
-                                  if (!target) return;
-                                  await orchestratorsApi.attachSkill(item.id, target);
-                                  setSkillTarget((current) => ({ ...current, [item.id]: '' }));
-                                },
-                                'Compétence associée.',
-                              )
-                            }
-                            className="rounded-md border border-white/10 px-3 py-1 text-[11px] text-slate-300 hover:bg-white/5 disabled:opacity-40"
-                          >
-                            Associer
-                          </button>
-                        </div>
-                      </div>
+                      {/* Les compétences ajoutées sont gérées dans la rubrique « Capacités » ci-dessus. */}
                       <p className="text-[10px] text-slate-600">Dernière vérification : {item.last_checked_at ?? 'jamais'}</p>
                     </div>
                   )}
@@ -479,12 +464,6 @@ export const OrchestratorRegistry = () => {
                 onChange={(event) => setDescription(event.target.value)}
                 placeholder="Description (optionnelle)"
                 className="h-9 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs outline-none focus:border-cyan-400/50 md:col-span-2"
-              />
-              <input
-                value={capability}
-                onChange={(event) => setCapability(event.target.value)}
-                placeholder="Capacité initiale (ex. code)"
-                className="h-9 rounded-lg border border-white/10 bg-white/[0.04] px-3 text-xs outline-none focus:border-cyan-400/50"
               />
               <button
                 type="submit"
