@@ -94,19 +94,47 @@ Run `45977646680` (commit `51ad258`), job `deploy` :
 Conclusion : **le déploiement du commit a réussi** et a bien semé MARKETING 360
 en ligne ; le run est rouge uniquement à cause de l'étape outil-paiement.
 
-## 5. Limites connues (à ne pas masquer)
+## 5. Mission de test en ligne — RÉUSSIE (2026-11-27)
 
-1. **Mission non lancée.** Créer et lancer une mission est une écriture
-   utilisateur : `POST /api/v1/missions` renvoie `401` sans jeton. Le secret
-   `HORIZON_ADMIN_TOKEN` n'est pas configuré (l'étape CI « mission de bout en
-   bout » est *skipped*).
+`HORIZON_ADMIN_TOKEN` ayant été fourni (écriture autorisée), la mission de test a
+été **créée puis exécutée sur le serveur en ligne** avec le fournisseur **Gemini**
+déjà actif.
+
+| Champ | Valeur |
+| --- | --- |
+| Mission | `ed205b79-b48a-43af-a3ae-e8818ed16672` — « Test operationnel Marketing 360 » |
+| Système d'orchestration | `system-marketing-360` |
+| Projet | `project-default` |
+| Run | `native-6d98fef4-414b-4f7c-883f-77dbc402f944` |
+| Statut mission / run | `completed` / `completed` |
+| Agent exécutant (runtime) | `Marketing Orchestrator` |
+| Fournisseur / modèle | `Gemini (Google)` / `gemini-flash-lite-latest` |
+| Jetons | 478 (prompt) + 944 (complétion) = 1 422 |
+| Durée | ~15 s (12:56:44 → 12:56:59 UTC) |
+| Sortie | « MARKETING 360 — RAPPORT D'ORCHESTRATION » (3 770 caractères) |
+| Erreur | (vide) |
+
+La sortie réelle mobilise les compétences héritées (analyse d'audience, campagne
+marketing) et signale explicitement les compétences non sollicitées.
+
+**Cause de l'échec local précédent** (`Délai dépassé après 120 s.`) : elle tenait
+au **modèle local** (LM Studio / `qwen3.5-4b`), plus lent que le délai
+`DEFAULT_TIMEOUT_S = 120 s` codé dans `horizon/llm.py`. En ligne, Gemini
+`gemini-flash-lite-latest` répond en **~11 s** : le délai n'est pas atteint.
+**Aucune modification du moteur n'a été nécessaire.**
+
+## 6. Limites connues (à ne pas masquer)
+
+1. **Écriture protégée par jeton.** Créer/lancer une mission exige
+   `HORIZON_ADMIN_TOKEN` (ou une session Google). La lecture reste ouverte.
 2. **Moteur mono-agent à l'exécution.** `native_adapter.dispatch()` appelle
-   `run_mission()` **sans** `agent_id`, et la table `orchestrator_runs` n'a pas de
-   colonne `agent_id`. Les 7 agents existent et sont listés, mais une exécution
-   n'enregistre pas encore quel agent a produit quel résultat : ne pas présenter
-   MARKETING 360 comme une collaboration multi-agents effective.
+   `run_mission()` **sans** `agent_id` : sans étape, c'est l'agent
+   **coordinateur** qui exécute (le `runtime` du run le nomme). La table
+   `orchestrator_runs` n'a pas de colonne `agent_id`, donc une exécution
+   n'enregistre pas par ligne quel agent a produit quel résultat : ne pas
+   présenter MARKETING 360 comme une collaboration multi-agents effective.
 
-## 6. Vérifications reproductibles
+## 7. Vérifications reproductibles
 
 ```powershell
 Invoke-RestMethod https://horizon.mayela-crm.com/api/v1/health
@@ -115,16 +143,17 @@ Invoke-RestMethod https://horizon.mayela-crm.com/api/v1/agents
 Invoke-RestMethod https://horizon.mayela-crm.com/api/v1/agents/agent-marketing-360-digital/skills
 ```
 
-## 7. Reprise (quand une écriture sera autorisée)
+## 8. Reprise (procédure de référence)
 
-Fournir `HORIZON_ADMIN_TOKEN` (secret GitHub côté serveur, ou variable locale
-pour appeler l'API), puis :
+Déjà effectuée le 2026-11-27 (voir §5). Pour une prochaine mission : fournir
+`HORIZON_ADMIN_TOKEN` (secret GitHub côté serveur, ou variable locale pour
+appeler l'API), puis :
 1. vérifier `GET /api/v1/projects` (projet cible, ex. `project-default`) ;
 2. créer la mission rattachée à `system-marketing-360` ;
 3. lancer la mission (fournisseur Gemini déjà actif : `gemini-flash-lite-latest`) ;
 4. lire `missions.status` et `orchestrator_runs` et rapporter la sortie réelle.
 
-## 8. Sauvegarde
+## 9. Sauvegarde
 
 La base du serveur n'est pas exposée. En local, `backend/data/horizon.db`
 conserve une copie de travail, avec `horizon.db.bak_20261127_021130` et
