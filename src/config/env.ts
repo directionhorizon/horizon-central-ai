@@ -83,6 +83,7 @@ export const API_ROUTES = {
   systemMetrics: '/api/v1/system/metrics',
   systemStatus: '/api/v1/system/status',
   systemConnectivity: '/api/v1/system/connectivity',
+  systemUpdate: '/api/v1/system/update',
 
   syncStatus: '/api/v1/sync/status',
   syncQueue: '/api/v1/sync/queue',

@@ -14,11 +14,24 @@ export interface CoreRouteResponse {
   orchestrator?: { id: string; name: string; health_status: string; capabilities: string[] };
 }
 
+export interface UpdateStatus {
+  state: 'idle' | 'running' | 'done' | 'error';
+  mode: 'local' | 'server' | 'off' | null;
+  available: boolean;
+  detail: string;
+  log: string[];
+  started_at: string | null;
+  finished_at: string | null;
+}
+
 export const systemApi = {
   metrics: (): Promise<SystemMetrics> => http.requestWithRetry<SystemMetrics>(API_ROUTES.systemMetrics),
   status: (): Promise<SystemStatus> => http.requestWithRetry<SystemStatus>(API_ROUTES.systemStatus),
   operations: (limit = 100): Promise<OperationsResponse> =>
     http.requestWithRetry<OperationsResponse>(`${API_ROUTES.operations}?limit=${limit}`),
+  updateStatus: (): Promise<UpdateStatus> => http.requestWithRetry<UpdateStatus>(API_ROUTES.systemUpdate),
+  startUpdate: (): Promise<UpdateStatus> =>
+    http.request<UpdateStatus>(API_ROUTES.systemUpdate, { method: 'POST', timeoutMs: 60000 }),
 } as const;
 
 export const coreApi = {

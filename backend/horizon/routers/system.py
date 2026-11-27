@@ -5,12 +5,13 @@ n'est simulée. Si une mesure échoue, elle est renvoyée à `None`.
 """
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
-from .. import connectivity, metrics
-from ..auth import token_status
+from .. import connectivity, metrics, updater
+from ..auth import require_admin, token_status
 from ..db import connect, now
 from ..repositories import llm as llm_repo
+from ..repositories import operations
 
 router = APIRouter(prefix="/api/v1", tags=["system"])
 
@@ -64,3 +65,21 @@ def _count(db, table: str, condition: str | None) -> int:
         query += f" WHERE {condition}"
     row = db.execute(query).fetchone()
     return int(row["n"]) if row else 0
+
+
+@router.get("/system/update")
+def system_update_status():
+    """Etat de la mise a jour (bouton « Mettre a jour »). Aucun secret."""
+    return updater.status()
+
+
+@router.post("/system/update")
+def system_update_start(actor: str = Depends(require_admin)):
+    """Lance la mise a jour : locale (git pull + build) ou en ligne (GitHub)."""
+    result = updater.start()
+    with connect() as db:
+        operations.log(
+            db, actor=actor, action="system.update", target_type="system", target_id=None,
+            detail=f"Mise a jour demandee (mode {result.get('mode') or 'inconnu'}).",
+        )
+    return result

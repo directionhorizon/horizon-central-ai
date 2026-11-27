@@ -15,6 +15,7 @@ import {
 import { syncApi } from '../../api/sync';
 import { describeApiError } from '../../api/errors';
 import type { SyncConflict, SyncQueueItem, SyncStatus } from '../../api/entities';
+import { UpdateButton } from '../../components/UpdateButton';
 
 const card = 'rounded-xl border border-white/[0.08] bg-white/[0.02] p-5';
 const badge = 'rounded-full bg-white/5 px-2 py-0.5 text-[10px] text-slate-400';
@@ -134,6 +135,7 @@ export const SyncCenter = () => {
             {online ? <Wifi size={14} /> : <WifiOff size={14} />}
             {loading ? 'Vérification…' : online ? 'Internet détecté' : 'Hors ligne'}
           </span>
+          <UpdateButton />
           <button
             type="button"
             onClick={() => void refresh()}
