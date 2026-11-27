@@ -1,110 +1,123 @@
-# ORGANIGRAMME — HORIZON CENTRAL AI (avec l'exécuteur)
+﻿# ORGANIGRAMME — HORIZON CENTRAL AI
 
-Ce document décrit **l'organisation réelle** du système, y compris le **moteur
-d'orchestration (exécuteur)** opérationnel depuis le 2026-11-27. Légende des états :
+Cet organigramme décrit la **hiérarchie de coordination réelle** (qui pilote quoi),
+et non une chaîne d'exécution. Vérifié en ligne le 2026-11-27.
 
-- ✅ **existe** (vérifié dans le code / en ligne)
-- 🟢 **opérationnel** (testé réellement en production)
-- 🟡 **partiel** (reste à faire, décrit précisément)
-- ❌ **à brancher** (mémoire/KR, politiques d'action, connecteurs)
+**HORIZON CORE est la direction générale.** Il planifie, **route** la demande vers le
+système d'orchestration compétent, supervise, vérifie et journalise. Il **coordonne les
+orchestrateurs** : il ne les remplace jamais et ne se substitue pas à leur agent
+coordinateur (source : `core.py` « HORIZON CORE — planification et routage » ;
+`agents.py` « HORIZON CORE supervise les systèmes ; chaque système garde son agent
+coordinateur »).
+
+Légende : ✅ existe (code / en ligne) · 🟢 opérationnel (testé en production) ·
+🟡 partiel · ❌ à brancher.
+
+## Organigramme (hiérarchie de coordination)
 
 ```mermaid
 flowchart TB
-  U["Utilisateur<br/>App de bureau (en ligne) · Navigateur · Mobile"] --> API
+  CORE["HORIZON CORE — DIRECTION GÉNÉRALE<br/>planifie · route (choisit le système) · supervise · vérifie · journalise"]
 
-  subgraph HZ["HORIZON CENTRAL AI — serveur en ligne (source de vérité unique)"]
-    direction TB
-    API["API HORIZON CORE (FastAPI)"]
-    subgraph REG["Registre & état (base de référence)"]
-      R1["Orchestrateurs / Systèmes"]
-      R2["Agents (coordinateur + spécialistes)"]
-      R3["Compétences (catalogue)"]
-      R4["Projets"]
-      R5["Missions · étapes · checkpoints"]
-      R6["Exécutions (runs) · journal d'opérations"]
-      R7["Outils (mains) · connexions"]
-    end
-    SEC["Sécurité · permissions · capacités"]
-    API --- REG
-    API --- SEC
-  end
-
-  API --> CORE
-  CORE["CORE — Planificateur + Routeur<br/>core.py : build_plan · select_orchestrator<br/>/api/v1/core/plan · /api/v1/core/route"] --> EXEC
-
-  subgraph EXEC["MOTEUR D'ORCHESTRATION — EXÉCUTEUR (générique, 🟢 opérationnel)"]
+  subgraph FCT["Fonctions internes d HORIZON CORE"]
     direction LR
-    E1["1. Décomposer"] --> E2["2. Router vers les agents"] --> E3["3. Exécuter chaque étape"]
-    E3 --> E4["4. Suivre (statuts)"] --> E5["5. Consolider"] --> E6["6. Revue qualité"] --> E7["7. Livrer"]
+    F1["Planificateur & routeur<br/>build_plan · select_orchestrator"]
+    F2["API & registres<br/>systèmes · agents · compétences<br/>projets · missions · runs · outils"]
+    F3["Sécurité & permissions<br/>jetons · capacités · journal"]
+    F4["Supervision & diagnostic<br/>statuts · santé · écarts"]
+    F5["Moteur d exécution<br/>orchestrator_engine.py 🟢"]
   end
+  CORE --> FCT
 
-  EXEC --> ADP
-  ADP["Adaptateurs UOIM (get_adapter par kind)"]
+  CORE -->|"coordonne & route la mission"| SYS
+  SYS -.->|"remonte statuts & résultats"| CORE
 
-  ADP --> SYS
-  subgraph SYS["Systèmes d'orchestration (aucun codé en dur ; HORIZON décide)"]
-    direction TB
-    subgraph M360["MARKETING 360 (kind = horizon, moteur natif, sans endpoint)"]
-      MO["Marketing Orchestrator (agent coordinateur)"]
-      S1["Marketing Strategist"]
-      S2["Market Intelligence"]
-      S3["Digital Marketing"]
-      S4["Marketing & Creative"]
-      S5["Performance & Automation"]
-      S6["Traditional Marketing"]
-      MO --- S1
-      MO --- S2
-      MO --- S3
-      MO --- S4
-      MO --- S5
-      MO --- S6
+  subgraph SYS["Systèmes d orchestration coordonnés par HORIZON CORE (aucun codé en dur)"]
+    direction LR
+    subgraph M360["MARKETING 360 — kind = horizon · v1.1.0 · actif"]
+      MO["Marketing Orchestrator<br/>agent coordinateur"]
+      MO --- MS["Marketing Strategist"]
+      MO --- MI["Market Intelligence"]
+      MO --- DM["Digital Marketing"]
+      MO --- MC["Marketing & Creative"]
+      MO --- PA["Performance & Automation"]
+      MO --- TM["Traditional Marketing"]
     end
-    subgraph FAS["FIRST AGENTIC SYSTEM (kind = horizon)"]
-      F0["Orchestrateur"]
-      F1["Academia Agent"]
-      F2["Fullstack Dev"]
-      F3["Test Agent"]
-      F0 --- F1
-      F0 --- F2
-      F0 --- F3
+    subgraph FAS["FIRST AGENTIC SYSTEM — kind = horizon"]
+      F0["Orchestrateur<br/>agent coordinateur"]
+      F0 --- FA["Academia Agent"]
+      F0 --- FD["Fullstack Dev"]
+      F0 --- FT["Test Agent"]
     end
   end
 
-  subgraph RES["Ressources transverses"]
-    L["Fournisseur LLM (Gemini) — routage & secours"]
-    T["Outils / mains — 56 dont 30 prêtes : tool-plan, tool-delegate, tool-skills…"]
-    K["Compétences — catalogue (149, vérifié en ligne)"]
-    KR["Mémoire / Knowledge (KR) — à brancher"]
-    C["Connecteurs : Supabase · Drive · GitHub — non configurés"]
-  end
+  SYS -->|"exécute ses missions via"| F5
 
-  EXEC -.-> RES
+  subgraph RES["Ressources transverses (direction, systèmes, utilisateur)"]
+    L["Fournisseur LLM<br/>Gemini — routage & secours ✅"]
+    T["Outils / mains<br/>56 dont 30 prêtes ✅"]
+    K["Compétences<br/>catalogue : 149 ✅"]
+    KR["Mémoire / Knowledge (KR)<br/>❌ à brancher"]
+    C["Connecteurs<br/>Supabase · Drive · GitHub ❌ non configurés"]
+  end
+  FCT -.-> RES
   SYS -.-> RES
-  U -.-> RES
+```
+
+## Rendu lisible (texte)
+
+```
+HORIZON CORE — DIRECTION GÉNÉRALE
+planifie · route (choisit le système) · supervise · vérifie · journalise
+│
+├── Fonctions internes
+│     ├── Planificateur & routeur .... build_plan · select_orchestrator
+│     ├── API & registres ........... systèmes · agents · compétences · projets ·
+│     │                                missions/étapes · runs · outils
+│     ├── Sécurité & permissions .... jetons · capacités · journal
+│     ├── Supervision & diagnostic .. statuts · santé · écarts
+│     └── Moteur d exécution ........ orchestrator_engine.py  🟢
+│
+├── Coordonne les systèmes d orchestration (aucun codé en dur)
+│     ├── MARKETING 360 (kind = horizon · v1.1.0 · actif)
+│     │     Marketing Orchestrator (coordinateur)
+│     │        ├── Marketing Strategist      ├── Marketing & Creative
+│     │        ├── Market Intelligence       ├── Performance & Automation
+│     │        └── Digital Marketing         └── Traditional Marketing
+│     └── FIRST AGENTIC SYSTEM (kind = horizon)
+│           Orchestrateur (coordinateur)
+│              ├── Academia Agent   ├── Fullstack Dev   └── Test Agent
+│
+└── Ressources transverses
+      ├── Fournisseur LLM (Gemini) ......................... ✅
+      ├── Outils / mains — 56 dont 30 prêtes ............... ✅
+      ├── Compétences — catalogue 149 ...................... ✅
+      ├── Mémoire / Knowledge (KR) ......................... ❌ à brancher
+      └── Connecteurs Supabase · Drive · GitHub ............ ❌ non configurés
 ```
 
 ## Lecture rapide
 
-| Étage | Rôle | État |
+| Niveau | Rôle | État |
 |---|---|---|
-| **Utilisateur** | app de bureau (mode en ligne), navigateur, mobile | ✅ |
-| **API CORE** | registres (systèmes, agents, compétences, projets, missions, runs, outils) + sécurité + journal | ✅ |
-| **CORE planificateur / routeur** | transforme une demande en mission + étapes et choisit le système | ✅ |
-| **MOTEUR (exécuteur)** | décompose → route vers les **agents** → exécute → suit → consolide | 🟢 **opérationnel** (`orchestrator_engine.py`, vérifié en ligne : mission `1acfa905`, 5 étapes / 5 agents) |
-| **Adaptateurs (UOIM)** | branche tout type de système sans code en dur | ✅ |
-| **Systèmes** | MARKETING 360 (7 agents) · FIRST AGENTIC SYSTEM (4 agents) | ✅ |
-| **Ressources** | LLM, outils, compétences, mémoire/KR, connecteurs | ✅ / ❌ selon la ligne |
+| **HORIZON CORE (direction générale)** | planifie, **route la demande vers le système compétent**, supervise, vérifie, journalise ; **coordonne les orchestrateurs** | ✅ |
+| **Fonctions internes** | planificateur/routeur, API & registres, sécurité & permissions, supervision & diagnostic | ✅ |
+| **Moteur d exécution** | capacité commune : décompose → route vers les agents → exécute → suit → consolide | 🟢 **opérationnel** (`orchestrator_engine.py` ; mission `1acfa905` : 5 étapes / 5 agents) |
+| **Systèmes d orchestration** | MARKETING 360 (7 agents) · FIRST AGENTIC SYSTEM (4 agents) — chacun garde son coordinateur | ✅ |
+| **Ressources transverses** | LLM, mains (56 dont 30 prêtes), compétences (149), mémoire/KR, connecteurs | ✅ / ❌ selon la ligne |
 
-## Ce que l'exécuteur utilise (en place et vérifié)
-Missions, **étapes** (`assigned_agent_id`), checkpoints, **runs** (statut/sortie/usage/
-runtime, `agent_id`), journal ; `effective_skills` (compétences par agent) ; outil
-**`tool-delegate`** ; outil **`tool-plan`** ; adaptateurs par `kind` ; fournisseur LLM
-(choix automatique du fournisseur configuré).
+## Relations (sens des liens)
+
+- **Direction → systèmes** : coordination, choix du système, plan de mission, supervision, journalisation.
+- **Systèmes → direction** : remontée des statuts et résultats (missions, étapes, exécutions).
+- **Système → agents** : chaque agent coordinateur mobilise ses spécialistes.
+- **Système → moteur d exécution** : le moteur est la **capacité commune** qui répartit une mission entre les agents du système.
+- **Ressources** : mobilisées par la direction, par les systèmes et par l utilisateur.
 
 ## Ce qui reste à faire
-1. **Boucle d'appel d'outils** dans le moteur : qu'un agent appelle réellement une main
+1. **Boucle d appel d outils** dans le moteur : qu un agent appelle réellement une main
    (recherche web, PDF, image, fichiers) au cours de son étape.
-2. **Revue qualité** formalisée après la consolidation (la consolidation distingue déjà
-   faits, estimations et hypothèses).
-3. **Parallélisation** des étapes indépendantes et reprise ciblée d'une étape en échec.
-4. Test PDF **en ligne** après dépôt d'un document réel dans l'espace de travail serveur.
+2. **Revue qualité** formalisée après la consolidation (elle distingue déjà faits,
+   estimations et hypothèses).
+3. **Parallélisation** des étapes indépendantes et reprise ciblée d une étape en échec.
+4. Test PDF **en ligne** après dépôt d un document réel dans l espace de travail serveur.
